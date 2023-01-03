@@ -1,0 +1,41 @@
+site_name: Fixie
+site_description: SDK for the Fixie platform
+site_url: https://fixie.ai/
+
+theme:
+    logo: assets/fixie-logo.png
+    favicon: assets/fixie-logo.png
+    name: 'material'
+    palette:
+      - scheme: 'default'
+        media: '(prefers-color-scheme: light)'
+        toggle:
+          icon: 'material/lightbulb'
+          name: "Switch to dark mode"
+      - scheme: 'slate'
+        media: '(prefers-color-scheme: dark)'
+        primary: 'black'
+        toggle:
+          icon: 'material/lightbulb-outline'
+          name: 'Switch to light mode'
+    features:
+        - navigation.sections
+
+repo_name: fixie-ai/fixie-sdk
+repo_url: https://github.com/fixie-ai/fixie-sdk
+edit_uri: ""
+
+nav:
+    - Introduction: 'index.md'
+    - Usage:
+        - QuickStart: 'quickstart.md'
+    - API Reference: 'api.md'
+
+markdown_extensions:
+  - admonition
+  - codehilite:
+      css_class: highlight
+  - mkautodoc
+
+extra_css:
+    - css/custom.css

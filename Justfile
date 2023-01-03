@@ -49,8 +49,14 @@ poetry *FLAGS:
 shell:
     poetry shell
 
+# Build wheel.
 build:
     poetry build
 
+# Publish wheel to PyPI.
 publish: build
     poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
+
+# Serve documentation locally.
+serve:
+    poetry run mkdocs serve

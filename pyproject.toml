@@ -29,7 +29,10 @@ isort = "5.10.1"
 mypy = "0.991"
 autoflake = "1.6.1"
 requests-mock = "1.10.0"
-
+mkdocs = "^1.4.2"
+mkdocs-material = "^9.0.1"
+mkautodoc = "^0.2.0"
+ 
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
