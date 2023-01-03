@@ -64,3 +64,7 @@ serve-docs:
 # Build documentation.
 build-docs:
     poetry run mkdocs build
+
+# Deploy docs to Github Pages.
+publish-docs:
+    poetry run mkdocs gh-deploy
