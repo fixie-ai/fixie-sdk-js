@@ -49,3 +49,8 @@ poetry *FLAGS:
 shell:
     poetry shell
 
+build:
+    poetry build
+
+publish: build
+    poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
