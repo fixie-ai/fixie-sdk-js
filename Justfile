@@ -58,5 +58,9 @@ publish: build
     poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
 
 # Serve documentation locally.
-serve:
+serve-docs:
     poetry run mkdocs serve
+
+# Build documentation.
+build-docs:
+    poetry run mkdocs build
