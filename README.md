@@ -21,7 +21,7 @@ pip install fixie
 
 The Fixie SDK provides a single class, `FixieClient`, which is used to communicate with the Fixie
 API. To create a client, you need to provide your API key, which you can find in the Fixie
-web application, on your profile page. Set the value of the `FICXIE_API_KEY` environment variable
+web application, on your profile page. Set the value of the `FIXIE_API_KEY` environment variable
 to your API key, and then create a client as follows:
 ```
 from fixie import FixieClient
