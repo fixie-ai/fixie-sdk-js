@@ -30,6 +30,11 @@ mypy = "0.991"
 autoflake = "1.6.1"
 requests-mock = "1.10.0"
 
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+
 [tool.mypy]
 python_version = "3.9"
 warn_return_any = true
