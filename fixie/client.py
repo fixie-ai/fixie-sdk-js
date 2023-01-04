@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Any, Dict, Optional
+from typing import Dict, List, Optional
 
 from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
+
+from fixie.playground import Playground
 
 
 class FixieClient:
@@ -23,6 +25,12 @@ class FixieClient:
             headers={"Authorization": f"Bearer {self._api_key}"},
         )
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
+
+    @property
+    def gqlclient(self) -> Client:
+        """Return the underlying GraphQL client used by this FixieClient."""
+        return self._gqlclient
+
 
     def agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -47,21 +55,14 @@ class FixieClient:
         agents = result["allAgents"]
         return {agent["agentId"]: agent for agent in agents}
 
-    def playgrounds(self) -> Dict[str, str]:
-        """Return metadata about all Fixie Playgrounds. The keys of the returned
-        dictionary are the Playground handles, and the values are dictionaries containing
-        metadata about each Playground."""
+    def playgrounds(self) -> List[Playground]:
+        """Return a list of all Fixie Playgrounds."""
 
         query = gql(
             """
             query getPlaygrounds {
                 allPlaygrounds {
                     handle
-                    name
-                    description
-                    owner {
-                        username
-                    }
                 }
             }
         """
@@ -69,47 +70,10 @@ class FixieClient:
         result = self._gqlclient.execute(query)
         assert "allPlaygrounds" in result and isinstance(result["allPlaygrounds"], list)
         playgrounds = result["allPlaygrounds"]
-        return {playground["handle"]: playground for playground in playgrounds}
+        return [Playground(self, playground["handle"]) for playground in playgrounds]
 
-    def get_playground(self, handle: str) -> Dict[str, Any]:
 
-        query = gql(
-            """
-            query getPlayground($handle: String!) {
-                playgroundByHandle(handle: $handle) {
-                    handle
-                    name
-                    description
-                    owner {
-                        username
-                    }
-                    embeds {
-                        key
-                        embed {
-                            id
-                            contentType
-                            created
-                            contentHash
-                            owner {
-                                id
-                            }
-                            url
-                        }
-                    }
-                    messages {
-                        id
-                        text
-                        sentBy
-                        type
-                        inReplyTo { id }
-                        timestamp
-                    }
-                }
-            }
-        """
-        )
-        result = self._gqlclient.execute(query, variable_values={"handle": handle})
-        assert "playgroundByHandle" in result and isinstance(
-            result["playgroundByHandle"], dict
-        )
-        return result["playgroundByHandle"]
+    def get_playground(self, handle: str) -> Playground:
+        return Playground(self, handle)
+
+
