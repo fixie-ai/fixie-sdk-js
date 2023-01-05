@@ -21,5 +21,5 @@ playground = fixie.Playground(client.gqlclient)
 result = playground.query("How many issues are assigned to mdwelsh?")
 print(result)
 
-result = playground.query("Show them to me")
-print(result)
+# Clean up!
+playground.delete()

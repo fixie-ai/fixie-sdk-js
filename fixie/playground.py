@@ -80,6 +80,22 @@ class Playground:
         assert isinstance(result["createPlayground"]["playground"], dict)
         return result["createPlayground"]["playground"]
 
+    def delete(self) -> None:
+        query = gql(
+            """
+            mutation DeletePlayground($handle: String!) {
+                deletePlayground(handle: $handle) {
+                    playground {
+                        handle
+                    }
+                }
+            }
+        """
+        )
+        _ = self._gqlclient.execute(
+            query, variable_values={"handle": self._handle}
+        )
+
     def get_embeds(self) -> List[Dict[str, Any]]:
         query = gql(
             """
