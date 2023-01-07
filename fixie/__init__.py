@@ -1,7 +1,11 @@
 from fixie.client import FixieClient
-from fixie.playground import Playground
+from fixie.client import agents
+from fixie.client import client
+from fixie.client import query
 
 __all__ = [
     "FixieClient",
-    "Playground",
+    "agents",
+    "query",
+    "client",
 ]

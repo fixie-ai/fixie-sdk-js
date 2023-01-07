@@ -6,13 +6,20 @@ from fixie.client import FixieClient
 
 @pytest.fixture
 def fixie_client():
-    return FixieClient(api_host="test.fixie.ai", api_key="test-key")
+    with requests_mock.Mocker() as m:
+        m.post(
+            "https://test.fixie.ai/graphql",
+            json={
+                "data": {"createPlayground": {"playground": {"handle": "test-handle"}}}
+            },
+        )
+        return FixieClient(api_url="https://test.fixie.ai", api_key="test-key")
 
 
 def test_agents(fixie_client):
     with requests_mock.Mocker() as m:
         m.post(
-            f"https://test.fixie.ai/graphql",
+            "https://test.fixie.ai/graphql",
             json={"data": {"allAgents": [{"agentId": "test", "name": "Test Agent"}]}},
         )
         assert fixie_client.agents() == {
@@ -20,10 +27,10 @@ def test_agents(fixie_client):
         }
 
 
-def test_playgrounds(fixie_client):
+def test_sessions(fixie_client):
     with requests_mock.Mocker() as m:
         m.post(
-            f"https://test.fixie.ai/graphql",
+            "https://test.fixie.ai/graphql",
             json={
                 "data": {
                     "allPlaygrounds": [
@@ -32,25 +39,30 @@ def test_playgrounds(fixie_client):
                 }
             },
         )
-        assert fixie_client.playgrounds() == {
-            "test-handle": {"handle": "test-handle", "name": "Test Playground"}
-        }
+        assert fixie_client.sessions() == ["test-handle"]
 
 
-def test_get_playground(fixie_client):
+def test_get_session():
     with requests_mock.Mocker() as m:
         m.post(
-            f"https://test.fixie.ai/graphql",
+            "https://test.fixie.ai/graphql",
             json={
                 "data": {
                     "playgroundByHandle": {
                         "handle": "test-handle",
-                        "name": "Test Playground",
+                        "messages": [
+                            {
+                                "id": 1,
+                                "text": "Test message",
+                            }
+                        ],
                     }
                 }
             },
         )
-        assert fixie_client.get_playground("test-handle") == {
-            "handle": "test-handle",
-            "name": "Test Playground",
-        }
+        client = FixieClient(
+            api_url="https://test.fixie.ai",
+            api_key="test-key",
+            session_id="test-handle",
+        )
+        assert client.get_messages() == [{"id": 1, "text": "Test message"}]
