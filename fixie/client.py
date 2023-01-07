@@ -33,6 +33,13 @@ def query(text: str) -> str:
     return client().query(text)
 
 
+def embeds() -> List[Dict[str, Any]]:
+    """Return metadata about all Fixie Agents. The keys of the returned
+    dictionary are Agent IDs, and the values are dictionaries containing
+    metadata about each Agent."""
+    return client().get_embeds()
+
+
 class FixieClient:
     def __init__(
         self,

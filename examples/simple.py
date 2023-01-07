@@ -2,6 +2,8 @@
 
 # This is a simple example of how to use the Fixie Python SDK.
 
+import requests
+
 import fixie
 
 # Get the list of Agents registered with the Fixie service.
@@ -15,3 +17,16 @@ print(result)
 
 result = fixie.query("Show them to me")
 print(result)
+
+# Generate an image.
+result = fixie.query("Generate an image of a cute red panda")
+print(result)
+
+# Fetch the image and save it to a file.
+embeds = fixie.embeds()
+embed_url = embeds[0]["embed"]["url"]
+r = requests.get(embed_url)
+r.raise_for_status()
+with open("panda.png", "wb") as f:
+    f.write(r.content)
+    print("Saved panda.png")
