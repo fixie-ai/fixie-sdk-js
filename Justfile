@@ -49,8 +49,24 @@ poetry *FLAGS:
 shell:
     poetry shell
 
+# Build wheel.
 build:
     poetry build
 
+# Publish wheel to PyPI.
+# This uses the PyPI API Token stored in the Google Cloud Secrets Manager, which you need
+# access to in order to publish the wheel.
 publish: build
     poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
+
+# Serve documentation locally.
+serve-docs:
+    poetry run mkdocs serve
+
+# Build documentation.
+build-docs:
+    poetry run mkdocs build
+
+# Deploy docs to Github Pages.
+publish-docs:
+    poetry run mkdocs gh-deploy
