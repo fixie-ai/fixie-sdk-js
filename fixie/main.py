@@ -5,7 +5,7 @@ import rich.console as rich_console
 
 import fixie
 
-console = rich_console.Console()
+textconsole = rich_console.Console()
 
 
 @click.group()
@@ -23,6 +23,14 @@ def cli(ctx, fixie_api_url, verbose):
     ctx.obj["VERBOSE"] = verbose
 
 
+@cli.command("console", help="Run live console.")
+@click.pass_context
+def console(ctx):
+    client = ctx.obj["CLIENT"]
+    c = fixie.Console(client)
+    c.run()
+
+
 @cli.group(help="Agent-related commands.")
 def agents():
     pass
@@ -34,13 +42,13 @@ def list_agents(ctx):
     client = ctx.obj["CLIENT"]
     agents = client.agents()
     for agent_id, agent in agents.items():
-        console.print(f"[green]{agent_id}[/]: {agent['name']}")
+        textconsole.print(f"[green]{agent_id}[/]: {agent['name']}")
         if ctx.obj["VERBOSE"]:
-            console.print(f"    {agent['description']}")
-            console.print(f"    [yellow]Developer[/]: {agent['developer']}")
+            textconsole.print(f"    {agent['description']}")
+            textconsole.print(f"    [yellow]Developer[/]: {agent['developer']}")
             if "moreInfo" in agent and agent["moreInfo"]:
-                console.print(f"    [yellow]More info[/]: {agent['moreInfo']}")
-            console.print("")
+                textconsole.print(f"    [yellow]More info[/]: {agent['moreInfo']}")
+            textconsole.print("")
 
 
 @cli.group(help="Session-related commands.")
@@ -54,7 +62,7 @@ def list_sessions(ctx):
     client = ctx.obj["CLIENT"]
     session_ids = client.sessions()
     for session_id in session_ids:
-        console.print(f"[green]{session_id}[/]")
+        textconsole.print(f"[green]{session_id}[/]")
 
 
 @sessions.command("show", help="Show session.")
@@ -64,7 +72,7 @@ def show_session(ctx, session_id: str):
     fixie_api_url = ctx.obj["FIXIE_API_URL"]
     client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
     messages = client.get_messages()
-    console.print(messages)
+    textconsole.print(messages)
 
 
 @sessions.command("embeds", help="Show embeds in a session.")
@@ -74,7 +82,7 @@ def embeds(ctx, session_id: str):
     fixie_api_url = ctx.obj["FIXIE_API_URL"]
     client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
     embeds = client.get_embeds()
-    console.print(embeds)
+    textconsole.print(embeds)
 
 
 if __name__ == "__main__":

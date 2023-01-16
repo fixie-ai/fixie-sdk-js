@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Any, Dict, List, Optional
+import threading
+import time
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 from gql import Client
 from gql import gql
@@ -67,6 +69,30 @@ class FixieClient:
         """Return the underlying GraphQL client used by this FixieClient."""
         return self._gqlclient
 
+    @property
+    def url(self) -> str:
+        """Return the URL of the Fixie API server."""
+        assert self._api_url is not None
+        return self._api_url
+
+    @property
+    def session_id(self) -> Optional[str]:
+        """Return the session ID used by this Fixie client."""
+        self._ensure_session()
+        return self._session_id
+
+    @property
+    def session_url(self) -> str:
+        """Return the URL of the Fixie session."""
+        assert self._api_url is not None
+        return f"{self._api_url}/sessions/{self.session_id}"
+
+    def clone(self) -> "FixieClient":
+        """Return a new FixieClient instance with the same configuration."""
+        return FixieClient(
+            api_url=self._api_url, api_key=self._api_key, session_id=self._session_id
+        )
+
     def agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
         dictionary are the Agent handles, and the values are dictionaries containing
@@ -105,11 +131,6 @@ class FixieClient:
         sessions = result["allSessions"]
         return [session["handle"] for session in sessions]
 
-    @property
-    def session_id(self) -> Optional[str]:
-        self._ensure_session()
-        return self._session_id
-
     def _ensure_session(self):
         """Create a new session if one does not already exist."""
         if self._session_id:
@@ -135,6 +156,7 @@ class FixieClient:
         self._session_id = result["createSession"]["session"]["handle"]
 
     def delete_session(self) -> None:
+        """Delete the current session."""
         self._ensure_session()
         query = gql(
             """
@@ -150,6 +172,7 @@ class FixieClient:
         _ = self._gqlclient.execute(query, variable_values={"handle": self._session_id})
 
     def get_embeds(self) -> List[Dict[str, Any]]:
+        """Return the Embeds attached to this Session."""
         self._ensure_session()
         query = gql(
             """
@@ -183,6 +206,7 @@ class FixieClient:
         return result["sessionByHandle"]["embeds"]
 
     def get_messages(self) -> List[Dict[str, Any]]:
+        """Return the messages that make up this session."""
         self._ensure_session()
         query = gql(
             """
@@ -211,6 +235,8 @@ class FixieClient:
         return result["sessionByHandle"]["messages"]
 
     def query(self, text: str) -> str:
+        """Run a single query against the Fixie API and return the response."""
+        self._ensure_session()
         query = gql(
             """
             mutation Post($handle: String!, $text: String!) {
@@ -230,3 +256,28 @@ class FixieClient:
         response = self.get_messages()[-1]
         assert isinstance(response["text"], str)
         return response["text"]
+
+    def run(self, text: str) -> Generator[Tuple[str, str, str], None, None]:
+        """Run a query against the Fixie API, returning a generator that yields
+        (text, sentBy, type) tuples for each reply."""
+        self._ensure_session()
+
+        # Run the query in the background, and continue polling for replies.
+        background_client = self.clone()
+        threading.Thread(target=background_client.query, args=(text,)).start()
+
+        last_messages: List[Dict[str, Any]] = []
+        while True:
+            time.sleep(1)
+            messages = self.get_messages()
+            if not messages:
+                continue
+            if messages == last_messages:
+                continue
+            for message in messages:
+                if message in last_messages:
+                    continue
+                yield (message["text"], message["sentBy"], message["type"])
+            last_messages = messages
+            if message["type"] == "response":
+                break

@@ -9,9 +9,7 @@ def fixie_client():
     with requests_mock.Mocker() as m:
         m.post(
             "https://test.fixie.ai/graphql",
-            json={
-                "data": {"createPlayground": {"playground": {"handle": "test-handle"}}}
-            },
+            json={"data": {"createSession": {"session": {"handle": "test-handle"}}}},
         )
         return FixieClient(api_url="https://test.fixie.ai", api_key="test-key")
 
@@ -20,10 +18,10 @@ def test_agents(fixie_client):
     with requests_mock.Mocker() as m:
         m.post(
             "https://test.fixie.ai/graphql",
-            json={"data": {"allAgents": [{"agentId": "test", "name": "Test Agent"}]}},
+            json={"data": {"allAgents": [{"handle": "test", "name": "Test Agent"}]}},
         )
         assert fixie_client.agents() == {
-            "test": {"agentId": "test", "name": "Test Agent"}
+            "test": {"handle": "test", "name": "Test Agent"}
         }
 
 
@@ -33,9 +31,7 @@ def test_sessions(fixie_client):
             "https://test.fixie.ai/graphql",
             json={
                 "data": {
-                    "allPlaygrounds": [
-                        {"handle": "test-handle", "name": "Test Playground"}
-                    ]
+                    "allSessions": [{"handle": "test-handle", "name": "Test Session"}]
                 }
             },
         )
@@ -48,7 +44,7 @@ def test_get_session():
             "https://test.fixie.ai/graphql",
             json={
                 "data": {
-                    "playgroundByHandle": {
+                    "sessionByHandle": {
                         "handle": "test-handle",
                         "messages": [
                             {
