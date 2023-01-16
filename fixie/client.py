@@ -1,16 +1,53 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
+_CLIENT: Optional["FixieClient"] = None
+
+
+def client() -> "FixieClient":
+    """Return the global FixieClient instance."""
+    global _CLIENT
+    if not _CLIENT:
+        _CLIENT = FixieClient()
+    assert _CLIENT is not None
+    return _CLIENT
+
+
+def agents() -> Dict[str, Dict[str, str]]:
+    """Return metadata about all Fixie Agents. The keys of the returned
+    dictionary are Agent IDs, and the values are dictionaries containing
+    metadata about each Agent."""
+    return client().agents()
+
+
+def query(text: str) -> str:
+    """Return metadata about all Fixie Agents. The keys of the returned
+    dictionary are Agent IDs, and the values are dictionaries containing
+    metadata about each Agent."""
+    return client().query(text)
+
+
+def embeds() -> List[Dict[str, Any]]:
+    """Return metadata about all Fixie Agents. The keys of the returned
+    dictionary are Agent IDs, and the values are dictionaries containing
+    metadata about each Agent."""
+    return client().get_embeds()
+
 
 class FixieClient:
-    def __init__(self, api_host: Optional[str] = None, api_key: Optional[str] = None):
-        self._api_host = api_host or os.getenv("FIXIE_API_HOST", "app.fixie.ai")
+    def __init__(
+        self,
+        api_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ):
+        self._api_url = api_url or os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
         self._api_key = api_key or os.getenv("FIXIE_API_KEY")
         if not self._api_key:
             raise ValueError(
@@ -19,10 +56,20 @@ class FixieClient:
                 "https://app.fixie.ai."
             )
         transport = RequestsHTTPTransport(
-            url=f"https://{self._api_host}/graphql",
+            url=f"{self._api_url}/graphql",
             headers={"Authorization": f"Bearer {self._api_key}"},
         )
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
+
+        if not session_id:
+            self._session_id = self._create_session()
+        else:
+            self._session_id = session_id
+
+    @property
+    def gqlclient(self) -> Client:
+        """Return the underlying GraphQL client used by this FixieClient."""
+        return self._gqlclient
 
     def agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -47,21 +94,14 @@ class FixieClient:
         agents = result["allAgents"]
         return {agent["agentId"]: agent for agent in agents}
 
-    def playgrounds(self) -> Dict[str, str]:
-        """Return metadata about all Fixie Playgrounds. The keys of the returned
-        dictionary are the Playground handles, and the values are dictionaries containing
-        metadata about each Playground."""
+    def sessions(self) -> List[str]:
+        """Return a list of all session IDs."""
 
         query = gql(
             """
             query getPlaygrounds {
                 allPlaygrounds {
                     handle
-                    name
-                    description
-                    owner {
-                        username
-                    }
                 }
             }
         """
@@ -69,20 +109,51 @@ class FixieClient:
         result = self._gqlclient.execute(query)
         assert "allPlaygrounds" in result and isinstance(result["allPlaygrounds"], list)
         playgrounds = result["allPlaygrounds"]
-        return {playground["handle"]: playground for playground in playgrounds}
+        return [playground["handle"] for playground in playgrounds]
 
-    def get_playground(self, handle: str) -> Dict[str, Any]:
+    @property
+    def session_id(self) -> str:
+        return self._session_id
 
+    def _create_session(self) -> str:
         query = gql(
             """
-            query getPlayground($handle: String!) {
-                playgroundByHandle(handle: $handle) {
-                    handle
-                    name
-                    description
-                    owner {
-                        username
+            mutation CreatePlayground {
+                createPlayground(playgroundData: {}) {
+                    playground {
+                        handle
                     }
+                }
+            }
+            """
+        )
+        result = self._gqlclient.execute(query)
+        if "createPlayground" not in result or result["createPlayground"] is None:
+            raise ValueError(f"Failed to create Session")
+        assert isinstance(result["createPlayground"], dict)
+        assert isinstance(result["createPlayground"]["playground"], dict)
+        assert isinstance(result["createPlayground"]["playground"]["handle"], str)
+        return result["createPlayground"]["playground"]["handle"]
+
+    def delete_session(self) -> None:
+        query = gql(
+            """
+            mutation DeletePlayground($handle: String!) {
+                deletePlayground(handle: $handle) {
+                    playground {
+                        handle
+                    }
+                }
+            }
+        """
+        )
+        _ = self._gqlclient.execute(query, variable_values={"handle": self._session_id})
+
+    def get_embeds(self) -> List[Dict[str, Any]]:
+        query = gql(
+            """
+            query getEmbeds($handle: String!) {
+                playgroundByHandle(handle: $handle) {
                     embeds {
                         key
                         embed {
@@ -96,6 +167,25 @@ class FixieClient:
                             url
                         }
                     }
+                }
+            }
+        """
+        )
+        result = self._gqlclient.execute(
+            query, variable_values={"handle": self._session_id}
+        )
+        assert (
+            "playgroundByHandle" in result
+            and isinstance(result["playgroundByHandle"], dict)
+            and isinstance(result["playgroundByHandle"]["embeds"], list)
+        )
+        return result["playgroundByHandle"]["embeds"]
+
+    def get_messages(self) -> List[Dict[str, Any]]:
+        query = gql(
+            """
+            query getMessages($handle: String!) {
+                playgroundByHandle(handle: $handle) {
                     messages {
                         id
                         text
@@ -108,8 +198,33 @@ class FixieClient:
             }
         """
         )
-        result = self._gqlclient.execute(query, variable_values={"handle": handle})
-        assert "playgroundByHandle" in result and isinstance(
-            result["playgroundByHandle"], dict
+        result = self._gqlclient.execute(
+            query, variable_values={"handle": self._session_id}
         )
-        return result["playgroundByHandle"]
+        assert (
+            "playgroundByHandle" in result
+            and isinstance(result["playgroundByHandle"], dict)
+            and isinstance(result["playgroundByHandle"]["messages"], list)
+        )
+        return result["playgroundByHandle"]["messages"]
+
+    def query(self, text: str) -> str:
+        query = gql(
+            """
+            mutation Post($handle: String!, $text: String!) {
+                addPlaygroundMessage(messageData: {playground: $handle, text: $text}) {
+                    message {
+                        text
+                    }
+                }
+            }
+            """
+        )
+        result = self._gqlclient.execute(
+            query, variable_values={"handle": self._session_id, "text": text}
+        )
+
+        # The reply to the query comes in as the most recent 'response' message in the session.
+        response = self.get_messages()[-1]
+        assert isinstance(response["text"], str)
+        return response["text"]

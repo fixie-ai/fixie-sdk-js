@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 
-
 import click
 import rich.console as rich_console
 
-import fixie.client as fixie_client
+import fixie
 
 console = rich_console.Console()
 
 
 @click.group()
 @click.option(
-    "--fixie_api_host",
-    help="Fixie API host. Defaults to the value of the FIXIE_API_HOST env var, or `app.fixie.ai` if that is unset.",
+    "--fixie_api_url",
+    help="Fixie API URL. Defaults to the value of the FIXIE_API_URL env var, or `https://app.fixie.ai` if that is unset.",
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
-def cli(ctx, fixie_api_host, verbose):
+def cli(ctx, fixie_api_url, verbose):
     ctx.ensure_object(dict)
-    client = fixie_client.FixieClient(api_host=fixie_api_host)
+    client = fixie.FixieClient(api_url=fixie_api_url)
+    ctx.obj["FIXIE_API_URL"] = fixie_api_url
     ctx.obj["CLIENT"] = client
     ctx.obj["VERBOSE"] = verbose
 
@@ -43,31 +43,38 @@ def list_agents(ctx):
             console.print("")
 
 
-@cli.group(help="Playground-related commands.")
-def playgrounds():
+@cli.group(help="Session-related commands.")
+def sessions():
     pass
 
 
-@playgrounds.command("list", help="List playgrounds.")
+@sessions.command("list", help="List sessions.")
 @click.pass_context
-def list_playgrounds(ctx):
+def list_sessions(ctx):
     client = ctx.obj["CLIENT"]
-    playgrounds = client.playgrounds()
-    for handle, playground in playgrounds.items():
-        console.print(f"[green]{handle}[/]: {playground['name']}")
-        if ctx.obj["VERBOSE"]:
-            console.print(f"    {playground['description']}")
-            console.print(f"    [yellow]Owner[/]: {playground['owner']}")
-            console.print("")
+    session_ids = client.sessions()
+    for session_id in session_ids:
+        console.print(f"[green]{session_id}[/]")
 
 
-@playgrounds.command("show", help="Show playground.")
+@sessions.command("show", help="Show session.")
 @click.pass_context
-@click.argument("handle")
-def show_playground(ctx, handle: str):
-    client = ctx.obj["CLIENT"]
-    playground = client.get_playground(handle)
-    console.print(playground)
+@click.argument("session_id")
+def show_session(ctx, session_id: str):
+    fixie_api_url = ctx.obj["FIXIE_API_URL"]
+    client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
+    messages = client.get_messages()
+    console.print(messages)
+
+
+@sessions.command("embeds", help="Show embeds in a session.")
+@click.pass_context
+@click.argument("session_id")
+def embeds(ctx, session_id: str):
+    fixie_api_url = ctx.obj["FIXIE_API_URL"]
+    client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
+    embeds = client.get_embeds()
+    console.print(embeds)
 
 
 if __name__ == "__main__":
