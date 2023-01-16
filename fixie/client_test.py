@@ -20,7 +20,7 @@ def test_agents(fixie_client):
             "https://test.fixie.ai/graphql",
             json={"data": {"allAgents": [{"handle": "test", "name": "Test Agent"}]}},
         )
-        assert fixie_client.agents() == {
+        assert fixie_client.get_agents() == {
             "test": {"handle": "test", "name": "Test Agent"}
         }
 
@@ -35,7 +35,7 @@ def test_sessions(fixie_client):
                 }
             },
         )
-        assert fixie_client.sessions() == ["test-handle"]
+        assert fixie_client.get_sessions() == ["test-handle"]
 
 
 def test_get_session():

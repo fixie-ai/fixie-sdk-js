@@ -41,11 +41,13 @@ class Console:
         with console.status("Working...", spinner="bouncingBall"):
             try:
                 self._response_index += 1
-                for response, sent_by, type in self._client.run(in_text):
-                    if type != "response":
-                        console.print(f"   [dim]@{sent_by}: {response}[/]")
+                for message in self._client.run(in_text):
+                    if message["type"] != "response":
+                        console.print(
+                            f"   [dim]@{message['sentBy']}: {message['text']}[/]"
+                        )
                     else:
-                        console.print(f"{self._response_index}❯ {response}")
+                        console.print(f"{self._response_index}❯ {message['text']}")
             except requests.exceptions.HTTPError as e:
                 console.print(f"🚨 {e}")
                 return

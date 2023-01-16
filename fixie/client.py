@@ -3,7 +3,7 @@
 import os
 import threading
 import time
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional
 
 from gql import Client
 from gql import gql
@@ -25,7 +25,7 @@ def agents() -> Dict[str, Dict[str, str]]:
     """Return metadata about all Fixie Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
-    return client().agents()
+    return client().get_agents()
 
 
 def query(text: str) -> str:
@@ -93,7 +93,7 @@ class FixieClient:
             api_url=self._api_url, api_key=self._api_key, session_id=self._session_id
         )
 
-    def agents(self) -> Dict[str, Dict[str, str]]:
+    def get_agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
         dictionary are the Agent handles, and the values are dictionaries containing
         metadata about each Agent."""
@@ -114,7 +114,7 @@ class FixieClient:
         agents = result["allAgents"]
         return {agent["handle"]: agent for agent in agents}
 
-    def sessions(self) -> List[str]:
+    def get_sessions(self) -> List[str]:
         """Return a list of all session IDs."""
 
         query = gql(
@@ -257,9 +257,9 @@ class FixieClient:
         assert isinstance(response["text"], str)
         return response["text"]
 
-    def run(self, text: str) -> Generator[Tuple[str, str, str], None, None]:
+    def run(self, text: str) -> Generator[Dict[str, Any], None, None]:
         """Run a query against the Fixie API, returning a generator that yields
-        (text, sentBy, type) tuples for each reply."""
+        messages."""
         self._ensure_session()
 
         # Run the query in the background, and continue polling for replies.
@@ -277,7 +277,7 @@ class FixieClient:
             for message in messages:
                 if message in last_messages:
                     continue
-                yield (message["text"], message["sentBy"], message["type"])
+                yield message
             last_messages = messages
             if message["type"] == "response":
                 break
