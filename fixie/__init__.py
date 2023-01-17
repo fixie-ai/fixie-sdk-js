@@ -3,6 +3,8 @@ from fixie.client import agents
 from fixie.client import client
 from fixie.client import embeds
 from fixie.client import query
+from fixie.console import Console
+from fixie.session import Session
 
 __all__ = [
     "FixieClient",
@@ -10,4 +12,6 @@ __all__ = [
     "embeds",
     "query",
     "client",
+    "Console",
+    "Session",
 ]
