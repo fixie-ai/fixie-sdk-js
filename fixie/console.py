@@ -21,6 +21,7 @@ class Console:
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
+        self._session = client.create_session()
         self._history_file = history_file
         self._response_index = 0
 
@@ -28,7 +29,7 @@ class Console:
         """Run the console application."""
 
         console.print("[blue]Welcome to Fixie!")
-        console.print(f"Connected to: {self._client.session_url}")
+        console.print(f"Connected to: {self._session.session_url}")
         while True:
             in_text = prompt_toolkit.prompt(
                 "🚲❯ ",
@@ -41,7 +42,7 @@ class Console:
         with console.status("Working...", spinner="bouncingBall"):
             try:
                 self._response_index += 1
-                for message in self._client.run(in_text):
+                for message in self._session.run(in_text):
                     if message["type"] != "response":
                         console.print(
                             f"   [dim]@{message['sentBy']}: {message['text']}[/]"

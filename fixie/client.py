@@ -1,24 +1,36 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import os
-import threading
-import time
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, List, Optional
 
 from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
+from fixie.session import Session
+
 _CLIENT: Optional["FixieClient"] = None
+_SESSION: Optional[Session] = None
 
 
-def client() -> "FixieClient":
+def client() -> FixieClient:
     """Return the global FixieClient instance."""
     global _CLIENT
     if not _CLIENT:
         _CLIENT = FixieClient()
     assert _CLIENT is not None
     return _CLIENT
+
+
+def session() -> Session:
+    """Return the global Fixie Session instance."""
+    global _SESSION
+    if not _SESSION:
+        _SESSION = Session(client())
+    assert _SESSION is not None
+    return _SESSION
 
 
 def agents() -> Dict[str, Dict[str, str]]:
@@ -32,22 +44,32 @@ def query(text: str) -> str:
     """Return metadata about all Fixie Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
-    return client().query(text)
+    return session().query(text)
 
 
 def embeds() -> List[Dict[str, Any]]:
     """Return metadata about all Fixie Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
-    return client().get_embeds()
+    return session().get_embeds()
 
 
 class FixieClient:
+    """FixieClient is a client to the Fixie system.
+
+    Args:
+        api_url: The URL of the Fixie API server. If not provided, the
+            FIXIE_API_URL environment variable will be used. If that is not
+            set, the default value of "https://app.fixie.ai" will be used.
+        api_key: The API key for the Fixie API server. If not provided, the
+            FIXIE_API_KEY environment variable will be used. If that is not
+            set, a ValueError will be raised.
+    """
+
     def __init__(
         self,
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
-        session_id: Optional[str] = None,
     ):
         self._api_url = api_url or os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
         self._api_key = api_key or os.getenv("FIXIE_API_KEY")
@@ -62,7 +84,6 @@ class FixieClient:
             headers={"Authorization": f"Bearer {self._api_key}"},
         )
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
-        self._session_id = session_id
 
     @property
     def gqlclient(self) -> Client:
@@ -75,23 +96,9 @@ class FixieClient:
         assert self._api_url is not None
         return self._api_url
 
-    @property
-    def session_id(self) -> Optional[str]:
-        """Return the session ID used by this Fixie client."""
-        self._ensure_session()
-        return self._session_id
-
-    @property
-    def session_url(self) -> str:
-        """Return the URL of the Fixie session."""
-        assert self._api_url is not None
-        return f"{self._api_url}/sessions/{self.session_id}"
-
     def clone(self) -> "FixieClient":
         """Return a new FixieClient instance with the same configuration."""
-        return FixieClient(
-            api_url=self._api_url, api_key=self._api_key, session_id=self._session_id
-        )
+        return FixieClient(api_url=self._api_url, api_key=self._api_key)
 
     def get_agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -131,153 +138,10 @@ class FixieClient:
         sessions = result["allSessions"]
         return [session["handle"] for session in sessions]
 
-    def _ensure_session(self):
-        """Create a new session if one does not already exist."""
-        if self._session_id:
-            return
+    def create_session(self) -> Session:
+        """Create a new Session."""
+        return Session(self)
 
-        query = gql(
-            """
-            mutation CreateSession {
-                createSession(sessionData: {}) {
-                    session {
-                        handle
-                    }
-                }
-            }
-            """
-        )
-        result = self._gqlclient.execute(query)
-        if "createSession" not in result or result["createSession"] is None:
-            raise ValueError(f"Failed to create Session")
-        assert isinstance(result["createSession"], dict)
-        assert isinstance(result["createSession"]["session"], dict)
-        assert isinstance(result["createSession"]["session"]["handle"], str)
-        self._session_id = result["createSession"]["session"]["handle"]
-
-    def delete_session(self) -> None:
-        """Delete the current session."""
-        self._ensure_session()
-        query = gql(
-            """
-            mutation DeleteSession($handle: String!) {
-                deleteSession(handle: $handle) {
-                    session {
-                        handle
-                    }
-                }
-            }
-        """
-        )
-        _ = self._gqlclient.execute(query, variable_values={"handle": self._session_id})
-
-    def get_embeds(self) -> List[Dict[str, Any]]:
-        """Return the Embeds attached to this Session."""
-        self._ensure_session()
-        query = gql(
-            """
-            query getEmbeds($handle: String!) {
-                sessionByHandle(handle: $handle) {
-                    embeds {
-                        key
-                        embed {
-                            id
-                            contentType
-                            created
-                            contentHash
-                            owner {
-                                id
-                            }
-                            url
-                        }
-                    }
-                }
-            }
-        """
-        )
-        result = self._gqlclient.execute(
-            query, variable_values={"handle": self._session_id}
-        )
-        assert (
-            "sessionByHandle" in result
-            and isinstance(result["sessionByHandle"], dict)
-            and isinstance(result["sessionByHandle"]["embeds"], list)
-        )
-        return result["sessionByHandle"]["embeds"]
-
-    def get_messages(self) -> List[Dict[str, Any]]:
-        """Return the messages that make up this session."""
-        self._ensure_session()
-        query = gql(
-            """
-            query getMessages($handle: String!) {
-                sessionByHandle(handle: $handle) {
-                    messages {
-                        id
-                        text
-                        sentBy
-                        type
-                        inReplyTo { id }
-                        timestamp
-                    }
-                }
-            }
-        """
-        )
-        result = self._gqlclient.execute(
-            query, variable_values={"handle": self._session_id}
-        )
-        assert (
-            "sessionByHandle" in result
-            and isinstance(result["sessionByHandle"], dict)
-            and isinstance(result["sessionByHandle"]["messages"], list)
-        )
-        return result["sessionByHandle"]["messages"]
-
-    def query(self, text: str) -> str:
-        """Run a single query against the Fixie API and return the response."""
-        self._ensure_session()
-        query = gql(
-            """
-            mutation Post($handle: String!, $text: String!) {
-                addSessionMessage(messageData: {session: $handle, text: $text}) {
-                    message {
-                        text
-                    }
-                }
-            }
-            """
-        )
-        result = self._gqlclient.execute(
-            query, variable_values={"handle": self._session_id, "text": text}
-        )
-
-        # The reply to the query comes in as the most recent 'response' message in the session.
-        response = self.get_messages()[-1]
-        assert isinstance(response["text"], str)
-        return response["text"]
-
-    def run(self, text: str) -> Generator[Dict[str, Any], None, None]:
-        """Run a query against the Fixie API, returning a generator that yields
-        messages."""
-        self._ensure_session()
-
-        # Run the query in the background, and continue polling for replies.
-        background_client = self.clone()
-        threading.Thread(target=background_client.query, args=(text,)).start()
-
-        last_messages: List[Dict[str, Any]] = []
-        while True:
-            time.sleep(1)
-            messages = self.get_messages()
-            if not messages:
-                continue
-            if messages == last_messages:
-                continue
-            for message in messages:
-                if message in last_messages:
-                    continue
-                yield message
-            last_messages = messages
-            if message["type"] == "response":
-                break
+    def get_session(self, session_id: str) -> Session:
+        """Return an existing Session object."""
+        return Session(self, session_id)

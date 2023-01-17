@@ -44,6 +44,22 @@ def test_get_session():
             "https://test.fixie.ai/graphql",
             json={
                 "data": {
+                    "session": {
+                        "handle": "test-handle",
+                    }
+                }
+            },
+        )
+        client = FixieClient(
+            api_url="https://test.fixie.ai",
+            api_key="test-key",
+        )
+        session = client.get_session("test-handle")
+
+        m.post(
+            "https://test.fixie.ai/graphql",
+            json={
+                "data": {
                     "sessionByHandle": {
                         "handle": "test-handle",
                         "messages": [
@@ -56,9 +72,4 @@ def test_get_session():
                 }
             },
         )
-        client = FixieClient(
-            api_url="https://test.fixie.ai",
-            api_key="test-key",
-            session_id="test-handle",
-        )
-        assert client.get_messages() == [{"id": 1, "text": "Test message"}]
+        assert session.get_messages() == [{"id": 1, "text": "Test message"}]

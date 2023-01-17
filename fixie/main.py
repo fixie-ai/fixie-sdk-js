@@ -70,8 +70,9 @@ def list_sessions(ctx):
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
     fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
-    messages = client.get_messages()
+    client = fixie.FixieClient(api_url=fixie_api_url)
+    session = client.get_session(session_id)
+    messages = session.get_messages()
     textconsole.print(messages)
 
 
@@ -80,8 +81,9 @@ def show_session(ctx, session_id: str):
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
     fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = fixie.FixieClient(api_url=fixie_api_url, session_id=session_id)
-    embeds = client.get_embeds()
+    client = fixie.FixieClient(api_url=fixie_api_url)
+    session = client.get_session(session_id)
+    embeds = session.get_embeds()
     textconsole.print(embeds)
 
 
