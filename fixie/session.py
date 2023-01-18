@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import threading
 import time
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
@@ -32,12 +33,13 @@ class Session:
     ):
         self._client = client
         self._gqlclient = self._client.gqlclient
+        self._session_id = session_id
         if session_id:
-            self._session_id = session_id
             # Test that the session exists.
             _ = self.get_metadata()
         else:
             self._session_id = self._create_session()
+        self._last_message_timestamp = None
 
     @property
     def session_id(self) -> Optional[str]:
@@ -55,8 +57,7 @@ class Session:
 
     def _create_session(self) -> str:
         """Create a new session."""
-        if self._session_id:
-            return self._session_id
+        assert self._session_id is None
 
         query = gql(
             """
@@ -83,15 +84,10 @@ class Session:
         query = gql(
             """
             query getSession($session_id: String!) {
-                session(handle: $session_id) {
+                sessionByHandle(handle: $session_id) {
                     handle
                     name
                     description
-                    agent {
-                        handle
-                        name
-                        description
-                    }
                 }
             }
         """
@@ -99,8 +95,10 @@ class Session:
         result = self._gqlclient.execute(
             query, variable_values={"session_id": self._session_id}
         )
-        assert "session" in result and isinstance(result["session"], dict)
-        return result["session"]
+        assert "sessionByHandle" in result and isinstance(
+            result["sessionByHandle"], dict
+        )
+        return result["sessionByHandle"]
 
     def delete_session(self) -> None:
         """Delete the current session."""
@@ -213,18 +211,24 @@ class Session:
         background_client = self.clone()
         threading.Thread(target=background_client.add_message, args=(text,)).start()
 
-        last_messages: List[Dict[str, Any]] = []
-        while True:
+        response_received = False
+        while not response_received:
             time.sleep(1)
-            messages = self.get_messages()
-            if not messages:
-                continue
-            if messages == last_messages:
-                continue
+            messages = self._get_messages_since(self._last_message_timestamp)
             for message in messages:
-                if message in last_messages:
-                    continue
+                self._last_message_timestamp = datetime.datetime.fromisoformat(
+                    message["timestamp"]
+                )
+                response_received = message["type"] == "response"
                 yield message
-            last_messages = messages
-            if message["type"] == "response":
-                break
+
+    def _get_messages_since(
+        self, timestamp: Optional[datetime.datetime]
+    ) -> List[Dict[str, Any]]:
+        """Return all messages since the given timestamp."""
+        messages = self.get_messages()
+        return [
+            m
+            for m in messages
+            if timestamp is None or m["timestamp"] > timestamp.isoformat()
+        ]
