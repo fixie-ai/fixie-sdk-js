@@ -44,7 +44,7 @@ def test_get_session():
             "https://test.fixie.ai/graphql",
             json={
                 "data": {
-                    "session": {
+                    "sessionByHandle": {
                         "handle": "test-handle",
                     }
                 }
