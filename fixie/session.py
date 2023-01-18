@@ -216,9 +216,9 @@ class Session:
             time.sleep(1)
             messages = self._get_messages_since(self._last_message_timestamp)
             for message in messages:
-                self._last_message_timestamp = datetime.datetime.fromisoformat(
-                    message["timestamp"]
-                )
+                timestamp = datetime.datetime.fromisoformat(message["timestamp"])
+                assert timestamp
+                self._last_message_timestamp = timestamp
                 response_received = message["type"] == "response"
                 yield message
 
