@@ -39,7 +39,7 @@ class Session:
             _ = self.get_metadata()
         else:
             self._session_id = self._create_session()
-        self._last_message_timestamp = None
+        self._last_message_timestamp: Optional[datetime.datetime] = None
 
     @property
     def session_id(self) -> Optional[str]:
@@ -217,7 +217,6 @@ class Session:
             messages = self._get_messages_since(self._last_message_timestamp)
             for message in messages:
                 timestamp = datetime.datetime.fromisoformat(message["timestamp"])
-                assert timestamp
                 self._last_message_timestamp = timestamp
                 response_received = message["type"] == "response"
                 yield message
