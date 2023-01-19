@@ -5,7 +5,7 @@ import prompt_toolkit
 import requests
 import rich.console as rich_console
 
-import fixie
+import llamalabs
 
 HISTORY_FILE = "history.txt"
 
@@ -13,11 +13,11 @@ console = rich_console.Console()
 
 
 class Console:
-    """A simple console interface for Fixie."""
+    """A simple console interface for Llama Labs."""
 
     def __init__(
         self,
-        client: fixie.FixieClient,
+        client: llamalabs.LlamaLabsClient,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
@@ -28,11 +28,11 @@ class Console:
     def run(self) -> None:
         """Run the console application."""
 
-        console.print("[blue]Welcome to Fixie!")
+        console.print("[blue]Welcome to Llama Labs!")
         console.print(f"Connected to: {self._session.session_url}")
         while True:
             in_text = prompt_toolkit.prompt(
-                "🚲❯ ",
+                "🦙❯ ",
                 history=prompt_toolkit.history.FileHistory(self._history_file),
                 auto_suggest=prompt_toolkit.auto_suggest.AutoSuggestFromHistory(),
             )

@@ -1,47 +1,47 @@
 import pytest
 import requests_mock
 
-from fixie.client import FixieClient
+from llamalabs.client import LlamaLabsClient
 
 
 @pytest.fixture
-def fixie_client():
+def llamalabs_client():
     with requests_mock.Mocker() as m:
         m.post(
-            "https://test.fixie.ai/graphql",
+            "https://test.llamalabs.ai/graphql",
             json={"data": {"createSession": {"session": {"handle": "test-handle"}}}},
         )
-        return FixieClient(api_url="https://test.fixie.ai", api_key="test-key")
+        return LlamaLabsClient(api_url="https://test.llamalabs.ai", api_key="test-key")
 
 
-def test_agents(fixie_client):
+def test_agents(llamalabs_client):
     with requests_mock.Mocker() as m:
         m.post(
-            "https://test.fixie.ai/graphql",
+            "https://test.llamalabs.ai/graphql",
             json={"data": {"allAgents": [{"handle": "test", "name": "Test Agent"}]}},
         )
-        assert fixie_client.get_agents() == {
+        assert llamalabs_client.get_agents() == {
             "test": {"handle": "test", "name": "Test Agent"}
         }
 
 
-def test_sessions(fixie_client):
+def test_sessions(llamalabs_client):
     with requests_mock.Mocker() as m:
         m.post(
-            "https://test.fixie.ai/graphql",
+            "https://test.llamalabs.ai/graphql",
             json={
                 "data": {
                     "allSessions": [{"handle": "test-handle", "name": "Test Session"}]
                 }
             },
         )
-        assert fixie_client.get_sessions() == ["test-handle"]
+        assert llamalabs_client.get_sessions() == ["test-handle"]
 
 
 def test_get_session():
     with requests_mock.Mocker() as m:
         m.post(
-            "https://test.fixie.ai/graphql",
+            "https://test.llamalabs.ai/graphql",
             json={
                 "data": {
                     "sessionByHandle": {
@@ -50,14 +50,14 @@ def test_get_session():
                 }
             },
         )
-        client = FixieClient(
-            api_url="https://test.fixie.ai",
+        client = LlamaLabsClient(
+            api_url="https://test.llamalabs.ai",
             api_key="test-key",
         )
         session = client.get_session("test-handle")
 
         m.post(
-            "https://test.fixie.ai/graphql",
+            "https://test.llamalabs.ai/graphql",
             json={
                 "data": {
                     "sessionByHandle": {

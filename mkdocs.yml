@@ -1,6 +1,6 @@
-site_name: Fixie
-site_description: SDK for the Fixie platform
-site_url: https://fixie.ai/
+site_name: Llama Labs
+site_description: SDK for the Llama Labs platform
+site_url: https://llamalabs.ai/
 
 theme:
     logo: assets/fixie-logo.png
@@ -21,8 +21,8 @@ theme:
     features:
         - navigation.sections
 
-repo_name: fixie-ai/fixie-sdk
-repo_url: https://github.com/fixie-ai/fixie-sdk
+repo_name: llamalabs-ai/llamalabs-sdk
+repo_url: https://github.com/llamalabs-ai/llamalabs-sdk
 edit_uri: ""
 
 nav:

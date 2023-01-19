@@ -1,4 +1,4 @@
-# This is the main Justfile for the Fixie SDK repo.
+# This is the main Justfile for the Llama Labs SDK repo.
 # To install Just, see: https://github.com/casey/just#installation 
 
 # This causes the .env file to be read by Just.
@@ -57,7 +57,7 @@ build:
 # This uses the PyPI API Token stored in the Google Cloud Secrets Manager, which you need
 # access to in order to publish the wheel.
 publish: build
-    poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
+    poetry publish -u __token__ -p $(gcloud secrets versions access --secret=llamalabs-sdk-pypi-api-token latest)
 
 # Serve documentation locally.
 serve-docs:

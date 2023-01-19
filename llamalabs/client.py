@@ -9,23 +9,23 @@ from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
-from fixie.session import Session
+from llamalabs.session import Session
 
-_CLIENT: Optional["FixieClient"] = None
+_CLIENT: Optional["LlamaLabsClient"] = None
 _SESSION: Optional[Session] = None
 
 
-def client() -> FixieClient:
-    """Return the global FixieClient instance."""
+def client() -> LlamaLabsClient:
+    """Return the global LlamaLabsClient instance."""
     global _CLIENT
     if not _CLIENT:
-        _CLIENT = FixieClient()
+        _CLIENT = LlamaLabsClient()
     assert _CLIENT is not None
     return _CLIENT
 
 
 def session() -> Session:
-    """Return the global Fixie Session instance."""
+    """Return the global Llama Labs Session instance."""
     global _SESSION
     if not _SESSION:
         _SESSION = Session(client())
@@ -34,34 +34,34 @@ def session() -> Session:
 
 
 def agents() -> Dict[str, Dict[str, str]]:
-    """Return metadata about all Fixie Agents. The keys of the returned
+    """Return metadata about all Llama Labs Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
     return client().get_agents()
 
 
 def query(text: str) -> str:
-    """Return metadata about all Fixie Agents. The keys of the returned
+    """Return metadata about all Llama Labs Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
     return session().query(text)
 
 
 def embeds() -> List[Dict[str, Any]]:
-    """Return metadata about all Fixie Agents. The keys of the returned
+    """Return metadata about all Llama Labs Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
     return session().get_embeds()
 
 
-class FixieClient:
-    """FixieClient is a client to the Fixie system.
+class LlamaLabsClient:
+    """LlamaLabsClient is a client to the Llama Labs system.
 
     Args:
-        api_url: The URL of the Fixie API server. If not provided, the
+        api_url: The URL of the Llama Labs API server. If not provided, the
             FIXIE_API_URL environment variable will be used. If that is not
             set, the default value of "https://app.fixie.ai" will be used.
-        api_key: The API key for the Fixie API server. If not provided, the
+        api_key: The API key for the Llama Labs API server. If not provided, the
             FIXIE_API_KEY environment variable will be used. If that is not
             set, a ValueError will be raised.
     """
@@ -75,7 +75,7 @@ class FixieClient:
         self._api_key = api_key or os.getenv("FIXIE_API_KEY")
         if not self._api_key:
             raise ValueError(
-                "No Fixie API key provided. Set the FIXIE_API_KEY environment variable "
+                "No Llama Labs API key provided. Set the FIXIE_API_KEY environment variable "
                 "to your API key, which can be obtained from your profile page on "
                 "https://app.fixie.ai."
             )
@@ -87,21 +87,21 @@ class FixieClient:
 
     @property
     def gqlclient(self) -> Client:
-        """Return the underlying GraphQL client used by this FixieClient."""
+        """Return the underlying GraphQL client used by this LlamaLabsClient."""
         return self._gqlclient
 
     @property
     def url(self) -> str:
-        """Return the URL of the Fixie API server."""
+        """Return the URL of the Llama Labs API server."""
         assert self._api_url is not None
         return self._api_url
 
-    def clone(self) -> "FixieClient":
-        """Return a new FixieClient instance with the same configuration."""
-        return FixieClient(api_url=self._api_url, api_key=self._api_key)
+    def clone(self) -> "LlamaLabsClient":
+        """Return a new LlamaLabsClient instance with the same configuration."""
+        return LlamaLabsClient(api_url=self._api_url, api_key=self._api_key)
 
     def get_agents(self) -> Dict[str, Dict[str, str]]:
-        """Return metadata about all running Fixie Agents. The keys of the returned
+        """Return metadata about all running Llama Labs Agents. The keys of the returned
         dictionary are the Agent handles, and the values are dictionaries containing
         metadata about each Agent."""
 
