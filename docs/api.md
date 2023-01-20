@@ -1,5 +1,9 @@
 # API Reference
 
-::: fixie.client.FixieClient
+::: llamalabs.client.LlamaLabsClient
+    :docstring:
+    :members:
+
+::: llamalabs.session.Session
     :docstring:
     :members:

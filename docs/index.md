@@ -1,17 +1,17 @@
-# Fixie SDK
+# Llama Labs SDK
 
 ---
 
-Install the Fixie SDK using pip:
+Install the Llama Labs SDK using pip:
 
 ```shell
-$ pip install fixie-sdk
+$ pip install llamalabs
 ```
 
 Now, let's get started:
 
 ```pycon
->>> import fixie
->>> client = fixie.FixieClient()
+>>> import llamalabs
+>>> client = llamalabs.LlamaLabsClient()
 ```
 
