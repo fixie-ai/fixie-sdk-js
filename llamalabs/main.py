@@ -3,22 +3,22 @@
 import click
 import rich.console as rich_console
 
-import fixie
+import llamalabs
 
 textconsole = rich_console.Console()
 
 
 @click.group()
 @click.option(
-    "--fixie_api_url",
-    help="Fixie API URL. Defaults to the value of the FIXIE_API_URL env var, or `https://app.fixie.ai` if that is unset.",
+    "--llamalabs_api_url",
+    help="Llama Labs API URL. Defaults to the value of the LLAMALABS_API_URL env var, or `https://app.llamalabs.ai` if that is unset.",
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
-def cli(ctx, fixie_api_url, verbose):
+def cli(ctx, llamalabs_api_url, verbose):
     ctx.ensure_object(dict)
-    client = fixie.FixieClient(api_url=fixie_api_url)
-    ctx.obj["FIXIE_API_URL"] = fixie_api_url
+    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
+    ctx.obj["LLAMALABS_API_URL"] = llamalabs_api_url
     ctx.obj["CLIENT"] = client
     ctx.obj["VERBOSE"] = verbose
 
@@ -27,7 +27,7 @@ def cli(ctx, fixie_api_url, verbose):
 @click.pass_context
 def console(ctx):
     client = ctx.obj["CLIENT"]
-    c = fixie.Console(client)
+    c = llamalabs.Console(client)
     c.run()
 
 
@@ -69,8 +69,8 @@ def list_sessions(ctx):
 @click.pass_context
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
-    fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = fixie.FixieClient(api_url=fixie_api_url)
+    llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
+    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     messages = session.get_messages()
     textconsole.print(messages)
@@ -80,8 +80,8 @@ def show_session(ctx, session_id: str):
 @click.pass_context
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
-    fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = fixie.FixieClient(api_url=fixie_api_url)
+    llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
+    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     embeds = session.get_embeds()
     textconsole.print(embeds)

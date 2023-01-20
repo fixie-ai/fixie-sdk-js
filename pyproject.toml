@@ -1,19 +1,19 @@
 [tool.poetry]
-name = "fixie-sdk"
+name = "llamalabs"
 version = "0.1.0"
-description = "SDK for the Fixie platform. See: https://fixie.ai"
-authors = ["Fixie.ai Team <founders@fixie.ai>"]
+description = "SDK for the Llama Labs platform. See: https://llamalabs.ai"
+authors = ["LlamaLabs.ai Team <founders@fixie.ai>"]
 packages = [
-    { include = "fixie/" },
+    { include = "llamalabs/" },
 ]
 
 [build-system]
 requires = ["poetry>=1.2.1"]
 build-backend = "poetry.masonry.api"
 
-# Install the "fixie" commandline script.
+# Install the "llamalabs" commandline script.
 [tool.poetry.scripts]
-fixie = "fixie.main:cli"
+llamalabs = "llamalabs.main:cli"
 
 [tool.poetry.dependencies]
 click = "^8.1.3"
