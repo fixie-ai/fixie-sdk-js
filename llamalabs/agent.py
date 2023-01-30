@@ -83,9 +83,8 @@ class Agent:
 
     def _do_query(self, query: AgentQuery) -> StreamingResponse:
         # TODO(mdw): Add support for verifying query JWT.
-        responses_it = self.query(query)
-        bytes_it = (self._encode_response(response) for response in responses_it)
-        return StreamingResponse(bytes_it)
+        responses_it = self._encode_response(self.query(query))
+        return StreamingResponse(responses_it)
 
     def query(self, query: AgentQuery) -> Generator[str | AgentResponse, None, None]:
         """Agents should overide the query() method to handle queries from other Agents.
@@ -93,11 +92,19 @@ class Agent:
         `AgentResponse` objects."""
         raise NotImplemented
 
-    def _encode_response(self, response: str | AgentResponse):
-        if isinstance(response, str):
-            resp = AgentResponse(
-                message=response, response_type=AgentResponseType.RESPONSE
-            )
-        else:
-            resp = response
-        return resp.json().encode("utf-8") + b"\r\n"
+    def _encode_response(self, responses: Generator[str | AgentResponse, None, None]):
+        last_response = False
+        for response in responses:
+            if isinstance(response, str):
+                resp = AgentResponse(
+                    message=response, response_type=AgentResponseType.RESPONSE
+                )
+            else:
+                resp = response
+            if resp.response_type == AgentResponseType.RESPONSE:
+                if last_response:
+                    raise ValueError(
+                        "Cannot send response type 'response' more than once"
+                    )
+                last_response = True
+            yield resp.json().encode("utf-8") + b"\r\n"
