@@ -1,6 +1,7 @@
 from llamalabs.agent import Agent
 from llamalabs.agent import AgentQuery
 from llamalabs.agent import AgentResponse
+from llamalabs.agent import AgentResponseType
 from llamalabs.client import LlamaLabsClient
 from llamalabs.client import agents
 from llamalabs.client import client
@@ -20,4 +21,5 @@ __all__ = [
     "Agent",
     "AgentQuery",
     "AgentResponse",
+    "AgentResponseType",
 ]

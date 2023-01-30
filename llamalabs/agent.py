@@ -54,6 +54,9 @@ class AgentQuery(BaseModel):
 
 
 class AgentResponseType(enum.Enum):
+    """Represents the type of the response. Agents can return responses that represent
+    final responses to a query (RESPONSE), or intermediate processing steps."""
+
     RESPONSE = "response"
     STATUS_GOT_QUERY = "status_got_query"
     STATUS_RESPONSE_READY = "status_response_ready"
@@ -61,9 +64,13 @@ class AgentResponseType(enum.Enum):
 
 
 class AgentResponse(BaseModel):
+    """A response message from an Agent."""
+
+    # The text of the response message.
     message: str
 
-    response_type: Optional[str]
+    # The type of the response message.
+    response_type: Optional[AgentResponseType] = AgentResponseType.RESPONSE
 
     # The responding agent id, if different than the one that received the query.
     from_agent: Optional[str] = None
@@ -77,10 +84,20 @@ class Agent:
     def _do_query(self, query: AgentQuery) -> StreamingResponse:
         # TODO(mdw): Add support for verifying query JWT.
         responses_it = self.query(query)
-        bytes_it = (
-            response.json().encode("utf-8") + b"\r\n" for response in responses_it
-        )
+        bytes_it = (self._encode_response(response) for response in responses_it)
         return StreamingResponse(bytes_it)
 
-    def query(self, query: AgentQuery) -> Generator[AgentResponse, None, None]:
+    def query(self, query: AgentQuery) -> Generator[str | AgentResponse, None, None]:
+        """Agents should overide the query() method to handle queries from other Agents.
+        This method should `yield` either strings (for simple text-based responses), or
+        `AgentResponse` objects."""
         raise NotImplemented
+
+    def _encode_response(self, response: str | AgentResponse):
+        if isinstance(response, str):
+            resp = AgentResponse(
+                message=response, response_type=AgentResponseType.RESPONSE
+            )
+        else:
+            resp = response
+        return resp.json().encode("utf-8") + b"\r\n"
