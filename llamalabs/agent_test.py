@@ -1,7 +1,6 @@
 import json
-import logging
-import pytest
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
