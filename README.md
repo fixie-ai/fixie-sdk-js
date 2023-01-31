@@ -4,7 +4,7 @@ This is the official Python SDK for Llama Labs.
 
 ## What is Llama Labs?
 
-Llama Labs is a platform for building applications using large language models. In Fixie, an application
+Llama Labs is a platform for building applications using large language models. In Llama Labs, an application
 consists of a set of natural-language **queries** that are handled by one or more **agents**.
 Each agent consists of a large language model coupled with some custom code to process or generate
 data, or call out to external systems, such as databases or APIs. By composing agents together,
@@ -27,7 +27,3 @@ to your API key, and then create a client as follows:
 from llamalabs import LlamaLabsClient
 client = LlamaLabsClient()
 ```
-
-
-
-
