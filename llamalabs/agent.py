@@ -77,9 +77,9 @@ class AgentResponse(BaseModel):
 
 
 class Agent:
-    def __init__(self):
+    def __init__(self, route: str = "/"):
         self.router = APIRouter()
-        self.router.add_api_route("/", self._do_query, methods=["POST"])
+        self.router.add_api_route(route, self._do_query, methods=["POST"])
 
     def _do_query(self, query: AgentQuery) -> StreamingResponse:
         # TODO(mdw): Add support for verifying query JWT.
@@ -104,7 +104,8 @@ class Agent:
             if resp.response_type == AgentResponseType.RESPONSE:
                 if last_response:
                     raise ValueError(
-                        "Cannot send response type 'response' more than once"
+                        "Agent.query() cannot yield more than one AgentResponse message "
+                        "with type `response`."
                     )
                 last_response = True
             yield resp.json().encode("utf-8") + b"\r\n"
