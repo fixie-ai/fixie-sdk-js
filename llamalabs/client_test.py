@@ -1,7 +1,7 @@
 import pytest
 import requests_mock
 
-from llamalabs.client import LlamaLabsClient
+from llamalabs import LlamaLabsClient
 
 
 @pytest.fixture
