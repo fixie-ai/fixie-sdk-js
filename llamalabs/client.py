@@ -71,7 +71,9 @@ class LlamaLabsClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
-        self._api_url = api_url or os.getenv("LLAMALABS_API_URL", "https://app.fixie.ai ")
+        self._api_url = api_url or os.getenv(
+            "LLAMALABS_API_URL", "https://app.fixie.ai "
+        )
         self._api_key = api_key or os.getenv("LLAMALABS_API_KEY")
         if not self._api_key:
             raise ValueError(
