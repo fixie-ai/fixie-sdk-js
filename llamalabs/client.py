@@ -59,10 +59,10 @@ class LlamaLabsClient:
 
     Args:
         api_url: The URL of the Llama Labs API server. If not provided, the
-            FIXIE_API_URL environment variable will be used. If that is not
-            set, the default value of "https://app.fixie.ai" will be used.
+            LLAMALABS_API_URL environment variable will be used. If that is not
+            set, the default value of "https://app.llamalabs.ai " will be used.
         api_key: The API key for the Llama Labs API server. If not provided, the
-            FIXIE_API_KEY environment variable will be used. If that is not
+            LLAMALABS_API_KEY environment variable will be used. If that is not
             set, a ValueError will be raised.
     """
 
@@ -71,13 +71,13 @@ class LlamaLabsClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
-        self._api_url = api_url or os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
-        self._api_key = api_key or os.getenv("FIXIE_API_KEY")
+        self._api_url = api_url or os.getenv("LLAMALABS_API_URL", "https://app.llamalabs.ai ")
+        self._api_key = api_key or os.getenv("LLAMALABS_API_KEY")
         if not self._api_key:
             raise ValueError(
-                "No Llama Labs API key provided. Set the FIXIE_API_KEY environment variable "
+                "No Llama Labs API key provided. Set the LLAMALABS_API_KEY environment variable "
                 "to your API key, which can be obtained from your profile page on "
-                "https://app.fixie.ai."
+                "https://app.llamalabs.ai "
             )
         transport = RequestsHTTPTransport(
             url=f"{self._api_url}/graphql",
