@@ -1,3 +1,4 @@
+import fastapi
 from fastapi import testclient
 
 from llamalabs import agents
@@ -26,9 +27,10 @@ class SimpleAgent(agents.CodeShotAgent):
 
 def test_simple_agent_handshake():
     agent = SimpleAgent()
-    fast_api = agent.fast_api("/prefix/path")
+    fast_api = fastapi.FastAPI()
+    fast_api.include_router(agent.api_router())
     client = testclient.TestClient(fast_api)
-    response = client.get("/prefix/path")
+    response = client.get("/")
     assert response.status_code == 200
     json = response.json()
     assert json["handle"] == agent.handle
@@ -38,17 +40,18 @@ def test_simple_agent_handshake():
 
 def test_simple_agent_func_calls():
     agent = SimpleAgent()
-    fast_api = agent.fast_api("/prefix/path")
+    fast_api = fastapi.FastAPI()
+    fast_api.include_router(agent.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
 
     # Test Func[simple1]
-    response = client.post("/prefix/path/simple1", json={"message": {"text": "Howdy"}})
+    response = client.post("/simple1", json={"message": {"text": "Howdy"}})
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
 
     # Test Func[simple2]
-    response = client.post("/prefix/path/simple2", json={"message": {"text": "Howdy"}})
+    response = client.post("/simple2", json={"message": {"text": "Howdy"}})
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 2", "embeds": {}}}
@@ -60,9 +63,9 @@ def test_simple_agent_func_calls():
     assert response.status_code == 404
 
     # Test Func[simple1] with bad arguments returns 422: Unprocessable Entity
-    response = client.post("/prefix/path/simple1", json={"message": {"ttt": "Howdy"}})
+    response = client.post("/simple1", json={"message": {"ttt": "Howdy"}})
     assert response.status_code == 422
 
     # Test Func[__init__] 403: Forbidden
-    response = client.post("/prefix/path/__init__", json={"message": {"text": "Howdy"}})
+    response = client.post("/__init__", json={"message": {"text": "Howdy"}})
     assert response.status_code == 403

@@ -87,22 +87,16 @@ class CodeShotAgent(ABC):
             host: The address to start listening at.
             port: The port number to start listening at.
         """
-        uvicorn.run(self.fast_api(), host=host, port=port)
+        fast_api = fastapi.FastAPI()
+        fast_api.include_router(self.api_router())
+        uvicorn.run(fast_api, host=host, port=port)
 
-    def fast_api(self, prefix: str = "") -> fastapi.FastAPI:
-        """Returns a FastAPI object that serves the agents.
-
-        Args:
-            prefix: The sub-path to start listening at for messages from Llama Labs
-                ecosystem.
-        """
-        router = fastapi.APIRouter(prefix=prefix)
+    def api_router(self) -> fastapi.APIRouter:
+        """Returns a fastapi.APIRouter object that serves the agent."""
+        router = fastapi.APIRouter()
         router.add_api_route("/", self._handshake, methods=["GET"])
         router.add_api_route("/{func_name}", self._serve_func, methods=["POST"])
-
-        fast_api = fastapi.FastAPI()
-        fast_api.include_router(router)
-        return fast_api
+        return router
 
     def _handshake(self) -> AgentMetadata:
         return self._agent_metadata
