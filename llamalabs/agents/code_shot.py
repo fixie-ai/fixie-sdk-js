@@ -121,7 +121,9 @@ class CodeShotAgent(ABC):
             )
 
 
-def _wrap_with_agent_response(value: Union[str, Message, AgentResponse]) -> AgentResponse:
+def _wrap_with_agent_response(
+    value: Union[str, Message, AgentResponse]
+) -> AgentResponse:
     if isinstance(value, str):
         return AgentResponse(Message(value))
     elif isinstance(value, Message):
