@@ -16,7 +16,10 @@ from llamalabs.agents.api import Message
 
 @pydantic_dataclasses.dataclass
 class AgentMetadata:
-    """A CodeShot agent metadata that will get sent to the Llama Labs upon handshake."""
+    """Metadata for a Llama Labs CodeShot Agent.
+
+    This will get sent to the Llama Labs upon handshake.
+    """
 
     handle: str
     base_prompt: str
@@ -41,22 +44,22 @@ class CodeShotAgent(ABC):
             ]
 
     Your agent may define as many or little python functions that will be accessible by
-    the fewshots. Each python function should have the following sytax:
+    the fewshots. Each python function should have the following syntax:
 
-        def func(self, query: AgentQuery) -> ReturnType:
+        def my_func(self, query: AgentQuery) -> ReturnType:
             ...
 
         , where ReturnType is one of `str`, `Message` or `AgentResponse`.
 
     These python functions can be used in the fewshot like:
-        "Ask Func[func]: The query to send to the function"
-        "Func[func] says: The output of the function back"
+        "Ask Func[my_func]: The query to send to the function"
+        "Func[my_func] says: The output of the function back"
 
     """
 
     def __init__(self):
         # Call all abstract fields and lock the values in.
-        self._agent_metadata = AgentMetadata(
+        self._agent_metadata: AgentMetadata = AgentMetadata(
             handle=self.handle,
             base_prompt=self.BASE_PROMPT,
             fewshots=self.FEWSHOTS,
@@ -101,7 +104,7 @@ class CodeShotAgent(ABC):
         fast_api.include_router(router)
         return fast_api
 
-    def _handshake(self) -> "AgentMetadata":
+    def _handshake(self) -> AgentMetadata:
         return self._agent_metadata
 
     def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:

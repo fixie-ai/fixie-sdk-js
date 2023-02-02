@@ -50,6 +50,7 @@ addopts = [
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
+plugins = [ "pydantic.mypy" ]
 
 [tool.isort]
 profile = "black"
