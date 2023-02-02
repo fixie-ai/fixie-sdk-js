@@ -9,7 +9,7 @@ from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
-from llamalabs.session import Session
+from llamalabs.client.session import Session
 
 _CLIENT: Optional["LlamaLabsClient"] = None
 _SESSION: Optional[Session] = None

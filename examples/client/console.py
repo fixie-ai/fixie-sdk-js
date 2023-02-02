@@ -1,23 +1,70 @@
 #!/usr/bin/env python3
 
 import click
+import prompt_toolkit
+import requests
 import rich.console as rich_console
 
-import llamalabs
+import llamalabs.client
+
+HISTORY_FILE = "history.txt"
 
 textconsole = rich_console.Console()
+
+
+class Console:
+    """A simple console interface for Llama Labs."""
+
+    def __init__(
+        self,
+        client: llamalabs.client.LlamaLabsClient,
+        history_file: str = HISTORY_FILE,
+    ):
+        self._client = client
+        self._session = client.create_session()
+        self._history_file = history_file
+        self._response_index = 0
+
+    def run(self) -> None:
+        """Run the console application."""
+
+        textconsole.print("[blue]Welcome to Llama Labs!")
+        textconsole.print(f"Connected to: {self._session.session_url}")
+        while True:
+            in_text = prompt_toolkit.prompt(
+                "🦙❯ ",
+                history=prompt_toolkit.history.FileHistory(self._history_file),
+                auto_suggest=prompt_toolkit.auto_suggest.AutoSuggestFromHistory(),
+            )
+            self._query(in_text)
+
+    def _query(self, in_text: str) -> None:
+        with textconsole.status("Working...", spinner="bouncingBall"):
+            try:
+                self._response_index += 1
+                for message in self._session.run(in_text):
+                    if message["type"] != "response":
+                        textconsole.print(
+                            f"   [dim]@{message['sentBy']}: {message['text']}[/]"
+                        )
+                    else:
+                        textconsole.print(f"{self._response_index}❯ {message['text']}")
+            except requests.exceptions.HTTPError as e:
+                textconsole.print(f"🚨 {e}")
+                return
 
 
 @click.group()
 @click.option(
     "--llamalabs_api_url",
-    help="Llama Labs API URL. Defaults to the value of the LLAMALABS_API_URL env var, or `https://app.llamalabs.ai` if that is unset.",
+    help="Llama Labs API URL. Defaults to the value of the LLAMALABS_API_URL env var, "
+    "or `https://app.llamalabs.ai` if that is unset.",
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
 def cli(ctx, llamalabs_api_url, verbose):
     ctx.ensure_object(dict)
-    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
     ctx.obj["LLAMALABS_API_URL"] = llamalabs_api_url
     ctx.obj["CLIENT"] = client
     ctx.obj["VERBOSE"] = verbose
@@ -27,7 +74,7 @@ def cli(ctx, llamalabs_api_url, verbose):
 @click.pass_context
 def console(ctx):
     client = ctx.obj["CLIENT"]
-    c = llamalabs.Console(client)
+    c = Console(client)
     c.run()
 
 
@@ -70,7 +117,7 @@ def list_sessions(ctx):
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
     llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     messages = session.get_messages()
     textconsole.print(messages)
@@ -81,7 +128,7 @@ def show_session(ctx, session_id: str):
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
     llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = llamalabs.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     embeds = session.get_embeds()
     textconsole.print(embeds)
