@@ -22,6 +22,10 @@ class AgentMetadata:
     base_prompt: str
     fewshots: List[str]
 
+    def __post_init__(self):
+        utils.strip_prompt_lines(self)
+        utils.validate_codeshot_agent(self)
+
 
 class CodeShotAgent(ABC):
     """Abstract CodeShot agent.
@@ -51,8 +55,12 @@ class CodeShotAgent(ABC):
     """
 
     def __init__(self):
-        utils.strip_fewshot_lines(self)
-        utils.validate_codeshot_agent(self)
+        # Call all abstract fields and lock the values in.
+        self._agent_metadata = AgentMetadata(
+            handle=self.handle,
+            base_prompt=self.BASE_PROMPT,
+            fewshots=self.FEWSHOTS,
+        )
 
     @property
     @abstractmethod
@@ -94,11 +102,7 @@ class CodeShotAgent(ABC):
         return fast_api
 
     def _handshake(self) -> "AgentMetadata":
-        return AgentMetadata(
-            handle=self.handle,
-            base_prompt=self.BASE_PROMPT,
-            fewshots=self.FEWSHOTS,
-        )
+        return self._agent_metadata
 
     def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
         try:

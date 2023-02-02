@@ -12,15 +12,17 @@ else:
     code_shot = mock.MagicMock()
 
 
-def strip_fewshot_lines(agent: code_shot.CodeShotAgent):
-    """Strips all fewshot lines."""
-    for i, fewshot in enumerate(agent.FEWSHOTS):
-        agent.FEWSHOTS[i] = _strip_fewshot(fewshot)
+def strip_prompt_lines(agent_metadata: code_shot.AgentMetadata):
+    """Strips all prompt lines."""
+    agent_metadata.base_prompt = _strip_all_lines(agent_metadata.base_prompt)
+    for i, fewshot in enumerate(agent_metadata.fewshots):
+        agent_metadata.fewshots[i] = _strip_all_lines(fewshot)
 
 
-def validate_codeshot_agent(agent: code_shot.CodeShotAgent):
+def validate_codeshot_agent(agent_metadata: code_shot.AgentMetadata):
     """A client-side validation of fewshots and agent."""
-    for fewshot in agent.FEWSHOTS:
+    _validate_base_prompt(agent_metadata.base_prompt)
+    for fewshot in agent_metadata.fewshots:
         _validate_few_shot_prompt(fewshot)
 
 
@@ -69,9 +71,28 @@ def get_pyfunc(
     return func
 
 
-def _strip_fewshot(fewshot: str) -> str:
+def _strip_all_lines(fewshot: str) -> str:
     fewshot = fewshot.strip()
     return "\n".join(line.strip() for line in fewshot.splitlines())
+
+
+def _validate_base_prompt(base_prompt: str):
+    if base_prompt.endswith("\n") or base_prompt.startswith("\n"):
+        raise ValueError(
+            "base_prompt should not start or end in newlines. "
+            f"base_prompt={base_prompt!r}."
+        )
+    whitespaces = (" ", "\t", "\r")
+    prompt_lines = base_prompt.split("\n")
+    bad_lines = [
+        line
+        for line in prompt_lines
+        if line.startswith(whitespaces) or line.endswith(whitespaces)
+    ]
+    if bad_lines:
+        raise ValueError(
+            f"Some lines in the base prompt start or end in whitespaces: {bad_lines!r}."
+        )
 
 
 class FewshotLinePattern(enum.Enum):
