@@ -16,7 +16,10 @@ from llamalabs.agents.api import Message
 
 @pydantic_dataclasses.dataclass
 class AgentMetadata:
-    """A CodeShot agent metadata that will get sent to the Llama Labs upon handshake."""
+    """Metadata for a Llama Labs CodeShot Agent.
+
+    This will get sent to the Llama Labs upon handshake.
+    """
 
     handle: str
     base_prompt: str
@@ -41,22 +44,22 @@ class CodeShotAgent(ABC):
             ]
 
     Your agent may define as many or little python functions that will be accessible by
-    the fewshots. Each python function should have the following sytax:
+    the fewshots. Each python function should have the following syntax:
 
-        def func(self, query: AgentQuery) -> ReturnType:
+        def my_func(self, query: AgentQuery) -> ReturnType:
             ...
 
         , where ReturnType is one of `str`, `Message` or `AgentResponse`.
 
     These python functions can be used in the fewshot like:
-        "Ask Func[func]: The query to send to the function"
-        "Func[func] says: The output of the function back"
+        "Ask Func[my_func]: The query to send to the function"
+        "Func[my_func] says: The output of the function back"
 
     """
 
     def __init__(self):
         # Call all abstract fields and lock the values in.
-        self._agent_metadata = AgentMetadata(
+        self._agent_metadata: AgentMetadata = AgentMetadata(
             handle=self.handle,
             base_prompt=self.BASE_PROMPT,
             fewshots=self.FEWSHOTS,
@@ -84,24 +87,18 @@ class CodeShotAgent(ABC):
             host: The address to start listening at.
             port: The port number to start listening at.
         """
-        uvicorn.run(self.fast_api(), host=host, port=port)
+        fast_api = fastapi.FastAPI()
+        fast_api.include_router(self.api_router())
+        uvicorn.run(fast_api, host=host, port=port)
 
-    def fast_api(self, prefix: str = "") -> fastapi.FastAPI:
-        """Returns a FastAPI object that serves the agents.
-
-        Args:
-            prefix: The sub-path to start listening at for messages from Llama Labs
-                ecosystem.
-        """
-        router = fastapi.APIRouter(prefix=prefix)
+    def api_router(self) -> fastapi.APIRouter:
+        """Returns a fastapi.APIRouter object that serves the agent."""
+        router = fastapi.APIRouter()
         router.add_api_route("/", self._handshake, methods=["GET"])
         router.add_api_route("/{func_name}", self._serve_func, methods=["POST"])
+        return router
 
-        fast_api = fastapi.FastAPI()
-        fast_api.include_router(router)
-        return fast_api
-
-    def _handshake(self) -> "AgentMetadata":
+    def _handshake(self) -> AgentMetadata:
         return self._agent_metadata
 
     def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
@@ -117,14 +114,14 @@ class CodeShotAgent(ABC):
             )
         output = pyfunc(query)
         try:
-            return _wrap_by_agent_response(output)
+            return _wrap_with_agent_response(output)
         except TypeError:
             raise TypeError(
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
 
-def _wrap_by_agent_response(value: Union[str, Message, AgentResponse]) -> AgentResponse:
+def _wrap_with_agent_response(value: Union[str, Message, AgentResponse]) -> AgentResponse:
     if isinstance(value, str):
         return AgentResponse(Message(value))
     elif isinstance(value, Message):

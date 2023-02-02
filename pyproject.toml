@@ -13,7 +13,7 @@ build-backend = "poetry.masonry.api"
 
 # Install the "llamalabs" commandline script.
 [tool.poetry.scripts]
-llamalabs = "llamalabs.main:cli"
+llamalabs = "llamalabs.client.console:cli"
 
 [tool.poetry.dependencies]
 click = "^8.1.3"
@@ -50,6 +50,7 @@ addopts = [
 python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
+plugins = [ "pydantic.mypy" ]
 
 [tool.isort]
 profile = "black"
