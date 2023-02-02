@@ -50,6 +50,10 @@ class CodeShotAgent(ABC):
 
     """
 
+    def __init__(self):
+        utils.strip_fewshot_lines(self)
+        utils.validate_codeshot_agent(self)
+
     @property
     @abstractmethod
     def handle(self) -> str:

@@ -12,7 +12,14 @@ else:
     code_shot = mock.MagicMock()
 
 
+def strip_fewshot_lines(agent: code_shot.CodeShotAgent):
+    """Strips all fewshot lines."""
+    for i, fewshot in enumerate(agent.FEWSHOTS):
+        agent.FEWSHOTS[i] = _strip_fewshot(fewshot)
+
+
 def validate_codeshot_agent(agent: code_shot.CodeShotAgent):
+    """A client-side validation of fewshots and agent."""
     for fewshot in agent.FEWSHOTS:
         _validate_few_shot_prompt(fewshot)
 
@@ -60,6 +67,11 @@ def get_pyfunc(
             f"{list(params.values())} and returns {return_type}."
         )
     return func
+
+
+def _strip_fewshot(fewshot: str) -> str:
+    fewshot = fewshot.strip()
+    return "\n".join(line.strip() for line in fewshot.splitlines())
 
 
 class FewshotLinePattern(enum.Enum):
