@@ -114,14 +114,14 @@ class CodeShotAgent(ABC):
             )
         output = pyfunc(query)
         try:
-            return _wrap_by_agent_response(output)
+            return _wrap_with_agent_response(output)
         except TypeError:
             raise TypeError(
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
 
-def _wrap_by_agent_response(value: Union[str, Message, AgentResponse]) -> AgentResponse:
+def _wrap_with_agent_response(value: Union[str, Message, AgentResponse]) -> AgentResponse:
     if isinstance(value, str):
         return AgentResponse(Message(value))
     elif isinstance(value, Message):
