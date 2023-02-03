@@ -15,14 +15,14 @@ else:
 def strip_prompt_lines(agent_metadata: code_shot.AgentMetadata):
     """Strips all prompt lines."""
     agent_metadata.base_prompt = _strip_all_lines(agent_metadata.base_prompt)
-    for i, fewshot in enumerate(agent_metadata.fewshots):
-        agent_metadata.fewshots[i] = _strip_all_lines(fewshot)
+    for i, fewshot in enumerate(agent_metadata.few_shots):
+        agent_metadata.few_shots[i] = _strip_all_lines(fewshot)
 
 
-def validate_codeshot_agent(agent_metadata: code_shot.AgentMetadata):
-    """A client-side validation of fewshots and agent."""
+def validate_code_shot_agent(agent_metadata: code_shot.AgentMetadata):
+    """A client-side validation of few_shots and agent."""
     _validate_base_prompt(agent_metadata.base_prompt)
-    for fewshot in agent_metadata.fewshots:
+    for fewshot in agent_metadata.few_shots:
         _validate_few_shot_prompt(fewshot)
 
 

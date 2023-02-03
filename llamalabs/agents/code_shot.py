@@ -21,13 +21,13 @@ class AgentMetadata:
     This will get sent to the Llama Labs upon handshake.
     """
 
-    handle: str
+    agent_id: str
     base_prompt: str
-    fewshots: List[str]
+    few_shots: List[str]
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
-        utils.validate_codeshot_agent(self)
+        utils.validate_code_shot_agent(self)
 
 
 class CodeShotAgent(ABC):
@@ -39,12 +39,12 @@ class CodeShotAgent(ABC):
             handle = "llamalabs-agent-id"
             BASE_PROMPT = "A summary of what this agent does; how it does it; and its
                            personality"
-            FEWSHOTS = [
-                # List of fewshots go here.
+            FEW_SHOTS = [
+                # List of few_shots go here.
             ]
 
     Your agent may define as many or little python functions that will be accessible by
-    the fewshots. Each python function should have the following syntax:
+    the few_shots. Each python function should have the following syntax:
 
         def my_func(self, query: AgentQuery) -> ReturnType:
             ...
@@ -60,14 +60,14 @@ class CodeShotAgent(ABC):
     def __init__(self):
         # Call all abstract fields and lock the values in.
         self._agent_metadata: AgentMetadata = AgentMetadata(
-            handle=self.handle,
+            agent_id=self.agent_id,
             base_prompt=self.BASE_PROMPT,
-            fewshots=self.FEWSHOTS,
+            few_shots=self.FEW_SHOTS,
         )
 
     @property
     @abstractmethod
-    def handle(self) -> str:
+    def agent_id(self) -> str:
         raise NotImplementedError()
 
     @property
@@ -77,7 +77,7 @@ class CodeShotAgent(ABC):
 
     @property
     @abstractmethod
-    def FEWSHOTS(self) -> List[str]:
+    def FEW_SHOTS(self) -> List[str]:
         raise NotImplementedError()
 
     def serve(self, host: str = "0.0.0.0", port: int = 8181):
