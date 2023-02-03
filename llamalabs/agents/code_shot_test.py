@@ -5,9 +5,9 @@ from llamalabs import agents
 
 
 class SimpleAgent(agents.CodeShotAgent):
-    handle = "simple_agent"
+    agent_id = "simple_agent"
     BASE_PROMPT = "I am a simple dummy agent."
-    FEWSHOTS = [
+    FEW_SHOTS = [
         """Q: Sample query 1
            Ask Func[simple1]: Simple argument
            Func[simple1] says: Simple response
@@ -33,9 +33,9 @@ def test_simple_agent_handshake():
     response = client.get("/")
     assert response.status_code == 200
     json = response.json()
-    assert json["handle"] == agent.handle
+    assert json["agent_id"] == agent.agent_id
     assert json["base_prompt"] == agent.BASE_PROMPT
-    assert json["fewshots"] == agent.FEWSHOTS
+    assert json["few_shots"] == agent.FEW_SHOTS
 
 
 def test_simple_agent_func_calls():

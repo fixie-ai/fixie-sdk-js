@@ -36,12 +36,6 @@ class AgentQuery:
     # The contents of the query.
     message: Message
 
-    # An access token associated with the user for whom this query was created.
-    # Agents wishing to make queries to other agents, or to other Llama Labs services,
-    # should carry this token in the query so that it can be tied back to the original
-    # user.
-    access_token: Optional[str] = None
-
     # The ID of the (human) user for whom this query was made. Agents should treat
     # this as an opaque string and not make any assumptions about its format, other
     # than that it uniquely identifies an end user.
