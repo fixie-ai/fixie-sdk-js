@@ -35,7 +35,7 @@ def get_pyfunc(
 
     func = getattr(agent, func_name)
 
-    # Validate that func has a proper api.api.AgentQuery -> api.api.AgentResponse signature.
+    # Validate that func has a proper api.AgentQuery -> api.AgentResponse signature.
     if not inspect.ismethod(func):
         raise TypeError(
             f"Attribute {func_name!r} is not a method, but it's of type {type(func)!r}."
@@ -71,9 +71,9 @@ def get_pyfunc(
     return func
 
 
-def _strip_all_lines(fewshot: str) -> str:
-    fewshot = fewshot.strip()
-    return "\n".join(line.strip() for line in fewshot.splitlines())
+def _strip_all_lines(prompt: str) -> str:
+    prompt = prompt.strip()
+    return "\n".join(line.strip() for line in prompt.splitlines())
 
 
 def _validate_base_prompt(base_prompt: str):
