@@ -12,7 +12,7 @@ install_requires = [
     "gql[all]>=3.4.0,<4.0.0",
     "pillow>=9.0.1,<10.0.0",
     "prompt-toolkit>=3.0.31,<4.0.0",
-    "pydantic>=1.4.0,<2.0.0",
+    "pydantic",
     "requests>=2.28.1,<3.0.0",
     "rich>=12.6.0,<13.0.0",
 ]
