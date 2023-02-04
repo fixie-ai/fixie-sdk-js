@@ -135,4 +135,4 @@ def embeds(ctx, session_id: str):
 
 
 if __name__ == "__main__":
-    cli()
+    llamalabs()
