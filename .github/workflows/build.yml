@@ -35,12 +35,3 @@ jobs:
 
     - name: Publish documentation
         just publish-docs
-
-    - name: Test main
-      env:
-        GOOGLE_CLOUD_PROJECT: ${{secrets.GCP_PROJECT}}
-        GOOGLE_APPLICATION_CREDENTIALS: service_account.json
-        SERVICE_ACCOUNT: ${{secrets.GCP_SERVICE_ACCOUNT}}
-      run: |
-        echo '${{secrets.GCP_SA_KEY}}' > service_account.json
-        just publish
