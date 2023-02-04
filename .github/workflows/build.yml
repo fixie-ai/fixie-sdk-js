@@ -1,0 +1,46 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+        submodules: true
+
+    - uses: extractions/setup-just@v1
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Poetry Action
+      uses: snok/install-poetry@v1.3.1
+
+    - name: Install dependencies
+      run: |
+        just install
+
+    - name: Publish documentation
+        just publish-docs
+
+    - name: Test main
+      env:
+        GOOGLE_CLOUD_PROJECT: ${{secrets.GCP_PROJECT}}
+        GOOGLE_APPLICATION_CREDENTIALS: service_account.json
+        SERVICE_ACCOUNT: ${{secrets.GCP_SERVICE_ACCOUNT}}
+      run: |
+        echo '${{secrets.GCP_SA_KEY}}' > service_account.json
+        just publish

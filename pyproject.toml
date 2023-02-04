@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llamalabs"
-version = "0.1.0"
+version = "0.1.1"
 description = "SDK for the Llama Labs platform. See: https://llamalabs.ai"
 authors = ["LlamaLabs.ai Team <info@llamalabs.ai>"]
 packages = [
