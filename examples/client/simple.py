@@ -4,26 +4,26 @@
 
 import requests
 
-import llamalabs.client
+import llamalabs.client.client as client
 
 # Get the list of Agents registered with the Llama Labs service.
-agents = llamalabs.client.agents()
+agents = client.agents()
 for agent_id, agent in agents.items():
     print(f"{agent_id}: {agent['name']}")
 
 # Send it some queries.
-result = llamalabs.client.query("How many issues are assigned to mdwelsh?")
+result = client.query("How many issues are assigned to mdwelsh?")
 print(result)
 
-result = llamalabs.client.query("Show them to me")
+result = client.query("Show them to me")
 print(result)
 
 # Generate an image.
-result = llamalabs.client.query("Generate an image of a cute red panda")
+result = client.query("Generate an image of a cute red panda")
 print(result)
 
 # Fetch the image and save it to a file.
-embeds = llamalabs.client.embeds()
+embeds = client.embeds()
 embed_url = embeds[0]["embed"]["url"]
 r = requests.get(embed_url)
 r.raise_for_status()

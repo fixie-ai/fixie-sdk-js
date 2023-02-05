@@ -57,7 +57,7 @@ class CodeShotAgent(ABC):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Call all abstract fields and lock the values in.
         self._agent_metadata: AgentMetadata = AgentMetadata(
             agent_id=self.agent_id,
