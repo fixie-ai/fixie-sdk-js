@@ -4,9 +4,9 @@ from typing import Dict, List, Union
 
 import requests
 
+from llamalabs import defaults
 from llamalabs.agents import api
 
-USER_STORAGE_URL = "https://app.llamalabs.ai/api/userstorage"
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
     UserStoragePrimitives,
@@ -34,7 +34,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         self,
         query: api.AgentQuery,
         agent_id: str,
-        userstorage_url: str = USER_STORAGE_URL,
+        userstorage_url: str = defaults.LLAMALABS_USER_STORAGE_URL,
     ):
         # TODO(hessam): Remove agent_id from args, once access_token includes agent_id
         #  as well.

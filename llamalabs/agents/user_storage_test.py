@@ -3,6 +3,7 @@ import re
 
 import pytest
 
+from llamalabs import defaults
 from llamalabs.agents import api
 from llamalabs.agents import user_storage
 
@@ -58,7 +59,7 @@ class MockUserStorageService:
 def mock_user_storage_urls(requests_mock):
     mock_storage_service = MockUserStorageService()
     user_storage_path_re = re.compile(
-        "^" + re.escape(user_storage.USER_STORAGE_URL) + "/"
+        "^" + re.escape(defaults.LLAMALABS_USER_STORAGE_URL) + "/"
     )
     requests_mock.post(user_storage_path_re, json=mock_storage_service.post)
     requests_mock.get(user_storage_path_re, json=mock_storage_service.get)
