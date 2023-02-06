@@ -19,7 +19,7 @@ class MockUserStorageService:
         assert request.headers["Authorization"] == f"Bearer {FAKE_ACCESS_TOKEN}"
         prefix = f"/api/userstorage/{FAKE_AGENT_ID}"
         assert request.path.startswith(prefix)
-        key = request.path[len(prefix) + 1:]
+        key = request.path[len(prefix) + 1 :]
         return key
 
     def post(self, request, context):
@@ -72,7 +72,7 @@ VALUES_TO_TEST = [
     b"binary",
     "simple_str",
     {"key": "value"},
-    {"key1": {"key2": ["value1", True, b"binary2", None, 4.3]}}
+    {"key1": {"key2": ["value1", True, b"binary2", None, 4.3]}},
 ]
 
 
