@@ -1,3 +1,4 @@
+import doctest
 import re
 
 import pytest
@@ -95,3 +96,7 @@ def test_user_storage(mock_user_storage_urls, test_value):
     assert len(storage) == 0
     with pytest.raises(KeyError):
         _ = storage["key"]
+
+
+def test_doctest(mock_user_storage_urls):
+    doctest.testmod(user_storage, raise_on_error=True)

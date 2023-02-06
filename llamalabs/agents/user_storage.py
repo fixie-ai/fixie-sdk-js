@@ -16,7 +16,19 @@ UserStorageType = Union[
 
 
 class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
-    """UserStorage provides a dict-like interface to a user-specific storage."""
+    """UserStorage provides a dict-like interface to a user-specific storage.
+
+    Usage:
+    >>> query = api.AgentQuery(
+    ...   api.Message("incoming query"),
+    ...   access_token="fake-access-token"
+    ... )
+    >>> storage = UserStorage(query, "fake-agent")
+    >>> storage["key"] = "value"
+    >>> storage["complex-key"] = {"key1": {"key2": [12, False, None, b"binary"]}}
+    >>> assert len(storage) == 2
+    >>> assert storage["complex-key"]["key1"]["key2"][-1] == b"binary"
+    """
 
     def __init__(
         self,
