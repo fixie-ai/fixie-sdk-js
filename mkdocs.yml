@@ -5,7 +5,7 @@ site_url: https://llamalabs.ai/
 theme:
     logo: assets/llamalabs-icon.png
     favicon: assets/llamalabs-icon.png
-    name: 'material'
+    name: 'cinder'
     palette:
       - scheme: 'default'
         media: '(prefers-color-scheme: light)'
