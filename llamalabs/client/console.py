@@ -87,7 +87,7 @@ def agents():
 @click.pass_context
 def list_agents(ctx):
     client = ctx.obj["CLIENT"]
-    agents = client.agents()
+    agents = client.get_agents()
     for agent_id, agent in agents.items():
         textconsole.print(f"[green]{agent_id}[/]: {agent['name']}")
         if ctx.obj["VERBOSE"]:
@@ -107,7 +107,7 @@ def sessions():
 @click.pass_context
 def list_sessions(ctx):
     client = ctx.obj["CLIENT"]
-    session_ids = client.sessions()
+    session_ids = client.get_sessions()
     for session_id in session_ids:
         textconsole.print(f"[green]{session_id}[/]")
 
