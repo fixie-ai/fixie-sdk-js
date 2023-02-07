@@ -42,17 +42,18 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         #  as well.
         self._agent_id = agent_id
         self._userstorage_url = userstorage_url
-        self._headers = {"Authorization": f"Bearer {query.access_token}"}
+        self._session = requests.Session()
+        self._session.headers.update({"Authorization": f"Bearer {query.access_token}"})
 
     def __setitem__(self, key: str, value: UserStorageType):
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
-        response = requests.post(url, json=to_json_type(value), headers=self._headers)
+        response = self._session.post(url, json=to_json_type(value))
         response.raise_for_status()
 
     def __getitem__(self, key: str) -> UserStorageType:
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
         try:
-            response = requests.get(url, headers=self._headers)
+            response = self._session.get(url)
             response.raise_for_status()
             return from_json_type(response.json())
         except requests.exceptions.HTTPError as e:
@@ -61,7 +62,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     def __contains__(self, key: object) -> bool:
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
         try:
-            response = requests.head(url, headers=self._headers)
+            response = self._session.head(url)
             response.raise_for_status()
             return True
         except requests.exceptions.HTTPError as e:
@@ -70,14 +71,14 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     def __delitem__(self, key: str):
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
         try:
-            response = requests.delete(url, headers=self._headers)
+            response = self._session.delete(url)
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise KeyError(f"Key {key} not found") from e
 
     def _get_all_keys(self):
         url = f"{self._userstorage_url}/{self._agent_id}"
-        response = requests.get(url, headers=self._headers)
+        response = self._session.get(url)
         response.raise_for_status()
         return [value["key"] for value in response.json()]
 
