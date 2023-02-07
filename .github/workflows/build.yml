@@ -32,4 +32,5 @@ jobs:
         just install
 
     - name: Publish documentation
+      run: |
         just publish-docs
