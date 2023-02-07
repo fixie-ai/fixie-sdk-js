@@ -118,7 +118,6 @@ class LlamaLabsClient:
             }
         """
         )
-        logging.info(f"MDW: QUERY IS {query}")
         result = self._gqlclient.execute(query)
         assert "allAgents" in result and isinstance(result["allAgents"], list)
         agents = result["allAgents"]
