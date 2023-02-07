@@ -9,7 +9,7 @@ from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
-from llamalabs import defaults
+from llamalabs import constants
 from llamalabs.client.session import Session
 
 _CLIENT: Optional["LlamaLabsClient"] = None
@@ -72,8 +72,8 @@ class LlamaLabsClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
-        self._api_url = api_url or defaults.LLAMALABS_API_URL
-        self._api_key = api_key or defaults.LLAMALABS_API_KEY
+        self._api_url = api_url or constants.LLAMALABS_API_URL
+        self._api_key = api_key or constants.LLAMALABS_API_KEY
         if not self._api_key:
             raise ValueError(
                 "No Llama Labs API key provided. Set the LLAMALABS_API_KEY environment variable "

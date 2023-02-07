@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
 
-from llamalabs import defaults
+from llamalabs import constants
 if TYPE_CHECKING:
     from llamalabs.agents.api import AgentQuery
 
@@ -36,7 +36,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         self,
         query: "AgentQuery",
         agent_id: str,
-        userstorage_url: str = defaults.LLAMALABS_USER_STORAGE_URL,
+        userstorage_url: str = constants.LLAMALABS_USER_STORAGE_URL,
     ):
         # TODO(hessam): Remove agent_id from args once access_token includes agent_id
         #  as well.
