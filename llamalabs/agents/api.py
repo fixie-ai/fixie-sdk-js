@@ -8,6 +8,8 @@ from typing import Optional
 
 from pydantic import dataclasses as pydantic_dataclasses
 
+from llamalabs.agents import user_storage
+
 
 @pydantic_dataclasses.dataclass
 class Embed:
@@ -44,6 +46,17 @@ class AgentQuery:
     # Fixie services, should carry this token in the query so that it
     # can be tied back to the original user.
     access_token: Optional[str] = None
+
+    def user_storage(self, agent_id: str) -> user_storage.UserStorage:
+        """Returns a persistent, user-specific, dict-like memory storage.
+
+        Args:
+            agent_id: The agent who's asking for it.
+
+        TODO(hessam): Remove agent_id from the signature once agent_id is included in
+         access_token.
+        """
+        return user_storage.UserStorage(self, agent_id)
 
 
 @pydantic_dataclasses.dataclass

@@ -1,11 +1,12 @@
 import base64
 import collections.abc
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
 
 from llamalabs import defaults
-from llamalabs.agents import api
+if TYPE_CHECKING:
+    from llamalabs.agents.api import AgentQuery
 
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
@@ -19,8 +20,9 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
-    >>> query = api.AgentQuery(
-    ...   api.Message("incoming query"),
+    >>> from llamalabs.agents.api import AgentQuery, Message
+    >>> query = AgentQuery(
+    ...   Message("incoming query"),
     ...   access_token="fake-access-token"
     ... )
     >>> storage = UserStorage(query, "fake-agent")
@@ -32,11 +34,11 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
 
     def __init__(
         self,
-        query: api.AgentQuery,
+        query: "AgentQuery",
         agent_id: str,
         userstorage_url: str = defaults.LLAMALABS_USER_STORAGE_URL,
     ):
-        # TODO(hessam): Remove agent_id from args, once access_token includes agent_id
+        # TODO(hessam): Remove agent_id from args once access_token includes agent_id
         #  as well.
         self._agent_id = agent_id
         self._userstorage_url = userstorage_url
