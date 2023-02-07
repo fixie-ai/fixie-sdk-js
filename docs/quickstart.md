@@ -27,7 +27,6 @@ After you added your agent you can test it in Llama Labs app by going to home, o
 
 
 ## Template code for new agent
-Your code in chain: chain/new_agent/new_agent.py will have this format
 
 ```python
 
