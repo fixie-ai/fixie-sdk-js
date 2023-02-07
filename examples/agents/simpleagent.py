@@ -20,7 +20,7 @@ class SimpleAgent(llamalabs.agents.CodeShotAgent):
             --data '{"message": {"text": "flip a coin"}}'
     """
 
-    #make sure you use the same agent_id when adding the agent name in app.llamalabs.ai/agents/
+    # make sure you use the same agent_id when adding the agent name in app.llamalabs.ai/agents/
     agent_id = "toss_a_coin"
     BASE_PROMPT = "I am a simple agent that tosses a coin."
     FEW_SHOTS = [
