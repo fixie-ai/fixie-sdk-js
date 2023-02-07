@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 
 from gql import Client
@@ -60,7 +61,7 @@ class LlamaLabsClient:
     Args:
         api_url: The URL of the Llama Labs API server. If not provided, the
             LLAMALABS_API_URL environment variable will be used. If that is not
-            set, the default value of "https://app.fixie.ai " will be used.
+            set, the default value of "https://app.llamalabs.ai " will be used.
         api_key: The API key for the Llama Labs API server. If not provided, the
             LLAMALABS_API_KEY environment variable will be used. If that is not
             set, a ValueError will be raised.
@@ -77,7 +78,7 @@ class LlamaLabsClient:
             raise ValueError(
                 "No Llama Labs API key provided. Set the LLAMALABS_API_KEY environment variable "
                 "to your API key, which can be obtained from your profile page on "
-                "https://app.fixie.ai "
+                "https://app.llamalabs.ai "
             )
         transport = RequestsHTTPTransport(
             url=f"{self._api_url}/graphql",

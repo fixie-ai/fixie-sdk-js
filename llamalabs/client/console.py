@@ -5,7 +5,7 @@ import prompt_toolkit
 import requests
 import rich.console as rich_console
 
-import llamalabs.client
+from llamalabs.client.client import LlamaLabsClient
 
 HISTORY_FILE = "history.txt"
 
@@ -17,7 +17,7 @@ class Console:
 
     def __init__(
         self,
-        client: llamalabs.client.LlamaLabsClient,
+        client: LlamaLabsClient,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
@@ -62,15 +62,15 @@ class Console:
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
-def cli(ctx, llamalabs_api_url, verbose):
+def llamalabs(ctx, llamalabs_api_url, verbose):
     ctx.ensure_object(dict)
-    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = LlamaLabsClient(api_url=llamalabs_api_url)
     ctx.obj["LLAMALABS_API_URL"] = llamalabs_api_url
     ctx.obj["CLIENT"] = client
     ctx.obj["VERBOSE"] = verbose
 
 
-@cli.command("console", help="Run live console.")
+@llamalabs.command("console", help="Run live console.")
 @click.pass_context
 def console(ctx):
     client = ctx.obj["CLIENT"]
@@ -78,7 +78,7 @@ def console(ctx):
     c.run()
 
 
-@cli.group(help="Agent-related commands.")
+@llamalabs.group(help="Agent-related commands.")
 def agents():
     pass
 
@@ -87,7 +87,7 @@ def agents():
 @click.pass_context
 def list_agents(ctx):
     client = ctx.obj["CLIENT"]
-    agents = client.agents()
+    agents = client.get_agents()
     for agent_id, agent in agents.items():
         textconsole.print(f"[green]{agent_id}[/]: {agent['name']}")
         if ctx.obj["VERBOSE"]:
@@ -98,7 +98,7 @@ def list_agents(ctx):
             textconsole.print("")
 
 
-@cli.group(help="Session-related commands.")
+@llamalabs.group(help="Session-related commands.")
 def sessions():
     pass
 
@@ -107,7 +107,7 @@ def sessions():
 @click.pass_context
 def list_sessions(ctx):
     client = ctx.obj["CLIENT"]
-    session_ids = client.sessions()
+    session_ids = client.get_sessions()
     for session_id in session_ids:
         textconsole.print(f"[green]{session_id}[/]")
 
@@ -117,7 +117,7 @@ def list_sessions(ctx):
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
     llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     messages = session.get_messages()
     textconsole.print(messages)
@@ -128,11 +128,11 @@ def show_session(ctx, session_id: str):
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
     llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = llamalabs.client.LlamaLabsClient(api_url=llamalabs_api_url)
+    client = LlamaLabsClient(api_url=llamalabs_api_url)
     session = client.get_session(session_id)
     embeds = session.get_embeds()
     textconsole.print(embeds)
 
 
 if __name__ == "__main__":
-    cli()
+    llamalabs()
