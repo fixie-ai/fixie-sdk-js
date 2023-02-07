@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Union
 import requests
 
 from llamalabs import constants
+
 if TYPE_CHECKING:
     from llamalabs.agents.api import AgentQuery
 
