@@ -157,7 +157,9 @@ class Session:
                     messages {
                         id
                         text
-                        sentBy
+                        sentBy {
+                            id
+                        }
                         type
                         inReplyTo { id }
                         timestamp
