@@ -36,7 +36,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         agent_id: str,
         userstorage_url: str = USER_STORAGE_URL,
     ):
-        # TODO(hessam): Remove agent_id from args, once access_token includes agent_id
+        # TODO(hessam): Remove agent_id from args once access_token includes agent_id
         #  as well.
         self._agent_id = agent_id
         self._userstorage_url = userstorage_url
