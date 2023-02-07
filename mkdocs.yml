@@ -1,11 +1,11 @@
-site_name: Llama Labs
-site_description: SDK for the Llama Labs platform
+site_name: Llama Labs Developer Portal
+site_description: API and SDK documentation for Llama Labs
 site_url: https://llamalabs.ai/
 
 theme:
-    logo: assets/fixie-logo.png
-    favicon: assets/fixie-logo.png
-    name: 'material'
+    logo: assets/llamalabs-icon.png
+    favicon: assets/llamalabs-icon.png
+    name: 'cinder'
     palette:
       - scheme: 'default'
         media: '(prefers-color-scheme: light)'
@@ -20,6 +20,7 @@ theme:
           name: 'Switch to light mode'
     features:
         - navigation.sections
+        - navigation.tabs
 
 repo_name: llamalabs-ai/llamalabs-sdk
 repo_url: https://github.com/llamalabs-ai/llamalabs-sdk
@@ -29,13 +30,22 @@ nav:
     - Introduction: 'index.md'
     - Usage:
         - QuickStart: 'quickstart.md'
-    - API Reference: 'api.md'
+    - Python SDK Reference:
+        - llamalabs.client: 'api-client.md'
+        - llamalabs.agents: 'api-agents.md'
+    - CLI Reference: 'cli.md'
+    - GraphQL Reference: 'https://app.llamalabs.ai/static/docs/index.html'
+
 
 markdown_extensions:
   - admonition
   - codehilite:
       css_class: highlight
-  - mkautodoc
+  - mkdocs-click
 
 extra_css:
     - css/custom.css
+
+plugins:
+  - search
+  - mkdocstrings
