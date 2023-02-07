@@ -39,8 +39,6 @@ mypy = "0.991"
 autoflake = "1.6.1"
 requests-mock = "1.10.0"
 mkdocs = "^1.4.2"
-mkdocs-material = "^9.0.1"
-mkdocs-windmill = "1.0.5"
 mkdocstrings = { version = "^0.20.0", extras = ["python"] }
 mkdocs-click = "^0.8.0"
 
