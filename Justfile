@@ -69,4 +69,4 @@ build-docs:
 
 # Deploy docs to Github Pages.
 publish-docs:
-    poetry run mkdocs gh-deploy
+    poetry run mkdocs gh-deploy --force
