@@ -49,7 +49,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
 
     def __setitem__(self, key: str, value: UserStorageType):
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
-        response = self._session.post(url, data={"data": to_json(value)})
+        response = self._session.post(url, json={"data": to_json(value)})
         response.raise_for_status()
 
     def __getitem__(self, key: str) -> UserStorageType:

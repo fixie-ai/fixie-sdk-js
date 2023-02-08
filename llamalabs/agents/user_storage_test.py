@@ -27,12 +27,13 @@ class MockUserStorageService:
     def post(self, request, context):
         key = self._parse_request(request)
         assert key
-        self._data[key] = request.json()
+        self._data[key] = request.json()["data"]
+        return {"msg": "success"}
 
     def get(self, request, context):
         key = self._parse_request(request)
         if key:
-            return self._data[key]
+            return {"data": self._data[key]}
         else:
             return [{"key": key, "value": value} for key, value in self._data.items()]
 
