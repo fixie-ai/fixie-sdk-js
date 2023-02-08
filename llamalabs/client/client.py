@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
 from gql import Client
@@ -79,6 +80,7 @@ class LlamaLabsClient:
                 "to your API key, which can be obtained from your profile page on "
                 "https://app.llamalabs.ai "
             )
+        logging.info(f"Using Llama Labs API URL: {self._api_url}")
         transport = RequestsHTTPTransport(
             url=f"{self._api_url}/graphql",
             headers={"Authorization": f"Bearer {self._api_key}"},
