@@ -1,5 +1,6 @@
 import base64
 import collections.abc
+import json
 from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
@@ -48,7 +49,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
 
     def __setitem__(self, key: str, value: UserStorageType):
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"
-        response = self._session.post(url, data={"data": to_json_type(value)})
+        response = self._session.post(url, data={"data": to_json(value)})
         response.raise_for_status()
 
     def __getitem__(self, key: str) -> UserStorageType:
@@ -56,7 +57,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         try:
             response = self._session.get(url)
             response.raise_for_status()
-            return from_json_type(response.json()["data"])
+            return from_json(response.json()["data"])
         except requests.exceptions.HTTPError as e:
             raise KeyError(f"Key {key} not found") from e
 
@@ -91,6 +92,16 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
 
 
 JsonType = Union[None, int, float, str, bool, List["JsonType"], Dict[str, "JsonType"]]
+
+
+def to_json(obj: UserStorageType) -> str:
+    """Serialize a UserStorageType to a JSON string."""
+    return json.dumps(to_json_type(obj))
+
+
+def from_json(json_dump: str) -> UserStorageType:
+    """Deserializes a UserStorageType from a JSON string."""
+    return from_json_type(json.loads(json_dump))
 
 
 def to_json_type(obj: UserStorageType) -> JsonType:
