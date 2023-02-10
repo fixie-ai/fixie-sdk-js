@@ -1,6 +1,6 @@
 # CLI Reference
 
-This page provides documentation for the Llama Labs command line tool.
+This page provides documentation for the Fixie command line tool.
 
 ::: mkdocs-click
     :module: llamalabs.client.console

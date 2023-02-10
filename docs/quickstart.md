@@ -1,7 +1,6 @@
-# Llama Labs SDK Quickstart
+# Fixie SDK Quickstart
 
-
-# Make your first LLama Labs Agent
+# Make your first Fixie Agent
 
 ## Summary of steps:
 *  **Edit agent template**: To make an agent you can edit the simple agent template from here:
@@ -11,13 +10,14 @@ agent: The **BASE PROMPT** & the **FEW_SHOTS** strings in the agent class, which
 *  **Deploy agent:** You can host your agent on replit (fork our replit template [here](https://replit.com/@llama-labs/Coin-Flip#main.py)). If you use our template make sure to change the agent id before deploying. Once your agent is deployed you can test it from your terminal by running the following command: ```curl -v -X POST -H "Content-Type: application/json" --data '{"message": {"text": " flip coin"}}' https://[your_url].repl.co```
 ![replit coinflip example](assets/coinflip_replit.png)
 
-*  **Test agent on Llama Labs App:**: Go to [https://app.llamalabs.ai/agents](https://app.llamalabs.ai/agents) and click on adding a new agent.
+*  **Test agent on Fixie App:**: Go to [https://app.fixie.ai/agents](https://app.fixie.ai/agents) and click on adding a new agent.
 Make sure your agent name is the same as the agent id in your replit/main.py file.
-![add agent coinflip example](assets/coinflip_add_agent_example.png)After you added your agent you can test it in Llama Labs app by going to home, openning a new session and typing @agent_id and asking a question. See example bellow:
+![add agent coinflip example](assets/coinflip_add_agent_example.png)After you added your agent you can test it
+in Fixie app by going to home, openning a new session and typing @agent_id and asking a question. See example bellow:
 ![test agent coinflip example](assets/coinflip_example.png)
 
 
-*  **Test, Format & Ship:** Once happy with the quality of your agent, run the following commands to test and format your code: ```just test & just format``` Once your code is tested you can submit a PR for review to publish your agent in the llamalabs-sdk/agent-gallery. You can also share your agent on our [discord](https://discord.com/invite/Z9dfbUav2p) under #share_your_work channel.
+*  **Test, Format & Ship:** Once happy with the quality of your agent, run the following commands to test and format your code: ```just test & just format``` Once your code is tested you can submit a PR for review to publish your agent in the fixie-sdk/agent-gallery. You can also share your agent on our [discord](https://discord.com/invite/Z9dfbUav2p) under #share_your_work channel.
 
 
 
@@ -25,11 +25,11 @@ Make sure your agent name is the same as the agent id in your replit/main.py fil
 
 ```python
 
-import llamalabs.agents
+import fixie.agents
 
 
-class SimpleAgent(llamalabs.agents.CodeShotAgent):
-    """This is an example of a simple Llama Labs Agent that tosses a coin.
+class SimpleAgent(fixie.agents.CodeShotAgent):
+    """This is an example of a simple Fixie Agent that tosses a coin.
 
     To run this agents, use:
         agent = SimpleAgent()
@@ -37,7 +37,7 @@ class SimpleAgent(llamalabs.agents.CodeShotAgent):
 
     """
 
-    #make sure you use the same agent_id when adding the agent name in app.llamalabs.ai/agents/
+    #make sure you use the same agent_id when adding the agent name in app.fixie.ai/agents/
     agent_id = "toss_a_coin"
     BASE_PROMPT = "I am a simple agent that tosses a coin."
     FEW_SHOTS = [
@@ -51,7 +51,7 @@ class SimpleAgent(llamalabs.agents.CodeShotAgent):
            A: It was heads the first 2 times and tails the last time!""",
     ]
 
-    def coin(self, query: llamalabs.agents.AgentQuery) -> str:
+    def coin(self, query: fixie.agents.AgentQuery) -> str:
         return random.choice(["heads", "tails"])
 
 

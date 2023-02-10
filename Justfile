@@ -1,4 +1,4 @@
-# This is the main Justfile for the Llama Labs SDK repo.
+# This is the main Justfile for the Fixie SDK repo.
 # To install Just, see: https://github.com/casey/just#installation 
 
 # This causes the .env file to be read by Just.
