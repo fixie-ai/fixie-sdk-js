@@ -1,4 +1,4 @@
-# Llama Labs Client API
+# Fixie Client API
 
 ::: llamalabs.client.client
 

@@ -1,4 +1,4 @@
-# Llama Labs Agent API
+# Fixie Agent API
 
 ::: llamalabs.agents.code_shot
 
