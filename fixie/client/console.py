@@ -116,8 +116,7 @@ def list_sessions(ctx):
 @click.pass_context
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
-    fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = FixieClient(api_url=fixie_api_url)
+    client = ctx.obj["CLIENT"]
     session = client.get_session(session_id)
     messages = session.get_messages()
     textconsole.print(messages)
@@ -127,8 +126,7 @@ def show_session(ctx, session_id: str):
 @click.pass_context
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
-    fixie_api_url = ctx.obj["FIXIE_API_URL"]
-    client = FixieClient(api_url=fixie_api_url)
+    client = ctx.obj["CLIENT"]
     session = client.get_session(session_id)
     embeds = session.get_embeds()
     textconsole.print(embeds)

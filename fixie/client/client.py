@@ -16,7 +16,7 @@ _CLIENT: Optional["FixieClient"] = None
 _SESSION: Optional[Session] = None
 
 
-def client() -> FixieClient:
+def get_client() -> FixieClient:
     """Return the global FixieClient instance."""
     global _CLIENT
     if not _CLIENT:
@@ -25,30 +25,30 @@ def client() -> FixieClient:
     return _CLIENT
 
 
-def session() -> Session:
+def get_session() -> Session:
     """Return the global Fixie Session instance."""
     global _SESSION
     if not _SESSION:
-        _SESSION = Session(client())
+        _SESSION = Session(get_client())
     assert _SESSION is not None
     return _SESSION
 
 
-def agents() -> Dict[str, Dict[str, str]]:
+def get_agents() -> Dict[str, Dict[str, str]]:
     """Return metadata about all Fixie Agents. The keys of the returned
     dictionary are Agent IDs, and the values are dictionaries containing
     metadata about each Agent."""
-    return client().get_agents()
+    return get_client().get_agents()
 
 
 def query(text: str) -> str:
     """Run a query."""
-    return session().query(text)
+    return get_session().query(text)
 
 
-def embeds() -> List[Dict[str, Any]]:
+def get_embeds() -> List[Dict[str, Any]]:
     """Return a list of Embeds."""
-    return session().get_embeds()
+    return get_session().get_embeds()
 
 
 class FixieClient:

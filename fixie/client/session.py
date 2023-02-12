@@ -129,7 +129,7 @@ class Session:
                             created
                             contentHash
                             owner {
-                                id
+                                username
                             }
                             url
                         }
@@ -158,7 +158,7 @@ class Session:
                         id
                         text
                         sentBy {
-                            id
+                            handle
                         }
                         type
                         inReplyTo { id }
