@@ -1,7 +1,7 @@
 # Fixie Client API
 
-::: llamalabs.client.client
+::: fixie.client.client
 
-::: llamalabs.client.session
+::: fixie.client.session
 
-::: llamalabs.client.console
+::: fixie.client.console

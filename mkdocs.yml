@@ -31,8 +31,8 @@ nav:
     - Usage:
         - QuickStart: 'quickstart.md'
     - Python SDK Reference:
-        - llamalabs.client: 'api-client.md'
-        - llamalabs.agents: 'api-agents.md'
+        - Client API: 'api-client.md'
+        - Agent API: 'api-agents.md'
     - CLI Reference: 'cli.md'
     - GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
 

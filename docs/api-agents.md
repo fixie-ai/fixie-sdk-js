@@ -1,7 +1,7 @@
 # Fixie Agent API
 
-::: llamalabs.agents.code_shot
+::: fixie.agents.code_shot
 
-::: llamalabs.agents.api
+::: fixie.agents.api
 
-::: llamalabs.agents.utils
+::: fixie.agents.utils

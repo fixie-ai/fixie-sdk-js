@@ -7,7 +7,7 @@
 examples/agents/simpleagent.py . There are three main parts of an
 agent: The **BASE PROMPT** & the **FEW_SHOTS** strings in the agent class, which provides a description of the agent purpose and examples of queries for the agent. Some agents can also use **CODE SHOTS** to add additional logic to their FEW_SHOTS, this is indicated by using the "Func[]" keyword in the prompt examples. See the simple agent template code below.
 *  **Test agent locally:**: To make sure the agent can serve the correct prompt, fewshots and metadat you can type the following command in your terminal:  ```curl -v -X GET http://localhost:8181```
-*  **Deploy agent:** You can host your agent on replit (fork our replit template [here](https://replit.com/@llama-labs/Coin-Flip#main.py)). If you use our template make sure to change the agent id before deploying. Once your agent is deployed you can test it from your terminal by running the following command: ```curl -v -X POST -H "Content-Type: application/json" --data '{"message": {"text": " flip coin"}}' https://[your_url].repl.co```
+*  **Deploy agent:** You can host your agent on replit (fork our replit template [here](https://replit.com/@fixie/Coin-Flip#main.py)). If you use our template make sure to change the agent id before deploying. Once your agent is deployed you can test it from your terminal by running the following command: ```curl -v -X POST -H "Content-Type: application/json" --data '{"message": {"text": " flip coin"}}' https://[your_url].repl.co```
 ![replit coinflip example](assets/coinflip_replit.png)
 
 *  **Test agent on Fixie App:**: Go to [https://app.fixie.ai/agents](https://app.fixie.ai/agents) and click on adding a new agent.
