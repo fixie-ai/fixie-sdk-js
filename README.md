@@ -36,8 +36,7 @@ fixie 🚲❯ Hello there
    @{'handle': 'user'}: Hello there
    @{'handle': 'user'}: Hello there
    @{'handle': 'fixie'}: Hello there
-   @{'handle': 'fixie'}: Thought: This is not a question. I need to greet 
-the user.
+   @{'handle': 'fixie'}: Thought: This is not a question. I need to greet the user.
    @{'handle': 'fixie'}: Hi there! How can I help you?
 1❯ Hi there! How can I help you?
 fixie 🚲❯
