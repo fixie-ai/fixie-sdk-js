@@ -1,11 +1,11 @@
-site_name: Llama Labs Developer Portal
-site_description: API and SDK documentation for Llama Labs
-site_url: https://llamalabs.ai/
+site_name: Fixie Developer Portal
+site_description: API and SDK documentation for Fixie
+site_url: https://fixie.ai/
 
 theme:
-    logo: assets/llamalabs-icon.png
-    favicon: assets/llamalabs-icon.png
-    name: 'cinder'
+    logo: assets/fixie-logo.png
+    favicon: assets/fixie-logo.png
+    name: 'readthedocs'
     palette:
       - scheme: 'default'
         media: '(prefers-color-scheme: light)'
@@ -22,8 +22,8 @@ theme:
         - navigation.sections
         - navigation.tabs
 
-repo_name: llamalabs-ai/llamalabs-sdk
-repo_url: https://github.com/llamalabs-ai/llamalabs-sdk
+repo_name: fixie-ai/fixie-sdk
+repo_url: https://github.com/fixie-ai/fixie-sdk
 edit_uri: ""
 
 nav:
@@ -34,7 +34,7 @@ nav:
         - llamalabs.client: 'api-client.md'
         - llamalabs.agents: 'api-agents.md'
     - CLI Reference: 'cli.md'
-    - GraphQL Reference: 'https://app.llamalabs.ai/static/docs/index.html'
+    - GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
 
 
 markdown_extensions:
