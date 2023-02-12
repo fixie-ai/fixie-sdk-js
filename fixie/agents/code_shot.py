@@ -8,17 +8,17 @@ import fastapi
 import uvicorn
 from pydantic import dataclasses as pydantic_dataclasses
 
-from llamalabs.agents import utils
-from llamalabs.agents.api import AgentQuery
-from llamalabs.agents.api import AgentResponse
-from llamalabs.agents.api import Message
+from fixie.agents import utils
+from fixie.agents.api import AgentQuery
+from fixie.agents.api import AgentResponse
+from fixie.agents.api import Message
 
 
 @pydantic_dataclasses.dataclass
 class AgentMetadata:
-    """Metadata for a Llama Labs CodeShot Agent.
+    """Metadata for a Fixie CodeShot Agent.
 
-    This will get sent to the Llama Labs upon handshake.
+    This will get sent to the Fixie upon handshake.
     """
 
     agent_id: str
@@ -36,7 +36,7 @@ class CodeShotAgent(ABC):
     To make a CodeShot agent, simply subclass and set the abstract fields:
 
         class CustomAgent(CodeShotAgent):
-            handle = "llamalabs-agent-id"
+            handle = "fixie-agent-id"
             BASE_PROMPT = "A summary of what this agent does; how it does it; and its
                            personality"
             FEW_SHOTS = [

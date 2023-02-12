@@ -10,25 +10,25 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 from gql import gql
 
 if TYPE_CHECKING:
-    import llamalabs.client as llamalabs_client
+    import fixie.client as fixie_client
 
-    LlamaLabsClient = llamalabs_client.LlamaLabsClient
+    FixieClient = fixie_client.FixieClient
 else:
-    LlamaLabsClient = Any
+    FixieClient = Any
 
 
 class Session:
-    """Represents a single session with the Llama Labs system.
+    """Represents a single session with the Fixie system.
 
     Args:
-        client: The LlamaLabsClient instance to use.
+        client: The FixieClient instance to use.
         session_id: The ID of the session to use. If not provided, a new
             session will be created.
     """
 
     def __init__(
         self,
-        client: LlamaLabsClient,
+        client: FixieClient,
         session_id: Optional[str] = None,
     ):
         self._client = client
@@ -43,12 +43,12 @@ class Session:
 
     @property
     def session_id(self) -> Optional[str]:
-        """Return the session ID used by this Llama Labs client."""
+        """Return the session ID used by this Fixie client."""
         return self._session_id
 
     @property
     def session_url(self) -> str:
-        """Return the URL of the Llama Labs session."""
+        """Return the URL of the Fixie session."""
         return f"{self._client.url}/sessions/{self.session_id}"
 
     def clone(self) -> "Session":
@@ -198,7 +198,7 @@ class Session:
         return result["addSessionMessage"]["message"]["text"]
 
     def query(self, text: str) -> str:
-        """Run a single query against the Llama Labs API and return the response."""
+        """Run a single query against the Fixie API and return the response."""
         self.add_message(text)
         # The reply to the query comes in as the most recent 'response' message in the session.
         response = self.get_messages()[-1]
@@ -206,7 +206,7 @@ class Session:
         return response["text"]
 
     def run(self, text: str) -> Generator[Dict[str, Any], None, None]:
-        """Run a query against the Llama Labs API, returning a generator that yields
+        """Run a query against the Fixie API, returning a generator that yields
         messages."""
 
         # Run the query in the background, and continue polling for replies.

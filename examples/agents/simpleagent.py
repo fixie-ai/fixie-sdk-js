@@ -1,10 +1,10 @@
 import random
 
-import llamalabs.agents
+import fixie.agents
 
 
-class SimpleAgent(llamalabs.agents.CodeShotAgent):
-    """This is an example of a simple Llama Labs Agent that tosses a coin.
+class SimpleAgent(fixie.agents.CodeShotAgent):
+    """This is an example of a simple Fixie Agent that tosses a coin.
 
     To run this agents, use:
         agent = SimpleAgent()
@@ -20,7 +20,7 @@ class SimpleAgent(llamalabs.agents.CodeShotAgent):
             --data '{"message": {"text": "flip a coin"}}'
     """
 
-    # make sure you use the same agent_id when adding the agent name in app.llamalabs.ai/agents/
+    # make sure you use the same agent_id when adding the agent name in app.fixie.ai/agents/
     agent_id = "toss_a_coin"
     BASE_PROMPT = "I am a simple agent that tosses a coin."
     FEW_SHOTS = [
@@ -34,7 +34,7 @@ class SimpleAgent(llamalabs.agents.CodeShotAgent):
            A: It was heads the first 2 times and tails the last time!""",
     ]
 
-    def coin(self, query: llamalabs.agents.AgentQuery) -> str:
+    def coin(self, query: fixie.agents.AgentQuery) -> str:
         return random.choice(["heads", "tails"])
 
 

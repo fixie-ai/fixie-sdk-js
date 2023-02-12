@@ -1,7 +1,7 @@
 import fastapi
 from fastapi import testclient
 
-from llamalabs import agents
+from fixie import agents
 
 
 class SimpleAgent(agents.CodeShotAgent):

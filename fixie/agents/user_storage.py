@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
 
-from llamalabs import constants
+from fixie import constants
 
 if TYPE_CHECKING:
-    from llamalabs.agents.api import AgentQuery
+    from fixie.agents.api import AgentQuery
 
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
@@ -22,7 +22,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
-    >>> from llamalabs.agents.api import AgentQuery, Message
+    >>> from fixie.agents.api import AgentQuery, Message
     >>> query = AgentQuery(
     ...   Message("incoming query"),
     ...   access_token="fake-access-token"
@@ -38,7 +38,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
         self,
         query: "AgentQuery",
         agent_id: str,
-        userstorage_url: str = constants.LLAMALABS_USER_STORAGE_URL,
+        userstorage_url: str = constants.FIXIE_USER_STORAGE_URL,
     ):
         # TODO(hessam): Remove agent_id from args once access_token includes agent_id
         #  as well.

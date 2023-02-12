@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Callable, Union
 from unittest import mock
 
 if TYPE_CHECKING:
-    from llamalabs.agents import api
-    from llamalabs.agents import code_shot
+    from fixie.agents import api
+    from fixie.agents import code_shot
 else:
     api = mock.MagicMock()
     code_shot = mock.MagicMock()
@@ -55,7 +55,7 @@ def get_pyfunc(
             "return type."
         )
     # Delayed import to avoid circular dependency
-    from llamalabs.agents import api
+    from fixie.agents import api
 
     # TODO(hessam): Allow return_type to be a Union of the allowed types.
     if param_type is not api.AgentQuery or return_type not in (

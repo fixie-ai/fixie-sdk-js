@@ -1,5 +1,5 @@
 """This module holds objects that represent the API interface by which Agents talk to
-Llama Labs ecosystem."""
+Fixie ecosystem."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Optional
 
 from pydantic import dataclasses as pydantic_dataclasses
 
-from llamalabs.agents import user_storage
+from fixie.agents import user_storage
 
 
 @pydantic_dataclasses.dataclass
@@ -19,13 +19,13 @@ class Embed:
     content_type: str
 
     # A public URL where the object can be downloaded. The Embed API can be used to
-    # upload an Embed object to Llama Labs and generate a URL.
+    # upload an Embed object to Fixie and generate a URL.
     uri: str
 
 
 @pydantic_dataclasses.dataclass
 class Message:
-    """A Message represents a single message sent  a Llama Labs agents."""
+    """A Message represents a single message sent to a Fixie agent."""
 
     # The text of the message.
     text: str
@@ -36,7 +36,7 @@ class Message:
 
 @pydantic_dataclasses.dataclass
 class AgentQuery:
-    """A standalone query sent to a Llama Labs agents."""
+    """A standalone query sent to a Fixie agent."""
 
     # The contents of the query.
     message: Message

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-# This is a simple example of how to use the Llama Labs Python SDK.
+# This is a simple example of how to use the Fixie Python SDK.
 
 import requests
 
-import llamalabs.client.client as client
+import fixie.client.client as client
 
-# Get the list of Agents registered with the Llama Labs service.
+# Get the list of Agents registered with the Fixie service.
 agents = client.agents()
 for agent_id, agent in agents.items():
     print(f"{agent_id}: {agent['name']}")

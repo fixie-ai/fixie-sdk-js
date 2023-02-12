@@ -1,6 +1,6 @@
 import pytest
 
-from llamalabs.agents import utils
+from fixie.agents import utils
 
 BAD_PROMPTS = [
     # Ask Agent without Agent says

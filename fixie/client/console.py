@@ -5,7 +5,7 @@ import prompt_toolkit
 import requests
 import rich.console as rich_console
 
-from llamalabs.client.client import LlamaLabsClient
+from fixie.client.client import FixieClient
 
 HISTORY_FILE = "history.txt"
 
@@ -13,11 +13,11 @@ textconsole = rich_console.Console()
 
 
 class Console:
-    """A simple console interface for Llama Labs."""
+    """A simple console interface for Fixie."""
 
     def __init__(
         self,
-        client: LlamaLabsClient,
+        client: FixieClient,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
@@ -28,11 +28,11 @@ class Console:
     def run(self) -> None:
         """Run the console application."""
 
-        textconsole.print("[blue]Welcome to Llama Labs!")
+        textconsole.print("[blue]Welcome to Fixie!")
         textconsole.print(f"Connected to: {self._session.session_url}")
         while True:
             in_text = prompt_toolkit.prompt(
-                "🦙❯ ",
+                "fixie 🚲❯ ",
                 history=prompt_toolkit.history.FileHistory(self._history_file),
                 auto_suggest=prompt_toolkit.auto_suggest.AutoSuggestFromHistory(),
             )
@@ -56,21 +56,21 @@ class Console:
 
 @click.group()
 @click.option(
-    "--llamalabs_api_url",
-    help="Llama Labs API URL. Defaults to the value of the LLAMALABS_API_URL env var, "
-    "or `https://app.llamalabs.ai` if that is unset.",
+    "--fixie_api_url",
+    help="Fixie API URL. Defaults to the value of the FIXIE_API_URL env var, "
+    "or `https://app.fixie.ai` if that is unset.",
 )
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
-def llamalabs(ctx, llamalabs_api_url, verbose):
+def fixie(ctx, fixie_api_url, verbose):
     ctx.ensure_object(dict)
-    client = LlamaLabsClient(api_url=llamalabs_api_url)
-    ctx.obj["LLAMALABS_API_URL"] = llamalabs_api_url
+    client = FixieClient(api_url=fixie_api_url)
+    ctx.obj["fixie_API_URL"] = fixie_api_url
     ctx.obj["CLIENT"] = client
     ctx.obj["VERBOSE"] = verbose
 
 
-@llamalabs.command("console", help="Run live console.")
+@fixie.command("console", help="Run live console.")
 @click.pass_context
 def console(ctx):
     client = ctx.obj["CLIENT"]
@@ -78,7 +78,7 @@ def console(ctx):
     c.run()
 
 
-@llamalabs.group(help="Agent-related commands.")
+@fixie.group(help="Agent-related commands.")
 def agents():
     pass
 
@@ -98,7 +98,7 @@ def list_agents(ctx):
             textconsole.print("")
 
 
-@llamalabs.group(help="Session-related commands.")
+@fixie.group(help="Session-related commands.")
 def sessions():
     pass
 
@@ -116,8 +116,8 @@ def list_sessions(ctx):
 @click.pass_context
 @click.argument("session_id")
 def show_session(ctx, session_id: str):
-    llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = LlamaLabsClient(api_url=llamalabs_api_url)
+    fixie_api_url = ctx.obj["FIXIE_API_URL"]
+    client = FixieClient(api_url=fixie_api_url)
     session = client.get_session(session_id)
     messages = session.get_messages()
     textconsole.print(messages)
@@ -127,12 +127,12 @@ def show_session(ctx, session_id: str):
 @click.pass_context
 @click.argument("session_id")
 def embeds(ctx, session_id: str):
-    llamalabs_api_url = ctx.obj["LLAMALABS_API_URL"]
-    client = LlamaLabsClient(api_url=llamalabs_api_url)
+    fixie_api_url = ctx.obj["FIXIE_API_URL"]
+    client = FixieClient(api_url=fixie_api_url)
     session = client.get_session(session_id)
     embeds = session.get_embeds()
     textconsole.print(embeds)
 
 
 if __name__ == "__main__":
-    llamalabs()
+    fixie()

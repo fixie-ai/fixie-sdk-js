@@ -3,9 +3,9 @@ import re
 
 import pytest
 
-from llamalabs import constants
-from llamalabs.agents import api
-from llamalabs.agents import user_storage
+from fixie import constants
+from fixie.agents import api
+from fixie.agents import user_storage
 
 FAKE_AGENT_ID = "fake-agent"
 FAKE_ACCESS_TOKEN = "fake-access-token"
@@ -60,7 +60,7 @@ class MockUserStorageService:
 def mock_user_storage_urls(requests_mock):
     mock_storage_service = MockUserStorageService()
     user_storage_path_re = re.compile(
-        "^" + re.escape(constants.LLAMALABS_USER_STORAGE_URL) + "/"
+        "^" + re.escape(constants.FIXIE_USER_STORAGE_URL) + "/"
     )
     requests_mock.post(user_storage_path_re, json=mock_storage_service.post)
     requests_mock.get(user_storage_path_re, json=mock_storage_service.get)
