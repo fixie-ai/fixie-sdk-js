@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import functools
 import re
 from typing import Callable, Dict, List, Optional, Union
@@ -97,7 +98,7 @@ class CodeShotAgent:
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler("startup", _ping_fixie(agent_id))
+        fast_api.add_event_handler("startup", lambda: asyncio.run(_ping_fixie(agent_id)))
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -187,6 +188,6 @@ def _split_few_shots(few_shots: str) -> List[str]:
     return few_shot_splits
 
 
-def _ping_fixie(agent_id: str):
-    """Returns a callable that pings Fixie to refresh prompt for the given agent_id."""
-    return lambda: requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
+async def _ping_fixie(agent_id: str):
+    """Coroutine that pings Fixie to refresh the given agent_id."""
+    return requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
