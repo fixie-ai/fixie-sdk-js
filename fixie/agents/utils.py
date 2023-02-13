@@ -1,7 +1,7 @@
 import enum
 import inspect
 import re
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable
 from unittest import mock
 
 if TYPE_CHECKING:
@@ -26,45 +26,47 @@ def validate_code_shot_agent(agent_metadata: code_shot.AgentMetadata):
         _validate_few_shot_prompt(fewshot)
 
 
-def get_pyfunc(
-    agent: code_shot.CodeShotAgent, func_name: str
-) -> Callable[[api.AgentQuery], Union[str, api.Message, api.AgentResponse]]:
-    """Gets the method Func[func_name] from `agents` and validates it."""
-    if func_name.startswith("_"):
-        raise ValueError(f"Func[{func_name}] is not allowed to be called.")
+def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
+    """Validates `func`'s signature to be a valid CodeShot Func.
 
-    func = getattr(agent, func_name)
-
+    Args:
+        func: The function to be validated.
+        duck_typing_okay: If set, registered function may be duck typed.
+    """
     # Validate that func has a proper api.AgentQuery -> api.AgentResponse signature.
-    if not inspect.ismethod(func):
+    if not inspect.isfunction(func):
         raise TypeError(
-            f"Attribute {func_name!r} is not a method, but it's of type {type(func)!r}."
+            f"Registered function {func!r} is not a function, but a {type(func)!r}."
         )
     signature = inspect.signature(func)
+
     params = signature.parameters
     if len(params) != 1:
         raise TypeError(
-            f"Expected Func[{func_name}] to get a single api.AgentQuery argument but it "
-            f"gets {len(params)}."
+            f"Expected function to get a single argument but it gets {len(params)}."
         )
     param_type = list(params.values())[0].annotation
     return_type = signature.return_annotation
-    if param_type is inspect.Signature.empty or return_type is inspect.Signature.empty:
+    if not duck_typing_okay and inspect.Signature.empty in (param_type, return_type):
         raise TypeError(
-            f"Expected Func[{func_name}] to set type annotation for its argument and "
+            f"Expected registered function to set type annotation for its argument and "
             "return type."
         )
     # Delayed import to avoid circular dependency
     from fixie.agents import api
 
     # TODO(hessam): Allow return_type to be a Union of the allowed types.
-    if param_type is not api.AgentQuery or return_type not in (
+    if param_type not in (
+        api.AgentQuery,
+        inspect.Signature.empty,
+    ) or return_type not in (
         api.AgentResponse,
         api.Message,
         str,
+        inspect.Signature.empty,
     ):
         raise TypeError(
-            f"Expected Func[{func_name}] to get a single api.AgentQuery "
+            f"Expected registered function to get a single api.AgentQuery "
             "argument and output an api.AgentResponse but it gets "
             f"{list(params.values())} and returns {return_type}."
         )

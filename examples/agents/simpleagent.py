@@ -1,42 +1,37 @@
+"""This is an example of a simple Fixie Agent that tosses a coin.
+
+An example query to the local agents might look like this:
+    curl -v -X GET http://localhost:8181
+this should return the agent prompt, the fewshots, and other agent metadata
+
+An example query to the hosted agents might look like this:
+    curl -v -X POST http://localhost:8181 \
+        -H "Content-Type: application/json" \
+        --data '{"message": {"text": "flip a coin"}}'
+"""
 import random
 
 import fixie.agents
 
+BASE_PROMPT = "I am a simple agent that tosses a coin."
+FEW_SHOTS = """
+Q: Toss a coin.
+Func[coin] says: heads
+A: It's heads!
 
-class SimpleAgent(fixie.agents.CodeShotAgent):
-    """This is an example of a simple Fixie Agent that tosses a coin.
+Q: Toss a coin 3 times.
+Func[coin] says: heads
+Func[coin] says: heads
+Func[coin] says: tails
+A: It was heads the first 2 times and tails the last time!
+"""
 
-    To run this agents, use:
-        agent = SimpleAgent()
-        agent.serve()
-
-    An example query to the local agents might look like this:
-        curl -v -X GET http://localhost:8181
-    this should return the agent prompt, the fewshots, and other agent metadata
-
-    An example query to the hosted agents might look like this:
-        curl -v -X POST <agent_url_here> \
-            -H "Content-Type: application/json" \
-            --data '{"message": {"text": "flip a coin"}}'
-    """
-
-    # make sure you use the same agent_id when adding the agent name in app.fixie.ai/agents/
-    agent_id = "toss_a_coin"
-    BASE_PROMPT = "I am a simple agent that tosses a coin."
-    FEW_SHOTS = [
-        """Q: Toss a coin.
-           Func[coin] says: heads
-           A: It's heads!""",
-        """Q: Toss a coin 3 times.
-           Func[coin] says: heads
-           Func[coin] says: heads
-           Func[coin] says: tails
-           A: It was heads the first 2 times and tails the last time!""",
-    ]
-
-    def coin(self, query: fixie.agents.AgentQuery) -> str:
-        return random.choice(["heads", "tails"])
+agent = fixie.agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
 
-agent = SimpleAgent()
-agent.serve(host="0.0.0.0", port=8181)
+@agent.register_func()
+def coin(self, query: fixie.agents.AgentQuery) -> str:
+    return random.choice(["heads", "tails"])
+
+
+agent.serve("toss_a_coin", host="0.0.0.0", port=8181)

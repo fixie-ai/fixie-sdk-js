@@ -3,43 +3,50 @@ from fastapi import testclient
 
 from fixie import agents
 
+BASE_PROMPT = "I am a simple dummy agent."
+FEW_SHOTS = """
+Q: Sample query 1
+Ask Func[simple1]: Simple argument
+Func[simple1] says: Simple response
+A: Simple final response
 
-class SimpleAgent(agents.CodeShotAgent):
-    agent_id = "simple_agent"
-    BASE_PROMPT = "I am a simple dummy agent."
-    FEW_SHOTS = [
-        """Q: Sample query 1
-           Ask Func[simple1]: Simple argument
-           Func[simple1] says: Simple response
-           A: Simple final response""",
-        """Q: Sample query 2
-           Ask Func[simple2]: Simple argument
-           Func[simple2] says: Simple response
-           A: Simple final response""",
-    ]
+Q: Sample query 2
+Ask Func[simple2]: Simple argument
+Func[simple2] says: Simple response
+A: Simple final response
+"""
+agent = agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
-    def simple1(self, query: agents.AgentQuery) -> str:
-        return "Simple response 1"
 
-    def simple2(self, query: agents.AgentQuery) -> str:
-        return "Simple response 2"
+@agent.register_func
+def simple1(query: agents.AgentQuery) -> str:
+    return "Simple response 1"
+
+
+@agent.register_func()
+def simple2(query: agents.AgentQuery):
+    return "Simple response 2"
+
+
+@agent.register_func(func_name="custom")
+def simple3(query):
+    return "Simple response custom"
 
 
 def test_simple_agent_handshake():
-    agent = SimpleAgent()
     fast_api = fastapi.FastAPI()
     fast_api.include_router(agent.api_router())
     client = testclient.TestClient(fast_api)
     response = client.get("/")
     assert response.status_code == 200
     json = response.json()
-    assert json["agent_id"] == agent.agent_id
-    assert json["base_prompt"] == agent.BASE_PROMPT
-    assert json["few_shots"] == agent.FEW_SHOTS
+    assert json == {
+        "base_prompt": agent.base_prompt,
+        "few_shots": agent.few_shots,
+    }
 
 
 def test_simple_agent_func_calls():
-    agent = SimpleAgent()
     fast_api = fastapi.FastAPI()
     fast_api.include_router(agent.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
@@ -56,16 +63,20 @@ def test_simple_agent_func_calls():
     json = response.json()
     assert json == {"message": {"text": "Simple response 2", "embeds": {}}}
 
+    # Test Func[custom]
+    response = client.post("/custom", json={"message": {"text": "Howdy"}})
+    assert response.status_code == 200
+    json = response.json()
+    assert json == {"message": {"text": "Simple response custom", "embeds": {}}}
+
     # Test non-existing Func[] returns 404: Not Found
-    response = client.post(
-        "/prefix/path/non_existing_func", json={"message": {"text": "Howdy"}}
-    )
+    response = client.post("/simple3", json={"message": {"text": "Howdy"}})
     assert response.status_code == 404
 
     # Test Func[simple1] with bad arguments returns 422: Unprocessable Entity
     response = client.post("/simple1", json={"message": {"ttt": "Howdy"}})
     assert response.status_code == 422
 
-    # Test Func[__init__] 403: Forbidden
+    # Test Func[__init__] 404: Not Found
     response = client.post("/__init__", json={"message": {"text": "Howdy"}})
-    assert response.status_code == 403
+    assert response.status_code == 404
