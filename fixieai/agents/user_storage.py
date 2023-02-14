@@ -22,7 +22,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
-    >>> from fixieai.agents.api import AgentQuery, Message
+    >>> from fixieai import AgentQuery, Message
     >>> query = AgentQuery(
     ...   Message("incoming query"),
     ...   access_token="fake-access-token"
