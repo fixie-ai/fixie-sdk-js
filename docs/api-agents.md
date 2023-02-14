@@ -1,7 +1,7 @@
 # Fixie Agent API
 
-::: fixie.agents.code_shot
+::: fixieai.agents.code_shot
 
-::: fixie.agents.api
+::: fixieai.agents.api
 
-::: fixie.agents.utils
+::: fixieai.agents.utils
