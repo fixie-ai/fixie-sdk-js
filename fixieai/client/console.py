@@ -5,7 +5,7 @@ import prompt_toolkit
 import requests
 import rich.console as rich_console
 
-from fixie.client.client import FixieClient
+from fixieai.client import FixieClient
 
 HISTORY_FILE = "history.txt"
 

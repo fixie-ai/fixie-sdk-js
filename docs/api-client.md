@@ -1,7 +1,7 @@
 # Fixie Client API
 
-::: fixie.client.client
+::: fixieai.client.client
 
-::: fixie.client.session
+::: fixieai.client.session
 
-::: fixie.client.console
+::: fixieai.client.console

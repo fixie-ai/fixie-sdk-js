@@ -17,13 +17,13 @@ building custom agents that plug into the platform.
 Install the Fixie SDK using pip:
 
 ```shell
-$ pip install fixie
+$ pip install fixieai
 ```
 
 Now, let's get started:
 
 ```pycon
->>> import fixie
->>> client = fixie.FixieClient()
+>>> import fixieai
+>>> client = fixieai.FixieClient()
 ```
 

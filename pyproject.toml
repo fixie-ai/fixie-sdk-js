@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "fixie-ai"
+name = "fixieai"
 version = "0.1.4"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
-    { include = "fixie/" },
+    { include = "fixieai/" },
 ]
 
 [build-system]
@@ -13,7 +13,7 @@ build-backend = "poetry.masonry.api"
 
 # Install the "fixie" commandline script.
 [tool.poetry.scripts]
-fixie = "fixie.client.console:fixie"
+fixie = "fixieai.client.console:fixie"
 
 [tool.poetry.dependencies]
 click = "^8.1.3"

@@ -1,6 +1,6 @@
 import pytest
 
-from fixie.agents import utils
+from fixieai.agents import utils
 
 BAD_PROMPTS = [
     # Ask Agent without Agent says

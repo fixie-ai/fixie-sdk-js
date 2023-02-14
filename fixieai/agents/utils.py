@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Callable
 from unittest import mock
 
 if TYPE_CHECKING:
-    from fixie.agents import api
-    from fixie.agents import code_shot
+    from fixieai.agents import api
+    from fixieai.agents import code_shot
 else:
     api = mock.MagicMock()
     code_shot = mock.MagicMock()
@@ -58,7 +58,7 @@ def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
             "return type."
         )
     # Delayed import to avoid circular dependency
-    from fixie.agents import api
+    from fixieai.agents import api
 
     # TODO(hessam): Allow return_type to be a Union of the allowed types.
     if param_type not in (

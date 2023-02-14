@@ -3,5 +3,5 @@
 This page provides documentation for the Fixie command line tool.
 
 ::: mkdocs-click
-    :module: fixie.client.console
+    :module: fixieai.client.console
     :command: fixie

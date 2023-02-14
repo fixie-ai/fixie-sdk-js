@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 from gql import gql
 
 if TYPE_CHECKING:
-    import fixie.client as fixie_client
+    import fixieai.client as fixie_client
 
     FixieClient = fixie_client.FixieClient
 else:
