@@ -3,11 +3,6 @@
 An example query to the local agents might look like this:
     curl -v -X GET http://localhost:8181
 this should return the agent prompt, the fewshots, and other agent metadata
-
-An example query to the hosted agents might look like this:
-    curl -v -X POST http://localhost:8181 \
-        -H "Content-Type: application/json" \
-        --data '{"message": {"text": "flip a coin"}}'
 """
 import random
 

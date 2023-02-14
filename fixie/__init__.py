@@ -1,4 +1,5 @@
 from fixie.agents.api import AgentQuery
+from fixie.agents.api import AgentResponse
 from fixie.agents.api import Embed
 from fixie.agents.api import Message
 from fixie.agents.code_shot import CodeShotAgent
@@ -10,6 +11,7 @@ from fixie.client import query
 
 __all__ = [
     "AgentQuery",
+    "AgentResponse",
     "Embed",
     "Message",
     "CodeShotAgent",

@@ -39,13 +39,18 @@ def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
             f"Registered function {func!r} is not a function, but a {type(func)!r}."
         )
     signature = inspect.signature(func)
-
     params = signature.parameters
     if len(params) != 1:
         raise TypeError(
             f"Expected function to get a single argument but it gets {len(params)}."
         )
-    param_type = list(params.values())[0].annotation
+    param = list(params.values())[0]
+    if param.kind not in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
+        raise TypeError(
+            f"Expected function get a positional argument,"
+            f" but it gets {param.kind.name!r}."
+        )
+    param_type = param.annotation
     return_type = signature.return_annotation
     if not duck_typing_okay and inspect.Signature.empty in (param_type, return_type):
         raise TypeError(

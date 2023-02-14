@@ -16,6 +16,7 @@ from fixie.agents.api import AgentQuery
 from fixie.agents.api import AgentResponse
 from fixie.agents.api import Message
 
+# Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
 
@@ -59,16 +60,19 @@ class CodeShotAgent:
     "Ask Agent[agent_id]: <query to pass>", or reach out to some python functions
     by "Ask Func[func_name]: <query to pass>".
 
-    There are a series of runtime `Func`s provided by the platform available for your
-    agents to consume. You may also define your own python functions here to be consumed
-    by your agent.
+    There are a series of default runtime `Func`s provided by the platform available for
+    your agents to consume. For a full list of default runtime `Func`s, refer to:
+        http://docs.fixie.ai/XXX
+
+    You may also need to write your own python functions here to be consumed by your
+    agent. To make a function accessible by an agent, you'd need to register it by
+    `@agent.register_func`. Example:
 
         @agent.register_func
         def func_name(query: fixie.AgentQuery) -> ReturnType:
             ...
 
-        , where ReturnType is one of `str`, `fixie.Message`,
-            or `Union[str, fixie.Message]`.
+        , where ReturnType is one of `str`, `fixie.Message`, or `fixie.AgentResponse`.
 
     Note that in the above, we are using the decorator `@agent.register_func` to
     register this function with the agent instance we just created.
