@@ -1,6 +1,6 @@
 """This is an example of a simple Fixie Agent that tosses a coin.
 
-An example query to the local agents might look like this:
+An example query to a local agent might look like this:
     curl -v -X GET http://localhost:8181
 this should return the agent prompt, the fewshots, and other agent metadata
 
