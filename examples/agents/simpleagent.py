@@ -30,8 +30,8 @@ agent = fixie.agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
 
 @agent.register_func()
-def coin(self, query: fixie.agents.AgentQuery) -> str:
+def coin(query: fixie.agents.AgentQuery) -> str:
     return random.choice(["heads", "tails"])
 
 
-agent.serve("toss_a_coin", host="0.0.0.0", port=8181)
+agent.serve("coin", host="0.0.0.0", port=8181)
