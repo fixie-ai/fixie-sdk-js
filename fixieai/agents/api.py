@@ -8,7 +8,7 @@ from typing import Optional
 
 from pydantic import dataclasses as pydantic_dataclasses
 
-from fixie.agents import user_storage
+from fixieai.agents import user_storage
 
 
 @pydantic_dataclasses.dataclass

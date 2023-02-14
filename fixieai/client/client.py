@@ -9,8 +9,8 @@ from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
-from fixie import constants
-from fixie.client.session import Session
+from fixieai import constants
+from fixieai.client.session import Session
 
 _CLIENT: Optional["FixieClient"] = None
 _SESSION: Optional[Session] = None

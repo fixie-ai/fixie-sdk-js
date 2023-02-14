@@ -2,9 +2,9 @@ import fastapi
 import pytest
 from fastapi import testclient
 
-import fixie
-from fixie import agents
-from fixie.agents import code_shot
+import fixieai
+from fixieai import agents
+from fixieai.agents import code_shot
 
 BASE_PROMPT = "I am a simple dummy agent."
 FEW_SHOTS = """
@@ -119,19 +119,19 @@ def bad_duck_typed_func3(**x):
     return "test"
 
 
-def good_typed_func1(x: fixie.AgentQuery) -> fixie.AgentResponse:
-    return fixie.AgentResponse(fixie.Message("test"))
+def good_typed_func1(x: fixieai.AgentQuery) -> fixieai.AgentResponse:
+    return fixieai.AgentResponse(fixieai.Message("test"))
 
 
-def good_typed_func2(x: fixie.AgentQuery) -> fixie.Message:
-    return fixie.Message("test")
+def good_typed_func2(x: fixieai.AgentQuery) -> fixieai.Message:
+    return fixieai.Message("test")
 
 
-def good_typed_func3(x: fixie.AgentQuery) -> str:
+def good_typed_func3(x: fixieai.AgentQuery) -> str:
     return "test"
 
 
-def good_semi_typed_func4(x: fixie.AgentQuery):
+def good_semi_typed_func4(x: fixieai.AgentQuery):
     ...
 
 

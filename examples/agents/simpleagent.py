@@ -6,7 +6,7 @@ this should return the agent prompt, the fewshots, and other agent metadata
 """
 import random
 
-import fixie.agents
+import fixieai.agents
 
 BASE_PROMPT = "I am a simple agent that tosses a coin."
 FEW_SHOTS = """
@@ -21,11 +21,11 @@ Func[coin] says: tails
 A: It was heads the first 2 times and tails the last time!
 """
 
-agent = fixie.agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
+agent = fixieai.agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
 
 @agent.register_func()
-def coin(query: fixie.agents.AgentQuery) -> str:
+def coin(query: fixieai.agents.AgentQuery) -> str:
     return random.choice(["heads", "tails"])
 
 

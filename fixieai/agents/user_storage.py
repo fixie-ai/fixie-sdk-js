@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Dict, List, Union
 
 import requests
 
-from fixie import constants
+from fixieai import constants
 
 if TYPE_CHECKING:
-    from fixie.agents.api import AgentQuery
+    from fixieai.agents.api import AgentQuery
 
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
@@ -22,7 +22,7 @@ class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
-    >>> from fixie.agents.api import AgentQuery, Message
+    >>> from fixieai.agents.api import AgentQuery, Message
     >>> query = AgentQuery(
     ...   Message("incoming query"),
     ...   access_token="fake-access-token"

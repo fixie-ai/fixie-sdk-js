@@ -3,9 +3,9 @@ import re
 
 import pytest
 
-from fixie import constants
-from fixie.agents import api
-from fixie.agents import user_storage
+from fixieai import constants
+from fixieai.agents import api
+from fixieai.agents import user_storage
 
 FAKE_AGENT_ID = "fake-agent"
 FAKE_ACCESS_TOKEN = "fake-access-token"

@@ -10,11 +10,11 @@ import requests
 import uvicorn
 from pydantic import dataclasses as pydantic_dataclasses
 
-from fixie import constants
-from fixie.agents import utils
-from fixie.agents.api import AgentQuery
-from fixie.agents.api import AgentResponse
-from fixie.agents.api import Message
+from fixieai import constants
+from fixieai.agents import utils
+from fixieai.agents.api import AgentQuery
+from fixieai.agents.api import AgentResponse
+from fixieai.agents.api import Message
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
@@ -69,10 +69,10 @@ class CodeShotAgent:
     `@agent.register_func`. Example:
 
         @agent.register_func
-        def func_name(query: fixie.AgentQuery) -> ReturnType:
+        def func_name(query: fixieai.AgentQuery) -> ReturnType:
             ...
 
-        , where ReturnType is one of `str`, `fixie.Message`, or `fixie.AgentResponse`.
+        , where ReturnType is one of `str`, `fixieai.Message`, or `fixie.AgentResponse`.
 
     Note that in the above, we are using the decorator `@agent.register_func` to
     register this function with the agent instance we just created.

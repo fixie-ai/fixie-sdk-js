@@ -1,7 +1,7 @@
 import pytest
 import requests_mock
 
-from fixie.client.client import FixieClient
+from fixieai.client.client import FixieClient
 
 
 @pytest.fixture
