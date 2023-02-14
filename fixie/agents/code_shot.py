@@ -98,7 +98,9 @@ class CodeShotAgent:
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler("startup", functools.partial(_ping_fixie, agent_id))
+        fast_api.add_event_handler(
+            "startup", functools.partial(_ping_fixie_async, agent_id)
+        )
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -188,10 +190,12 @@ def _split_few_shots(few_shots: str) -> List[str]:
     return few_shot_splits
 
 
-def _ping_fixie(agent_id: str):
+def _ping_fixie_async(agent_id: str):
     """Asynchronously pings Fixie to refresh the given agent_id."""
-    thread = threading.Thread(
-        target=requests.post,
-        args=(f"{constants.FIXIE_REFRESH_URL}/{agent_id}",)
-    )
+    thread = threading.Thread(target=_ping_fixie_sync, args=(agent_id,))
     thread.start()
+
+
+def _ping_fixie_sync(agent_id: str):
+    response = requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
+    response.raise_for_status()
