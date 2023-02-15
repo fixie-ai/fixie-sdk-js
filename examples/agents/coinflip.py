@@ -1,9 +1,4 @@
-"""This is an example of a simple Fixie Agent that tosses a coin.
-
-An example query to a local agent might look like this:
-    curl -v -X GET http://localhost:8181
-this should return the agent prompt, the fewshots, and other agent metadata
-"""
+"""This is an example of a simple Fixie Agent that flips a coin."""
 import random
 
 import fixieai
@@ -21,12 +16,15 @@ Func[coin] says: tails
 A: It was heads the first 2 times and tails the last time!
 """
 
+# Create the Agent with the base prompt and few shots.
 agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
-
+# The coin() function can be invoked by the Agent.
 @agent.register_func()
 def coin(query: fixieai.AgentQuery) -> str:
     return random.choice(["heads", "tails"])
 
-
-agent.serve("coin", host="0.0.0.0", port=8181)
+# Start the Agent. The name "coinflip" must match the handle of
+# the Agent that you create when you register the Agent with Fixie:
+# https://app.fixie.ai/agents/new
+agent.serve("coinflip")
