@@ -183,7 +183,7 @@ class Session:
         query = gql(
             """
             mutation Post($handle: String!, $text: String!) {
-                addSessionMessage(messageData: {session: $handle, text: $text}) {
+                sendSessionMessage(messageData: {session: $handle, text: $text}) {
                     message {
                         text
                     }
