@@ -1,4 +1,4 @@
-# Fixie.ai SDK Reference
+# Fixie Developer Portal
 
 [Fixie](https://fixie.ai) is a platform for building applications using Large Language
 Models. With Fixie, you can write apps that communicate, in natural
