@@ -30,12 +30,12 @@ nav:
     - Introduction: 'index.md'
     - Fixie Architecture: 'architecture.md'
     - Agent QuickStart: 'agent-quickstart.md'
+    - Agent Protocol: 'agent-protocol.md'
     - Python SDK Reference:
         - Client API: 'api-client.md'
         - Agent API: 'api-agents.md'
-    - CLI Reference: 'cli.md'
-    - Protocol reference: 'agent-protocol.md'
-    - GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
+    - Fixie CLI Reference: 'cli.md'
+    - Fixie GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
 
 
 markdown_extensions:
