@@ -28,6 +28,7 @@ edit_uri: ""
 
 nav:
     - Introduction: 'index.md'
+    - Fixie Architecture: 'architecture.md'
     - Agent QuickStart: 'agent-quickstart.md'
     - Python SDK Reference:
         - Client API: 'api-client.md'
