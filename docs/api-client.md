@@ -1,7 +1,13 @@
 # Fixie Client API
 
-::: fixieai.client.client
+## ::: fixieai.client.client
+    options:
+      show_source: false
 
-::: fixieai.client.session
+## ::: fixieai.client.session
+    options:
+      show_source: false
 
-::: fixieai.client.console
+## ::: fixieai.client.console
+    options:
+      show_source: false

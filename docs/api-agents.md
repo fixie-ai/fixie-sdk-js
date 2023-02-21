@@ -1,7 +1,13 @@
 # Fixie Agent API
 
-::: fixieai.agents.code_shot
+## ::: fixieai.agents.code_shot
+    options:
+      show_source: false
 
-::: fixieai.agents.api
+## ::: fixieai.agents.api
+    options:
+      show_source: false
 
-::: fixieai.agents.utils
+## ::: fixieai.agents.utils
+    options:
+      show_source: false
