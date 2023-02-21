@@ -28,12 +28,12 @@ edit_uri: ""
 
 nav:
     - Introduction: 'index.md'
-    - Usage:
-        - QuickStart: 'quickstart.md'
+    - Agent QuickStart: 'agent-quickstart.md'
     - Python SDK Reference:
         - Client API: 'api-client.md'
         - Agent API: 'api-agents.md'
     - CLI Reference: 'cli.md'
+    - Protocol reference: 'agent-protocol.md'
     - GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
 
 
