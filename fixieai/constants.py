@@ -12,3 +12,7 @@ FIXIE_API_KEY = os.getenv("FIXIE_API_KEY")
 FIXIE_USER_STORAGE_URL = f"{FIXIE_API_URL}/api/userstorage"
 # Fixie's refresh endpoint. It will be pinged when your agent comes alive.
 FIXIE_REFRESH_URL = f"{FIXIE_API_URL}/api/refresh"
+
+FIXIE_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEANcDOXX9KOKx64wNUuq9oyGKfj5lZJjM/0Qgj/A55PTw=
+-----END PUBLIC KEY-----"""
