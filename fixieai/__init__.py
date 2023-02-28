@@ -3,6 +3,7 @@ from fixieai.agents import AgentResponse
 from fixieai.agents import CodeShotAgent
 from fixieai.agents import Embed
 from fixieai.agents import Message
+from fixieai.agents import OAuthParams
 from fixieai.agents import RunHelper
 from fixieai.client import FixieClient
 from fixieai.client import get_agents
@@ -17,6 +18,7 @@ __all__ = [
     "Message",
     "CodeShotAgent",
     "RunHelper",
+    "OAuthParams",
     "FixieClient",
     "get_agents",
     "get_client",
