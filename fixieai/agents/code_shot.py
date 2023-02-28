@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import functools
 import re
 import threading
@@ -8,6 +9,7 @@ from typing import Callable, Dict, List, Optional, Union
 import fastapi
 import requests
 import uvicorn
+import yaml
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
@@ -152,6 +154,10 @@ class CodeShotAgent:
 
     def _handshake(self) -> AgentMetadata:
         return AgentMetadata(self.base_prompt, self.few_shots)
+        """Returns the agent's metadata in YAML format."""
+        metadata = AgentMetadata(self.base_prompt, self.few_shots)
+        yaml_content = yaml.dump(dataclasses.asdict(metadata))
+        return fastapi.Response(yaml_content, media_type="application/yaml")
 
     def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
         try:
