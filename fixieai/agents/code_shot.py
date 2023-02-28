@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import inspect
+import json
 import re
 import threading
 from typing import Callable, Dict, List, Optional, Union
@@ -99,6 +100,9 @@ class CodeShotAgent:
         self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
 
+        # Register default Funcs.
+        self.register_func(self._oauth)
+
     def serve(self, host: str = "0.0.0.0", port: int = 8181):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
@@ -186,6 +190,15 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
+    def _oauth(self, query: api.AgentQuery) -> api.AgentResponse:
+        """Serves Func[_oauth] which is used upon auth redirect callback."""
+        run_helper = RunHelper(query, self)
+        auth_request = json.loads(query.message.text)
+        state = auth_request["state"]
+        code = auth_request["code"]
+        run_helper.oauth_handler.authorize(state, code)
+        return api.AgentResponse(api.Message("Authorization successful!"))
+
 
 class RunHelper:
     """A RunHelper object provided interface to user-storage and oauth.
@@ -204,6 +217,10 @@ class RunHelper:
 
     @property
     def oauth_handler(self):
+        if not self._oauth_params:
+            raise ValueError(
+                "Cannot get oauth_handler for an agent who hasn't set oauth_params."
+            )
         return oauth.OAuthHandler(self._oauth_params, self._query, self._agent_id)
 
 
