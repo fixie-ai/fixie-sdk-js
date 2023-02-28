@@ -194,8 +194,8 @@ class Session:
         result = self._gqlclient.execute(
             query, variable_values={"handle": self._session_id, "text": text}
         )
-        assert isinstance(result["addSessionMessage"]["message"]["text"], str)
-        return result["addSessionMessage"]["message"]["text"]
+        assert isinstance(result["sendSessionMessage"]["message"]["text"], str)
+        return result["sendSessionMessage"]["message"]["text"]
 
     def query(self, text: str) -> str:
         """Run a single query against the Fixie API and return the response."""

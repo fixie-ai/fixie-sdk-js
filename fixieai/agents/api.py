@@ -4,7 +4,7 @@ Fixie ecosystem."""
 from __future__ import annotations
 
 import dataclasses
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import dataclasses as pydantic_dataclasses
 
@@ -29,7 +29,7 @@ class Message:
     text: str
 
     # A mapping of embed keys to Embed objects.
-    embeds: dict[str, Embed] = dataclasses.field(default_factory=dict)
+    embeds: Dict[str, Embed] = dataclasses.field(default_factory=dict)
 
 
 @pydantic_dataclasses.dataclass
