@@ -6,6 +6,7 @@ import fixieai
 from fixieai import agents
 from fixieai.agents import code_shot
 
+agent_id = "dummy"
 BASE_PROMPT = "I am a simple dummy agent."
 FEW_SHOTS = """
 Q: Sample query 1
@@ -22,7 +23,7 @@ A: Simple final response
 
 @pytest.fixture
 def dummy_agent():
-    agent = agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
+    agent = agents.CodeShotAgent(agent_id, BASE_PROMPT, FEW_SHOTS)
 
     @agent.register_func
     def simple1(query: agents.AgentQuery) -> str:
@@ -103,19 +104,27 @@ A: Simple final response""",
     ]
 
 
-def good_duck_typed_func(x):
+def good_duck_typed_func1(x):
     return "test"
 
 
-def bad_duck_typed_func1(x, y):
+def good_duck_typed_func2(x, y):
     return "test"
 
 
-def bad_duck_typed_func2(*x):
+def bad_duck_typed_func1(*x):
     return "test"
 
 
-def bad_duck_typed_func3(**x):
+def bad_duck_typed_func2(**x):
+    return "test"
+
+
+def bad_duck_typed_func3(x, y, z):
+    return "test"
+
+
+def bad_duck_typed_func4(x, *y):
     return "test"
 
 
@@ -131,11 +140,23 @@ def good_typed_func3(x: fixieai.AgentQuery) -> str:
     return "test"
 
 
-def good_semi_typed_func4(x: fixieai.AgentQuery):
+def good_typed_func4(x: fixieai.AgentQuery, y: fixieai.RunHelper) -> fixieai.Message:
+    return fixieai.Message("test")
+
+
+def good_semi_typed_func1(x: fixieai.AgentQuery):
     ...
 
 
-def good_semi_typed_func5(x) -> str:
+def good_semi_typed_func2(x) -> str:
+    return "test"
+
+
+def good_semi_typed_func3(x, y: fixieai.RunHelper):
+    ...
+
+
+def good_semi_typed_func4(x, y) -> str:
     return "test"
 
 
@@ -147,30 +168,40 @@ def bad_typed_func2(x: int) -> str:
     return "test"
 
 
-def test_registering_func(dummy_agent):
+def test_registering_good_and_bad_typed_funcs(dummy_agent):
+    good_funcs = [
+        good_typed_func1,
+        good_typed_func2,
+        good_typed_func3,
+        good_typed_func4,
+        good_duck_typed_func1,
+        good_duck_typed_func2,
+        good_semi_typed_func1,
+        good_semi_typed_func2,
+        good_semi_typed_func3,
+        good_semi_typed_func4,
+    ]
+    bad_funcs = [
+        bad_typed_func1,
+        bad_typed_func2,
+        bad_duck_typed_func1,
+        bad_duck_typed_func2,
+        bad_duck_typed_func3,
+        bad_duck_typed_func4,
+    ]
+    for good_func in good_funcs:
+        dummy_agent.register_func(good_func)
+        assert dummy_agent._funcs[good_func.__name__] == good_func
+
+    for bad_func in bad_funcs:
+        with pytest.raises(TypeError):
+            dummy_agent.register_func(bad_func)
+
+
+def test_registering_func_with_custom_name(dummy_agent):
     dummy_agent.register_func(good_typed_func1, func_name="name1")
     dummy_agent.register_func(good_typed_func2, func_name="name2")
     dummy_agent.register_func(good_typed_func3, func_name="name3")
     assert dummy_agent._funcs["name1"] == good_typed_func1
     assert dummy_agent._funcs["name2"] == good_typed_func2
     assert dummy_agent._funcs["name3"] == good_typed_func3
-
-    dummy_agent.register_func(good_duck_typed_func)
-    assert dummy_agent._funcs["good_duck_typed_func"] == good_duck_typed_func
-
-    dummy_agent.register_func(good_semi_typed_func4)
-    assert dummy_agent._funcs["good_semi_typed_func4"] == good_semi_typed_func4
-
-    dummy_agent.register_func(good_semi_typed_func5)
-    assert dummy_agent._funcs["good_semi_typed_func5"] == good_semi_typed_func5
-
-    with pytest.raises(TypeError):
-        dummy_agent.register_func(bad_duck_typed_func1)
-    with pytest.raises(TypeError):
-        dummy_agent.register_func(bad_duck_typed_func2)
-    with pytest.raises(TypeError):
-        dummy_agent.register_func(bad_duck_typed_func3)
-    with pytest.raises(TypeError):
-        dummy_agent.register_func(bad_typed_func1)
-    with pytest.raises(TypeError):
-        dummy_agent.register_func(bad_typed_func2)

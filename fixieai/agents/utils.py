@@ -39,41 +39,60 @@ def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
             f"Registered function {func!r} is not a function, but a {type(func)!r}."
         )
     signature = inspect.signature(func)
-    params = signature.parameters
-    if len(params) != 1:
+    params = list(signature.parameters.values())
+    if len(params) not in (1, 2):
         raise TypeError(
-            f"Expected function to get a single argument but it gets {len(params)}."
+            f"Expected function to either get 1 or 2 arguments "
+            f"but it gets {len(params)}."
         )
-    param = list(params.values())[0]
-    if param.kind not in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
-        raise TypeError(
-            f"Expected function get a positional argument,"
-            f" but it gets {param.kind.name!r}."
-        )
-    param_type = param.annotation
-    return_type = signature.return_annotation
-    if not duck_typing_okay and inspect.Signature.empty in (param_type, return_type):
-        raise TypeError(
-            f"Expected registered function to set type annotation for its argument and "
-            "return type."
-        )
+
     # Delayed import to avoid circular dependency
     from fixieai.agents import api
+    from fixieai.agents import code_shot
 
-    # TODO(hessam): Allow return_type to be a Union of the allowed types.
-    if param_type not in (
+    if any(
+        param.kind not in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
+        for param in params
+    ):
+        raise TypeError(
+            f"Expected function get positional arguments, but it gets {params!r}."
+        )
+
+    if not duck_typing_okay and any(
+        param.annotation == inspect.Signature.empty for param in params
+    ):
+        raise TypeError(
+            f"Expected registered function to set type annotation for its argument."
+        )
+
+    if params[0].annotation not in (
         api.AgentQuery,
         inspect.Signature.empty,
-    ) or return_type not in (
+    ):
+        raise TypeError(
+            f"Expected registered function to get an AgentQuery as the first "
+            f"argument but it gets {params[0].annotation}."
+        )
+
+    if len(params) > 1 and params[1].annotation not in (
+        code_shot.RunHelper,
+        inspect.Signature.empty,
+    ):
+        raise TypeError(
+            f"Expected registered function to get a RunHelper as the second "
+            f"argument but it gets {params[1].annotation}."
+        )
+
+    return_type = signature.return_annotation
+    if return_type not in (
         api.AgentResponse,
         api.Message,
         str,
         inspect.Signature.empty,
     ):
         raise TypeError(
-            f"Expected registered function to get a single api.AgentQuery "
-            "argument and output an api.AgentResponse but it gets "
-            f"{list(params.values())} and returns {return_type}."
+            f"Expected registered function to return an AgentResponse "
+            f"but it returns {return_type}."
         )
     return func
 

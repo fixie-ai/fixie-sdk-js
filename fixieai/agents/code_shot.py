@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import inspect
 import re
 import threading
 from typing import Callable, Dict, List, Optional, Union
@@ -11,10 +12,10 @@ import uvicorn
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
+from fixieai.agents import api
+from fixieai.agents import oauth
+from fixieai.agents import user_storage
 from fixieai.agents import utils
-from fixieai.agents.api import AgentQuery
-from fixieai.agents.api import AgentResponse
-from fixieai.agents.api import Message
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
@@ -82,28 +83,35 @@ class CodeShotAgent:
 
     """
 
-    def __init__(self, base_prompt: str, few_shots: Union[str, List[str]]):
+    def __init__(
+        self,
+        agent_id: str,
+        base_prompt: str,
+        few_shots: Union[str, List[str]],
+        oauth_params: Optional[oauth.OAuthParams] = None,
+    ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
+        self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
+        self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
 
-    def serve(self, agent_id: str, host: str = "0.0.0.0", port: int = 8181):
+    def serve(self, host: str = "0.0.0.0", port: int = 8181):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
         This pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
-            agent_id: Fixie agent_id that this agent will serve.
             host: The address to start listening at.
             port: The port number to start listening at.
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
         fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, agent_id)
+            "startup", functools.partial(_ping_fixie_async, self.agent_id)
         )
         uvicorn.run(fast_api, host=host, port=port)
 
@@ -153,14 +161,20 @@ class CodeShotAgent:
     def _handshake(self) -> AgentMetadata:
         return AgentMetadata(self.base_prompt, self.few_shots)
 
-    def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
+    def _serve_func(self, func_name: str, query: api.AgentQuery) -> api.AgentResponse:
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
-        output = pyfunc(query)
+        func_params = inspect.signature(pyfunc).parameters
+        if len(func_params) == 1:
+            # pyfunc gets a single AgentQuery argument.
+            output = pyfunc(query)
+        else:
+            # pyfunc gets 2 arguments: AgentQuery and RunHelper
+            output = pyfunc(query, RunHelper(query, self))
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
@@ -169,14 +183,34 @@ class CodeShotAgent:
             )
 
 
+class RunHelper:
+    """A RunHelper object provided interface to user-storage and oauth.
+
+    This object gets passed as second argument to agent `Func`s if they accept it.
+    """
+
+    def __init__(self, query: api.AgentQuery, agent: CodeShotAgent):
+        self._query = query
+        self._agent_id = agent.agent_id
+        self._oauth_params = agent.oauth_params
+
+    @property
+    def user_storage(self):
+        return user_storage.UserStorage(self._query, self._agent_id)
+
+    @property
+    def oauth_handler(self):
+        return oauth.OAuthHandler(self._oauth_params, self._query, self._agent_id)
+
+
 def _wrap_with_agent_response(
-    value: Union[str, Message, AgentResponse]
-) -> AgentResponse:
+    value: Union[str, api.Message, api.AgentResponse]
+) -> api.AgentResponse:
     if isinstance(value, str):
-        return AgentResponse(Message(value))
-    elif isinstance(value, Message):
-        return AgentResponse(value)
-    elif isinstance(value, AgentResponse):
+        return api.AgentResponse(api.Message(value))
+    elif isinstance(value, api.Message):
+        return api.AgentResponse(value)
+    elif isinstance(value, api.AgentResponse):
         return value
     else:
         raise TypeError(f"Unexpected type to wrap: {type(value)}")
