@@ -1,7 +1,6 @@
 import base64
-import collections.abc
 import json
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, MutableMapping, Union
 
 import requests
 
@@ -18,7 +17,7 @@ UserStorageType = Union[
 ]
 
 
-class UserStorage(collections.abc.MutableMapping[str, UserStorageType]):
+class UserStorage(MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
