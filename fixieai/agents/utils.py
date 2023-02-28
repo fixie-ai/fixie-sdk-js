@@ -1,7 +1,7 @@
 import enum
 import inspect
 import re
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, get_type_hints
 from unittest import mock
 
 if TYPE_CHECKING:
@@ -65,18 +65,18 @@ def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
             f"Expected registered function to set type annotation for its argument."
         )
 
-    if params[0].annotation not in (
-        api.AgentQuery,
-        inspect.Signature.empty,
-    ):
+    type_hints = get_type_hints(func)
+
+    if params[0].name in type_hints and type_hints[params[0].name] != api.AgentQuery:
         raise TypeError(
             f"Expected registered function to get an AgentQuery as the first "
             f"argument but it gets {params[0].annotation}."
         )
 
-    if len(params) > 1 and params[1].annotation not in (
-        code_shot.RunHelper,
-        inspect.Signature.empty,
+    if (
+        len(params) > 1
+        and params[1].name in type_hints
+        and type_hints[params[1].name] != code_shot.RunHelper
     ):
         raise TypeError(
             f"Expected registered function to get a RunHelper as the second "
@@ -84,11 +84,10 @@ def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
         )
 
     return_type = signature.return_annotation
-    if return_type not in (
+    if "return" in type_hints and type_hints["return"] not in (
         api.AgentResponse,
         api.Message,
         str,
-        inspect.Signature.empty,
     ):
         raise TypeError(
             f"Expected registered function to return an AgentResponse "
