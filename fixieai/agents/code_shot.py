@@ -172,9 +172,13 @@ class CodeShotAgent:
         if len(func_params) == 1:
             # pyfunc gets a single AgentQuery argument.
             output = pyfunc(query)
-        else:
+        elif len(func_params) == 2:
             # pyfunc gets 2 arguments: AgentQuery and RunHelper
             output = pyfunc(query, RunHelper(query, self))
+        else:
+            raise RuntimeError(
+                f"Func[{func_name}] accepts {len(func_params)} (not in [1, 2]) args."
+            )
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
