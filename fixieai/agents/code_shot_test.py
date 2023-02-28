@@ -1,3 +1,5 @@
+from unittest import mock
+
 import fastapi
 import pytest
 from fastapi import testclient
@@ -5,7 +7,6 @@ from fastapi import testclient
 import fixieai
 from fixieai import agents
 from fixieai.agents import code_shot
-from unittest import mock
 
 BASE_PROMPT = "I am a simple dummy agent."
 FEW_SHOTS = """

@@ -152,10 +152,7 @@ class CodeShotAgent:
         return func
 
     def _handshake(self) -> AgentMetadata:
-        metadata = AgentMetadata(self.base_prompt, self.few_shots)
-        return fastapi.Response(
-            content=yaml.dump(metadata), media_type="application/yaml"
-        )
+        return AgentMetadata(self.base_prompt, self.few_shots)
 
     def _serve_func(
         self,
@@ -184,7 +181,7 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
-    def _verify_token(token: str) -> bool:
+    def _verify_token(self, token: str) -> bool:
         try:
             _ = jwt.decode(token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"])
             return True
