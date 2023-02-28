@@ -152,8 +152,7 @@ class CodeShotAgent:
         self._funcs[name] = func
         return func
 
-    def _handshake(self) -> AgentMetadata:
-        return AgentMetadata(self.base_prompt, self.few_shots)
+    def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
         metadata = AgentMetadata(self.base_prompt, self.few_shots)
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
