@@ -2,6 +2,7 @@ from unittest import mock
 
 import fastapi
 import pytest
+import yaml
 from fastapi import testclient
 
 import fixieai
@@ -48,8 +49,9 @@ def test_simple_agent_handshake(dummy_agent):
     client = testclient.TestClient(fast_api)
     response = client.get("/")
     assert response.status_code == 200
-    json = response.json()
-    assert json == {
+    assert response.headers["content-type"] == "application/yaml"
+    yaml_content = yaml.load(response.content, Loader=yaml.Loader)
+    assert yaml_content == {
         "base_prompt": dummy_agent.base_prompt,
         "few_shots": dummy_agent.few_shots,
     }
