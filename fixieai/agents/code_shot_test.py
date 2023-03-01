@@ -1,5 +1,8 @@
+from unittest import mock
+
 import fastapi
 import pytest
+import yaml
 from fastapi import testclient
 
 import fixieai
@@ -37,6 +40,7 @@ def dummy_agent():
     def simple3(query):
         return "Simple response custom"
 
+    agent._verify_token = mock.Mock(return_value=True)
     return agent
 
 
@@ -46,8 +50,9 @@ def test_simple_agent_handshake(dummy_agent):
     client = testclient.TestClient(fast_api)
     response = client.get("/")
     assert response.status_code == 200
-    json = response.json()
-    assert json == {
+    assert response.headers["content-type"] == "application/yaml"
+    yaml_content = yaml.load(response.content, Loader=yaml.Loader)
+    assert yaml_content == {
         "base_prompt": dummy_agent.base_prompt,
         "few_shots": dummy_agent.few_shots,
     }
@@ -57,36 +62,54 @@ def test_simple_agent_func_calls(dummy_agent):
     fast_api = fastapi.FastAPI()
     fast_api.include_router(dummy_agent.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
 
     # Test Func[simple1]
-    response = client.post("/simple1", json={"message": {"text": "Howdy"}})
+    response = client.post(
+        "/simple1", json={"message": {"text": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
+    dummy_agent._verify_token.assert_called_once_with("fixie-test-token")
 
     # Test Func[simple2]
-    response = client.post("/simple2", json={"message": {"text": "Howdy"}})
+    response = client.post(
+        "/simple2", json={"message": {"text": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 2", "embeds": {}}}
 
     # Test Func[custom]
-    response = client.post("/custom", json={"message": {"text": "Howdy"}})
+    response = client.post(
+        "/custom", json={"message": {"text": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response custom", "embeds": {}}}
 
     # Test non-existing Func[] returns 404: Not Found
-    response = client.post("/simple3", json={"message": {"text": "Howdy"}})
+    response = client.post(
+        "/simple3", json={"message": {"text": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 404
 
     # Test Func[simple1] with bad arguments returns 422: Unprocessable Entity
-    response = client.post("/simple1", json={"message": {"ttt": "Howdy"}})
+    response = client.post(
+        "/simple1", json={"message": {"ttt": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 422
 
     # Test Func[__init__] 404: Not Found
-    response = client.post("/__init__", json={"message": {"text": "Howdy"}})
+    response = client.post(
+        "/__init__", json={"message": {"text": "Howdy"}}, headers=headers
+    )
     assert response.status_code == 404
+
+    # Test Func without auth header returns 401: Unauthorized
+    response = client.post("/simple1", json={"message": {"text": "Howdy"}})
+    assert response.status_code == 403
 
 
 def test_split_few_shots():

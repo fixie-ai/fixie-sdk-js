@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import functools
 import inspect
 import json
@@ -8,8 +9,10 @@ import threading
 from typing import Callable, Dict, List, Optional, Union
 
 import fastapi
+import jwt
 import requests
 import uvicorn
+import yaml
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
@@ -162,10 +165,25 @@ class CodeShotAgent:
         self._funcs[name] = func
         return func
 
-    def _handshake(self) -> AgentMetadata:
-        return AgentMetadata(self.base_prompt, self.few_shots)
+    def _handshake(self) -> fastapi.Response:
+        """Returns the agent's metadata in YAML format."""
+        metadata = AgentMetadata(self.base_prompt, self.few_shots)
+        yaml_content = yaml.dump(dataclasses.asdict(metadata))
+        return fastapi.Response(yaml_content, media_type="application/yaml")
 
-    def _serve_func(self, func_name: str, query: api.AgentQuery) -> api.AgentResponse:
+    def _serve_func(
+        self,
+        func_name: str,
+        query: api.AgentQuery,
+        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
+            fastapi.security.HTTPBearer()
+        ),
+    ) -> api.AgentResponse:
+        """Verifies the request is a valid request from Fixie, and dispatches it to
+        the appropriate function.
+        """
+        if not self._verify_token(credentials.credentials):
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
@@ -189,6 +207,13 @@ class CodeShotAgent:
             raise TypeError(
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
+
+    def _verify_token(self, token: str) -> bool:
+        try:
+            _ = jwt.decode(token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"])
+            return True
+        except jwt.DecodeError:
+            return False
 
 
 class RunHelper:
