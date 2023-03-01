@@ -67,10 +67,10 @@ def test_simple_agent_func_calls(dummy_agent):
     response = client.post(
         "/simple1", json={"message": {"text": "Howdy"}}, headers=headers
     )
-    agent._verify_token.assert_called_once_with("fixie-test-token")
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
+    dummy_agent._verify_token.assert_called_once_with("fixie-test-token")
 
     # Test Func[simple2]
     response = client.post(
