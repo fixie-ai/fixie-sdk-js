@@ -7,6 +7,7 @@ import threading
 from typing import Callable, Dict, List, Optional, Union
 
 import fastapi
+import jwt
 import requests
 import uvicorn
 import yaml
@@ -158,7 +159,19 @@ class CodeShotAgent:
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
-    def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
+    def _serve_func(
+        self,
+        func_name: str,
+        query: AgentQuery,
+        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
+            fastapi.security.HTTPBearer()
+        ),
+    ) -> AgentResponse:
+        """Verifies the request is a valid request from Fixie, and dispatches it to
+        the appropriate function.
+        """
+        if not self._verify_token(credentials.credentials):
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
@@ -172,6 +185,13 @@ class CodeShotAgent:
             raise TypeError(
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
+
+    def _verify_token(self, token: str) -> bool:
+        try:
+            _ = jwt.decode(token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"])
+            return True
+        except jwt.DecodeError:
+            return False
 
 
 def _wrap_with_agent_response(
