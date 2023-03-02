@@ -26,8 +26,8 @@ agent = fixieai.CodeShotAgent(agent_id, BASE_PROMPT, FEW_SHOTS)
 
 
 @agent.register_func
-def genrand(query: fixieai.AgentQuery) -> str:
-    low, high = query.message.text.replace(" ", "").split(",")
+def genrand(query: fixieai.Message) -> str:
+    low, high = query.text.replace(" ", "").split(",")
     return str(random.randint(int(low), int(high)))
 
 

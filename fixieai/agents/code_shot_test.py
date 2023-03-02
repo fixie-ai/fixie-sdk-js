@@ -40,11 +40,11 @@ def dummy_agent():
     )
 
     @agent.register_func
-    def simple1(query: agents.AgentQuery) -> str:
+    def simple1(query: agents.Message) -> str:
         return "Simple response 1"
 
     @agent.register_func()
-    def simple2(query: agents.AgentQuery):
+    def simple2(query: agents.Message):
         return "Simple response 2"
 
     @agent.register_func(func_name="custom")
