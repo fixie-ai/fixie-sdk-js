@@ -172,6 +172,11 @@ class CodeShotAgent:
         """
         if not self._verify_token(credentials.credentials):
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        elif query.access_token is not None and query.access_token != credentials.credentials:
+            raise fastapi.HTTPException(status_code=403, detail="Mismatched tokens")
+        else:
+            query.access_token = credentials.credentials
+
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
