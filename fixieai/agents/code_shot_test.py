@@ -26,7 +26,18 @@ A: Simple final response
 
 @pytest.fixture
 def dummy_agent():
-    agent = agents.CodeShotAgent(agent_id, BASE_PROMPT, FEW_SHOTS)
+    agent = agents.CodeShotAgent(
+        agent_id,
+        BASE_PROMPT,
+        FEW_SHOTS,
+        oauth_params=fixieai.OAuthParams(
+            client_id="dummy",
+            client_secret="dummy",
+            auth_uri="dummy",
+            token_uri="dummy",
+            scopes=["dummy"],
+        ),
+    )
 
     @agent.register_func
     def simple1(query: agents.AgentQuery) -> str:
@@ -127,67 +138,69 @@ A: Simple final response""",
     ]
 
 
-def good_duck_typed_func1(x):
+def good_duck_typed_func1(query):
     return "test"
 
 
-def good_duck_typed_func2(x, y):
+def good_duck_typed_func2(query, user_storage):
     return "test"
 
 
-def bad_duck_typed_func1(*x):
+def good_duck_typed_func3(user_storage, oauth_handler, query):
     return "test"
 
 
-def bad_duck_typed_func2(**x):
+def bad_duck_typed_func1(*query):
     return "test"
 
 
-def bad_duck_typed_func3(x, y, z):
+def bad_duck_typed_func2(**user_storage):
     return "test"
 
 
-def bad_duck_typed_func4(x, *y):
+def bad_duck_typed_func3(query, *user_storage):
     return "test"
 
 
-def good_typed_func1(x: fixieai.AgentQuery) -> fixieai.AgentResponse:
+def good_typed_func1(query: fixieai.Message) -> fixieai.AgentResponse:
     return fixieai.AgentResponse(fixieai.Message("test"))
 
 
-def good_typed_func2(x: fixieai.AgentQuery) -> fixieai.Message:
+def good_typed_func2(query: fixieai.Message) -> fixieai.Message:
     return fixieai.Message("test")
 
 
-def good_typed_func3(x: fixieai.AgentQuery) -> str:
+def good_typed_func3(user_storage: fixieai.UserStorage) -> str:
     return "test"
 
 
-def good_typed_func4(x: fixieai.AgentQuery, y: fixieai.RunHelper) -> fixieai.Message:
+def good_typed_func4(
+    user_storage: fixieai.UserStorage, oauth_handler: fixieai.OAuthHandler
+) -> fixieai.Message:
     return fixieai.Message("test")
 
 
-def good_semi_typed_func1(x: fixieai.AgentQuery):
+def good_semi_typed_func1(query: fixieai.Message):
     ...
 
 
-def good_semi_typed_func2(x) -> str:
+def good_semi_typed_func2(query) -> str:
     return "test"
 
 
-def good_semi_typed_func3(x, y: fixieai.RunHelper):
+def good_semi_typed_func3(user_storage, query: fixieai.Message):
     ...
 
 
-def good_semi_typed_func4(x, y) -> str:
+def good_semi_typed_func4(user_storage, oauth_handler) -> str:
     return "test"
 
 
-def bad_typed_func1(x: str) -> str:
+def bad_typed_func1(query: str) -> str:
     return "test"
 
 
-def bad_typed_func2(x: int) -> str:
+def bad_typed_func2(query: int) -> str:
     return "test"
 
 
@@ -199,6 +212,7 @@ def test_registering_good_and_bad_typed_funcs(dummy_agent):
         good_typed_func4,
         good_duck_typed_func1,
         good_duck_typed_func2,
+        good_duck_typed_func3,
         good_semi_typed_func1,
         good_semi_typed_func2,
         good_semi_typed_func3,
@@ -210,7 +224,6 @@ def test_registering_good_and_bad_typed_funcs(dummy_agent):
         bad_duck_typed_func1,
         bad_duck_typed_func2,
         bad_duck_typed_func3,
-        bad_duck_typed_func4,
     ]
     for good_func in good_funcs:
         dummy_agent.register_func(good_func)

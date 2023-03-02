@@ -6,7 +6,7 @@ import inspect
 import json
 import re
 import threading
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
 import jwt
@@ -158,7 +158,7 @@ class CodeShotAgent:
                     f"Function names may only be alphanumerics, got {func_name!r}."
                 )
 
-        utils.validate_registered_pyfunc(func, duck_typing_okay=True)
+        utils.validate_registered_pyfunc(func, self)
         name = func_name or func.__name__
         if name in self._funcs:
             raise ValueError(f"Func[{name}] is already registered with agent.")
@@ -190,17 +190,10 @@ class CodeShotAgent:
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
-        func_params = inspect.signature(pyfunc).parameters
-        if len(func_params) == 1:
-            # pyfunc gets a single AgentQuery argument.
-            output = pyfunc(query)
-        elif len(func_params) == 2:
-            # pyfunc gets 2 arguments: AgentQuery and RunHelper
-            output = pyfunc(query, RunHelper(query, self))
-        else:
-            raise RuntimeError(
-                f"Func[{func_name}] accepts {len(func_params)} (not in [1, 2]) args."
-            )
+        kwargs = self._get_func_kwargs(
+            query, inspect.signature(pyfunc).parameters.keys()
+        )
+        output = pyfunc(**kwargs)
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
@@ -215,37 +208,31 @@ class CodeShotAgent:
         except jwt.DecodeError:
             return False
 
-
-class RunHelper:
-    """A RunHelper object provided interface to user-storage and oauth.
-
-    This object gets passed as second argument to agent `Func`s if they accept it.
-    """
-
-    def __init__(self, query: api.AgentQuery, agent: CodeShotAgent):
-        self._query = query
-        self._agent_id = agent.agent_id
-        self._oauth_params = agent.oauth_params
-
-    @property
-    def user_storage(self):
-        return user_storage.UserStorage(self._query, self._agent_id)
-
-    @property
-    def oauth_handler(self):
-        if not self._oauth_params:
-            raise ValueError(
-                "Cannot get oauth_handler for an agent who hasn't set oauth_params."
-            )
-        return oauth.OAuthHandler(self._oauth_params, self._query, self._agent_id)
+    def _get_func_kwargs(
+        self, query: api.AgentQuery, arg_names: Iterable[str]
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {}
+        for arg_name in arg_names:
+            if arg_name == "query":
+                kwargs[arg_name] = query.message
+            elif arg_name == "user_storage":
+                kwargs[arg_name] = user_storage.UserStorage(query, self.agent_id)
+            elif arg_name == "oauth_handler":
+                assert self.oauth_params, "oauth_params is not set"
+                kwargs[arg_name] = oauth.OAuthHandler(
+                    self.oauth_params, query, self.agent_id
+                )
+            else:
+                raise ValueError(f"Found unknown argument {arg_name!r}.")
+        return kwargs
 
 
-def _oauth(query: api.AgentQuery, run_helper: RunHelper) -> str:
+def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
     """Serves Func[_oauth] which is used upon auth redirect callback."""
-    auth_request = json.loads(query.message.text)
+    auth_request = json.loads(query.text)
     state = auth_request["state"]
     code = auth_request["code"]
-    run_helper.oauth_handler.authorize(state, code)
+    oauth_handler.authorize(state, code)
     return "Authorization successful!"
 
 
