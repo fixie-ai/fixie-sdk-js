@@ -74,7 +74,7 @@ class CodeShotAgent:
     `@agent.register_func`. Example:
 
         @agent.register_func
-        def func_name(query: fixieai.AgentQuery) -> ReturnType:
+        def func_name(query: fixieai.Message) -> ReturnType:
             ...
 
         , where ReturnType is one of `str`, `fixieai.Message`, or `fixie.AgentResponse`.
