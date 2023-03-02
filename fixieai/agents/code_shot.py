@@ -163,22 +163,22 @@ class CodeShotAgent:
         self,
         func_name: str,
         query: AgentQuery,
-        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
-            fastapi.security.HTTPBearer()
-        ),
     ) -> AgentResponse:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        if not self._verify_token(credentials.credentials):
+        if not self._verify_token(query.access_token):
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
+
         output = pyfunc(query)
+
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
@@ -186,7 +186,9 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
-    def _verify_token(self, token: str) -> bool:
+    def _verify_token(self, token: Optional[str]) -> bool:
+        if token is None:
+            return False
         try:
             _ = jwt.decode(token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"])
             return True

@@ -1,12 +1,12 @@
-from unittest import mock
-
 import fastapi
+import jwt
 import pytest
 import yaml
 from fastapi import testclient
 
 import fixieai
 from fixieai import agents
+from fixieai import constants
 from fixieai.agents import code_shot
 
 BASE_PROMPT = "I am a simple dummy agent."
@@ -24,7 +24,7 @@ A: Simple final response
 
 
 @pytest.fixture
-def dummy_agent():
+def dummy_agent(mocker):
     agent = agents.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
     @agent.register_func
@@ -39,7 +39,7 @@ def dummy_agent():
     def simple3(query):
         return "Simple response custom"
 
-    agent._verify_token = mock.Mock(return_value=True)
+    mocker.patch("jwt.decode", return_value={"key": "value"})
     return agent
 
 
@@ -61,20 +61,23 @@ def test_simple_agent_func_calls(dummy_agent):
     fast_api = fastapi.FastAPI()
     fast_api.include_router(dummy_agent.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
-    headers = {"Authorization": "Bearer fixie-test-token"}
+    access_token = "fixie-test-token"
 
     # Test Func[simple1]
     response = client.post(
-        "/simple1", json={"message": {"text": "Howdy"}}, headers=headers
+        "/simple1",
+        json={"message": {"text": "Howdy"}, "access_token": access_token},
     )
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
-    dummy_agent._verify_token.assert_called_once_with("fixie-test-token")
+    jwt.decode.assert_called_once_with(
+        access_token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"]
+    )
 
     # Test Func[simple2]
     response = client.post(
-        "/simple2", json={"message": {"text": "Howdy"}}, headers=headers
+        "/simple2", json={"message": {"text": "Howdy"}, "access_token": access_token}
     )
     assert response.status_code == 200
     json = response.json()
@@ -82,7 +85,7 @@ def test_simple_agent_func_calls(dummy_agent):
 
     # Test Func[custom]
     response = client.post(
-        "/custom", json={"message": {"text": "Howdy"}}, headers=headers
+        "/custom", json={"message": {"text": "Howdy"}, "access_token": access_token}
     )
     assert response.status_code == 200
     json = response.json()
@@ -90,23 +93,23 @@ def test_simple_agent_func_calls(dummy_agent):
 
     # Test non-existing Func[] returns 404: Not Found
     response = client.post(
-        "/simple3", json={"message": {"text": "Howdy"}}, headers=headers
+        "/simple3", json={"message": {"text": "Howdy"}, "access_token": access_token}
     )
     assert response.status_code == 404
 
     # Test Func[simple1] with bad arguments returns 422: Unprocessable Entity
     response = client.post(
-        "/simple1", json={"message": {"ttt": "Howdy"}}, headers=headers
+        "/simple1", json={"message": {"ttt": "Howdy"}, "access_token": access_token}
     )
     assert response.status_code == 422
 
     # Test Func[__init__] 404: Not Found
     response = client.post(
-        "/__init__", json={"message": {"text": "Howdy"}}, headers=headers
+        "/__init__", json={"message": {"text": "Howdy"}, "access_token": access_token}
     )
     assert response.status_code == 404
 
-    # Test Func without auth header returns 401: Unauthorized
+    # Test Func without auth header returns 403: Forbidden
     response = client.post("/simple1", json={"message": {"text": "Howdy"}})
     assert response.status_code == 403
 
