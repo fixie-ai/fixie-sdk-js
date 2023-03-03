@@ -1,0 +1,3 @@
+[submodule "fixie-examples"]
+	path = fixie-examples
+	url = https://github.com/fixie-ai/fixie-examples
