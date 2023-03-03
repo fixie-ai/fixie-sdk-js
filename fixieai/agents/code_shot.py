@@ -103,8 +103,9 @@ class CodeShotAgent:
         self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
 
-        # Register default Funcs.
-        self.register_func(_oauth)
+        if oauth_params is not None:
+            # Register default Funcs.
+            self.register_func(_oauth)
 
     def serve(self, host: str = "0.0.0.0", port: int = 8181):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
