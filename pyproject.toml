@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixieai"
-version = "0.1.6"
+version = "0.1.8"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
@@ -22,11 +22,11 @@ uvicorn = { version = "^0.20.0", extras = ["standard"] }
 gql = { version = "^3.4.0", extras = ["requests"] }
 python = "^3.8"
 prompt-toolkit = "^3.0.31"
-PyYAML = "^6.0"
 pydantic = "*"
 PyJWT = "^2.6.0"
 requests = "^2.28.1"
 rich = "^12.6.0"
+dataclasses-json = "^0.5.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
