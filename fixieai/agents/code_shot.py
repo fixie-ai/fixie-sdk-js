@@ -183,6 +183,7 @@ class CodeShotAgent:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
+        import pdb; pdb.set_trace()
         if not self._verify_token(credentials.credentials):
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         elif (
