@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import inspect
+import json
 import re
 import threading
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
 import jwt
@@ -14,10 +16,10 @@ import yaml
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
+from fixieai.agents import api
+from fixieai.agents import oauth
+from fixieai.agents import user_storage
 from fixieai.agents import utils
-from fixieai.agents.api import AgentQuery
-from fixieai.agents.api import AgentResponse
-from fixieai.agents.api import Message
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
@@ -72,7 +74,7 @@ class CodeShotAgent:
     `@agent.register_func`. Example:
 
         @agent.register_func
-        def func_name(query: fixieai.AgentQuery) -> ReturnType:
+        def func_name(query: fixieai.Message) -> ReturnType:
             ...
 
         , where ReturnType is one of `str`, `fixieai.Message`, or `fixie.AgentResponse`.
@@ -85,28 +87,38 @@ class CodeShotAgent:
 
     """
 
-    def __init__(self, base_prompt: str, few_shots: Union[str, List[str]]):
+    def __init__(
+        self,
+        agent_id: str,
+        base_prompt: str,
+        few_shots: Union[str, List[str]],
+        oauth_params: Optional[oauth.OAuthParams] = None,
+    ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
+        self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
+        self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
 
-    def serve(self, agent_id: str, host: str = "0.0.0.0", port: int = 8181):
+        # Register default Funcs.
+        self.register_func(_oauth)
+
+    def serve(self, host: str = "0.0.0.0", port: int = 8181):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
         This pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
-            agent_id: Fixie agent_id that this agent will serve.
             host: The address to start listening at.
             port: The port number to start listening at.
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
         fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, agent_id)
+            "startup", functools.partial(_ping_fixie_async, self.agent_id)
         )
         uvicorn.run(fast_api, host=host, port=port)
 
@@ -146,7 +158,7 @@ class CodeShotAgent:
                     f"Function names may only be alphanumerics, got {func_name!r}."
                 )
 
-        utils.validate_registered_pyfunc(func, duck_typing_okay=True)
+        utils.validate_registered_pyfunc(func, self)
         name = func_name or func.__name__
         if name in self._funcs:
             raise ValueError(f"Func[{name}] is already registered with agent.")
@@ -162,11 +174,11 @@ class CodeShotAgent:
     def _serve_func(
         self,
         func_name: str,
-        query: AgentQuery,
+        query: api.AgentQuery,
         credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
             fastapi.security.HTTPBearer()
         ),
-    ) -> AgentResponse:
+    ) -> api.AgentResponse:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
@@ -186,7 +198,10 @@ class CodeShotAgent:
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
-        output = pyfunc(query)
+        kwargs = self._get_func_kwargs(
+            query, inspect.signature(pyfunc).parameters.keys()
+        )
+        output = pyfunc(**kwargs)
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
@@ -201,15 +216,42 @@ class CodeShotAgent:
         except jwt.DecodeError:
             return False
 
+    def _get_func_kwargs(
+        self, query: api.AgentQuery, arg_names: Iterable[str]
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {}
+        for arg_name in arg_names:
+            if arg_name == "query":
+                kwargs[arg_name] = query.message
+            elif arg_name == "user_storage":
+                kwargs[arg_name] = user_storage.UserStorage(query, self.agent_id)
+            elif arg_name == "oauth_handler":
+                assert self.oauth_params, "oauth_params is not set"
+                kwargs[arg_name] = oauth.OAuthHandler(
+                    self.oauth_params, query, self.agent_id
+                )
+            else:
+                raise ValueError(f"Found unknown argument {arg_name!r}.")
+        return kwargs
+
+
+def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
+    """Serves Func[_oauth] which is used upon auth redirect callback."""
+    auth_request = json.loads(query.text)
+    state = auth_request["state"]
+    code = auth_request["code"]
+    oauth_handler.authorize(state, code)
+    return "Authorization successful!"
+
 
 def _wrap_with_agent_response(
-    value: Union[str, Message, AgentResponse]
-) -> AgentResponse:
+    value: Union[str, api.Message, api.AgentResponse]
+) -> api.AgentResponse:
     if isinstance(value, str):
-        return AgentResponse(Message(value))
-    elif isinstance(value, Message):
-        return AgentResponse(value)
-    elif isinstance(value, AgentResponse):
+        return api.AgentResponse(api.Message(value))
+    elif isinstance(value, api.Message):
+        return api.AgentResponse(value)
+    elif isinstance(value, api.AgentResponse):
         return value
     else:
         raise TypeError(f"Unexpected type to wrap: {type(value)}")
