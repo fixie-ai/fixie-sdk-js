@@ -16,7 +16,8 @@ FIXIE_REFRESH_URL = f"{FIXIE_API_URL}/api/refresh"
 # to your agent.
 FIXIE_OAUTH_REDIRECT_URL = f"{FIXIE_API_URL}/oauth"
 
-
 FIXIE_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEANcDOXX9KOKx64wNUuq9oyGKfj5lZJjM/0Qgj/A55PTw=
 -----END PUBLIC KEY-----"""
+
+FIXIE_AGENT_API_AUDIENCE = "https://app.fixie.ai/api"
