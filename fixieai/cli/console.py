@@ -4,7 +4,6 @@ import rich.console as rich_console
 
 from fixieai import FixieClient
 
-
 HISTORY_FILE = "history.txt"
 textconsole = rich_console.Console()
 

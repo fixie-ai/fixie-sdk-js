@@ -1,10 +1,10 @@
 import dataclasses
 import os
-import yaml
-from typing import Any, Callable, Optional, TextIO, Type, Union
+from typing import Callable, Optional, TextIO, Union
 
 import dataclasses_json
 import prompt_toolkit
+import yaml
 
 from fixieai.cli import validators
 
@@ -12,6 +12,7 @@ from fixieai.cli import validators
 @dataclasses.dataclass
 class AgentConfig(dataclasses_json.DataClassJsonMixin):
     """Represents an agent.yaml config file."""
+
     agent_id: str = "agent_id"
     name: str = ""
     description: str = ""
@@ -27,7 +28,7 @@ class AgentConfig(dataclasses_json.DataClassJsonMixin):
 
     def to_yaml(self) -> str:
         """Dumps AgentConfig as a yaml config."""
-        return yaml.dump(self.to_dict(), sort_keys=False)
+        return yaml.dump(self.to_dict(), sort_keys=False)  # type: ignore
 
 
 def load_config(path: Optional[str] = None) -> "AgentConfig":
@@ -64,13 +65,13 @@ def save_config(agent_config: AgentConfig, path: Optional[str] = None):
 
 def prompt_user(agent_config: AgentConfig):
     """Prompts the to edit values in AgentConfig."""
-    print("""This utility will walk you through creating an agent.yaml file.
+    print(
+        """This utility will walk you through creating an agent.yaml file.
     
-""")
+"""
+    )
     agent_config.agent_id = _prompt_user_for_str(
-        "agent id",
-        agent_config.agent_id,
-        validators.validate_agent_id
+        "agent id", agent_config.agent_id, validators.validate_agent_id
     )
     agent_config.description = _prompt_user_for_str(
         "description",
@@ -92,9 +93,7 @@ def prompt_user(agent_config: AgentConfig):
 
 
 def _prompt_user_for_str(
-    description: str,
-    current_value: str,
-    validator: Optional[Callable] = None
+    description: str, current_value: str, validator: Optional[Callable] = None
 ) -> str:
     while True:
         if current_value:
@@ -126,13 +125,13 @@ def _prompt_user_for_bool(
         else:
             prompt = f"{description}: (No) "
 
-        response = prompt_toolkit.prompt(prompt)
-        response = response.strip()
-        if not response:
+        response_str = prompt_toolkit.prompt(prompt)
+        response_str = response_str.strip()
+        if not response_str:
             response = current_value
-        elif response.lower() in ("y", "yes"):
+        elif response_str.lower() in ("y", "yes"):
             response = True
-        elif response.lower() in ("n", "no"):
+        elif response_str.lower() in ("n", "no"):
             response = False
         else:
             print("Please only type Yes or No.")

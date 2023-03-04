@@ -12,6 +12,7 @@ textconsole = rich_console.Console()
 
 #######  fixie CLI definition  #######
 
+
 @click.group()
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
@@ -32,6 +33,7 @@ def init():
 
 
 ############  fixie agent  ############
+
 
 @fixie.group(help="Agent-related commands.")
 def agent():
@@ -54,6 +56,7 @@ def list_agents(ctx):
 
 
 ############  fixie session  ############
+
 
 @fixie.group(help="Session-related commands.")
 def sessions():
