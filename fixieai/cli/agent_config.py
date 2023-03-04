@@ -34,19 +34,14 @@ class AgentConfig(dataclasses_json.DataClassJsonMixin):
 def load_config(path: Optional[str] = None) -> "AgentConfig":
     """Loads AgentConfig from the given path, or its default path.
 
-    If config doesn't exist at path, a default config is returned.
-
     Args:
         path: Optional path to load config from. By default, config is loaded from
             "{cwd}/agent.yaml".
     """
     if path is None:
         path = os.path.join(os.getcwd(), "agent.yaml")
-    try:
-        with open(path, "r") as fp:
-            return AgentConfig.from_yaml(fp)
-    except FileNotFoundError:
-        return AgentConfig()
+    with open(path, "r") as fp:
+        return AgentConfig.from_yaml(fp)
 
 
 def save_config(agent_config: AgentConfig, path: Optional[str] = None):

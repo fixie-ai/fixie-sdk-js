@@ -27,7 +27,10 @@ def fixie(ctx, verbose):
 ############  fixie init  ############
 @fixie.command("init", help="Creates an agent.yaml file.")
 def init():
-    current_config = agent_config.load_config()
+    try:
+        current_config = agent_config.load_config()
+    except FileNotFoundError:
+        current_config = agent_config.AgentConfig()
     agent_config.prompt_user(current_config)
     agent_config.save_config(current_config)
 
