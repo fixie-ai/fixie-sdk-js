@@ -188,7 +188,12 @@ class CodeShotAgent:
 
     def _verify_token(self, token: str) -> bool:
         try:
-            _ = jwt.decode(token, constants.FIXIE_PUBLIC_KEY, algorithms=["EdDSA"])
+            _ = jwt.decode(
+                token,
+                constants.FIXIE_PUBLIC_KEY,
+                algorithms=["EdDSA"],
+                audience=constants.FIXIE_AGENT_API_AUDIENCE,
+            )
             return True
         except jwt.DecodeError:
             return False
