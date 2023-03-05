@@ -16,7 +16,7 @@ def _current_dirname() -> str:
 class AgentConfig(dataclasses_json.DataClassJsonMixin):
     """Represents an agent.yaml config file."""
 
-    agent_id: str = dataclasses.field(default_factory=_current_dirname)
+    handle: str = dataclasses.field(default_factory=_current_dirname)
     name: str = ""
     description: str = ""
     entry_point: str = "main.py"
@@ -63,7 +63,7 @@ def save_config(agent_config: AgentConfig, path: Optional[str] = None):
 
 def _slugify(s: str) -> str:
     s = s.lower().strip()
-    s = re.sub(r'[^\w\s-]', '', s)
-    s = re.sub(r'[\s_-]+', '-', s)
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_-]+", "-", s)
     s = s.strip("-")
     return s

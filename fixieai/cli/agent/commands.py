@@ -12,7 +12,9 @@ def agent():
 def _validate_slug(ctx, param, value):
     while True:
         if not validators.slug(value):
-            click.secho(f"{param.name} can be alpha numerics, underscores and dashes only.")
+            click.secho(
+                f"{param.name} can be alpha numerics, underscores and dashes only."
+            )
             value = click.prompt(param.prompt, default=param.default())
         else:
             return value
@@ -29,9 +31,9 @@ def _validate_url(ctx, param, value):
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
-    "--agent-id",
+    "--handle",
     prompt=True,
-    default=lambda: _current_config().agent_id,
+    default=lambda: _current_config().handle,
     callback=_validate_slug,
 )
 @click.option(
