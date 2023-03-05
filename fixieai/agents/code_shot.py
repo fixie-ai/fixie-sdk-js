@@ -102,6 +102,7 @@ class CodeShotAgent:
         self.few_shots = few_shots
         self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
+        self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
 
         if oauth_params is not None:
             # Register default Funcs.
@@ -212,9 +213,10 @@ class CodeShotAgent:
 
     def _verify_token(self, token: str) -> bool:
         try:
+            public_key = self._jwks_client.get_signing_key_from_jwt(token)
             _ = jwt.decode(
                 token,
-                constants.FIXIE_PUBLIC_KEY,
+                public_key.key,
                 algorithms=["EdDSA"],
                 audience=constants.FIXIE_AGENT_API_AUDIENCE,
             )
