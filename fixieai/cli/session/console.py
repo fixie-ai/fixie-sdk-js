@@ -41,7 +41,7 @@ class Console:
                 for message in self._session.run(in_text):
                     if message["type"] != "response":
                         textconsole.print(
-                            f"   [dim]@{message['sentBy']}: {message['text']}[/]"
+                            f"   [dim]@{message['sentBy']['handle']}: {message['text']}[/]"
                         )
                     else:
                         textconsole.print(f"{self._response_index}❯ {message['text']}")

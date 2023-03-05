@@ -78,18 +78,17 @@ def _current_config() -> agent_config.AgentConfig:
 
 
 @agent.command("list", help="List agents.")
+@click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
-def list_agents(ctx):
+def list_agents(ctx, verbose):
     client = ctx.obj["CLIENT"]
     agents = client.get_agents()
     for agent_id, agent in agents.items():
         click.secho(f"{agent_id}", fg="green", nl=False)
-        click.echo(f"{agent['name']}")
-        if ctx.obj["VERBOSE"]:
+        click.echo(f": {agent['name']}")
+        if verbose:
             click.echo(f"    {agent['description']}")
-            click.secho(f"    Developer", fg="yellow", nl=False)
-            click.echo(f": {agent['developer']}")
-            if "moreInfo" in agent and agent["moreInfo"]:
+            if "moreInfoUrl" in agent and agent["moreInfoUrl"]:
                 click.secho(f"    More info", fg="yellow", nl=False)
-                click.echo(f": {agent['moreInfo']}")
+                click.echo(f": {agent['moreInfoUrl']}")
             click.echo()
