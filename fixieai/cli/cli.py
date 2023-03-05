@@ -12,7 +12,6 @@ from fixieai.cli.session import commands as session_commands
 
 
 class ContextObject:
-
     def __init__(self):
         self._client: Optional[fixieai.FixieClient] = None
 

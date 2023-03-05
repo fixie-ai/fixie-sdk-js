@@ -28,12 +28,14 @@ FIXIE_AGENT_API_AUDIENCE = "https://app.fixie.ai/api"
 
 
 def fixie_api_key() -> str:
-    if os.getenv("FIXIE_API_KEY"):
-        return os.getenv("FIXIE_API_KEY")
+    if "FIXIE_API_KEY" in os.environ:
+        return os.environ["FIXIE_API_KEY"]
     try:
         with open(FIXIE_CONFIG_PATH) as fp:
-            return yaml.safe_load(fp)["fixie_api_key"]
-    except (FileNotFoundError, KeyError):
+            api_key = yaml.safe_load(fp)["fixie_api_key"]
+            assert isinstance(api_key, str)
+            return api_key
+    except (FileNotFoundError, KeyError, AssertionError):
         raise ValueError(
             "User is not authenticated. Run 'fixie auth' to authenticate, or set the "
             "FIXIE_API_KEY environment variable, which can be obtained from your "

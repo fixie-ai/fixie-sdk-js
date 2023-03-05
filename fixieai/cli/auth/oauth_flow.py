@@ -1,10 +1,9 @@
-import webbrowser
+import secrets
 import socket
-from typing import Optional
+import webbrowser
 
 import click
 from oauth2_client import credentials_manager
-import secrets
 
 from fixieai import constants
 
@@ -26,7 +25,7 @@ SERVICE_INFORMATION = credentials_manager.ServiceInformation(
 )
 
 
-def oauth_flow() -> Optional[str]:
+def oauth_flow() -> str:
     """Runs an interactive authorization flow with the user, and returns fixie_api_token
     if successful."""
     manager = credentials_manager.CredentialManager(SERVICE_INFORMATION)
@@ -53,10 +52,14 @@ def oauth_flow() -> Optional[str]:
     code = manager.wait_and_terminate_authorize_code_process()
     # Now we exchange the code for a fixie access token.
     manager.init_with_authorize_code(redirect_uri, code)
-    return manager._access_token
+    access_token = manager._access_token
+    assert isinstance(
+        access_token, str
+    ), f"Invalid access token type {type(access_token)}"
+    return access_token
 
 
 def find_free_port() -> int:
     with socket.socket() as s:
-        s.bind(('', 0))
-        return s.getsockname()[1]
+        s.bind(("", 0))
+        return int(s.getsockname()[1])

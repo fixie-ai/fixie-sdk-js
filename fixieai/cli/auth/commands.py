@@ -18,8 +18,13 @@ def validate_not_authed(ctx, param, force):
 
 
 @click.command("auth", help="Authorizes `fixie` to access Fixie platform.")
-@click.option("--force", is_flag=True, help="Forces authentication, even if the user is authenticated.",
-              callback=validate_not_authed, expose_value=False)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Forces authentication, even if the user is authenticated.",
+    callback=validate_not_authed,
+    expose_value=False,
+)
 def auth():
     fixie_api_token = oauth_flow.oauth_flow()
     try:

@@ -60,7 +60,7 @@ warn_unused_configs = true
 plugins = [ "pydantic.mypy" ]
 
 [[tool.mypy.overrides]]
-module = "validators"
+module = ["validators", "oauth2_client"]
 ignore_missing_imports = true
 
 [tool.isort]
