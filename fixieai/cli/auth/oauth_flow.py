@@ -6,13 +6,15 @@ from oauth2_client import credentials_manager
 import secrets
 
 # Fixie CLI Client ID.
-CLIENT_ID = "yNQGgbclvinYau20mS6gtE6nbRprbBUM"
+# CLIENT_ID = "yNQGgbclvinYau20mS6gtE6nbRprbBUM"  # fixie-cli app client id
+# CLIENT_ID = "wV1l8u48os7kX4FpZAO8ORNAYv07nVS9"  # dev client id
+CLIENT_ID = "3fXy1EoOPLN9OmFKGKLtUxaLFVZl5lSB"  # Prod client id
 # Scopes to request access for.
-SCOPES = ["openid"]
+SCOPES = ["openid", "profile", "email"]
 # The authorization URL that users click on.
-AUTHORIZE_SERVICE = "https://dev-ce7lcdzmwxrdx6cb.us.auth0.com/authorize"
+AUTHORIZE_SERVICE = "https://auth.fixie.ai/authorize"
 # The token exchange service that we use internally.
-TOKEN_SERVICE = "https://dev-ce7lcdzmwxrdx6cb.us.auth0.com/oauth/token"
+TOKEN_SERVICE = "https://auth.fixie.ai/oauth/token"
 # The ServiceInformation object that encapsulates all above.
 SERVICE_INFORMATION = credentials_manager.ServiceInformation(
     AUTHORIZE_SERVICE,
@@ -50,8 +52,8 @@ def oauth_flow() -> Optional[str]:
         click.secho(
             f"Could not bind to any of the selected ports {REDIRECT_PORTS}. "
             f"Please check these ports and whether the fixie CLI has the right "
-            "permissions to bind to a port. If need help, dont' hesitate to contact "
-            f"developers@fixie.ai and pass them this error message:\n{errors}",
+            "permissions to bind to a port. If need help, don't hesitate to contact "
+            f"us developers@fixie.ai. Please send this error message: :\n{errors}",
             fg="red",
         )
         return None
@@ -71,5 +73,7 @@ def oauth_flow() -> Optional[str]:
     # Now we exchange the code for a fixie access token.
     manager.init_with_authorize_code(redirect_uri, code)
     # Now get an API KEY with the access token.
+    response = manager.get("https://app.fixie.ai/profile")
+    print(response.content.decode())
     import pdb; pdb.set_trace()
     return manager._access_token
