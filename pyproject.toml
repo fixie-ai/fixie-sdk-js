@@ -27,6 +27,7 @@ PyJWT = "^2.6.0"
 requests = "^2.28.1"
 rich = "^12.6.0"
 dataclasses-json = "^0.5.7"
+validators = "^0.20.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
