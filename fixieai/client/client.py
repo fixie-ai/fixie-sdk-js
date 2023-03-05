@@ -105,6 +105,7 @@ class FixieClient:
                     handle
                     name
                     description
+                    moreInfoUrl
                 }
             }
         """
