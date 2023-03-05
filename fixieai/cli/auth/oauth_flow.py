@@ -1,20 +1,21 @@
 import webbrowser
+import socket
 from typing import Optional
 
 import click
 from oauth2_client import credentials_manager
 import secrets
 
+from fixieai import constants
+
 # Fixie CLI Client ID.
-# CLIENT_ID = "yNQGgbclvinYau20mS6gtE6nbRprbBUM"  # fixie-cli app client id
-# CLIENT_ID = "wV1l8u48os7kX4FpZAO8ORNAYv07nVS9"  # dev client id
-CLIENT_ID = "3fXy1EoOPLN9OmFKGKLtUxaLFVZl5lSB"  # Prod client id
+CLIENT_ID = "II4FM6ToxVwSKB6DW1r114AKAuSnuZEgYehEBB-5WQA"
 # Scopes to request access for.
-SCOPES = ["openid", "profile", "email"]
+SCOPES = ["fixie-api-key"]
 # The authorization URL that users click on.
-AUTHORIZE_SERVICE = "https://auth.fixie.ai/authorize"
+AUTHORIZE_SERVICE = f"{constants.FIXIE_API_URL}/authorize"
 # The token exchange service that we use internally.
-TOKEN_SERVICE = "https://auth.fixie.ai/oauth/token"
+TOKEN_SERVICE = f"{constants.FIXIE_API_URL}/oauth/token"
 # The ServiceInformation object that encapsulates all above.
 SERVICE_INFORMATION = credentials_manager.ServiceInformation(
     AUTHORIZE_SERVICE,
@@ -23,8 +24,6 @@ SERVICE_INFORMATION = credentials_manager.ServiceInformation(
     None,
     SCOPES,
 )
-# We will try listening on the first open port from this list.
-REDIRECT_PORTS = [8212, 8562, 8452, 8523, 8027]
 
 
 def oauth_flow() -> Optional[str]:
@@ -32,31 +31,13 @@ def oauth_flow() -> Optional[str]:
     if successful."""
     manager = credentials_manager.CredentialManager(SERVICE_INFORMATION)
 
-    url: Optional[str] = None
-    errors = []
-
-    for port in REDIRECT_PORTS:
-        try:
-            redirect_uri = f"http://localhost:{port}"
-            url = manager.init_authorize_code_process(
-                redirect_uri,
-                secrets.token_urlsafe(),
-            )
-            break
-        except OSError as err:
-            # Port is busy. We'll try the next port.
-            errors.append(err)
-            pass
-
-    if url is None:
-        click.secho(
-            f"Could not bind to any of the selected ports {REDIRECT_PORTS}. "
-            f"Please check these ports and whether the fixie CLI has the right "
-            "permissions to bind to a port. If need help, don't hesitate to contact "
-            f"us developers@fixie.ai. Please send this error message: :\n{errors}",
-            fg="red",
-        )
-        return None
+    port = find_free_port()
+    redirect_uri = f"http://localhost:{port}"
+    state = secrets.token_urlsafe()
+    url = manager.init_authorize_code_process(
+        redirect_uri,
+        state,
+    )
 
     success = webbrowser.open(url)
     if success:
@@ -72,8 +53,10 @@ def oauth_flow() -> Optional[str]:
     code = manager.wait_and_terminate_authorize_code_process()
     # Now we exchange the code for a fixie access token.
     manager.init_with_authorize_code(redirect_uri, code)
-    # Now get an API KEY with the access token.
-    response = manager.get("https://app.fixie.ai/profile")
-    print(response.content.decode())
-    import pdb; pdb.set_trace()
     return manager._access_token
+
+
+def find_free_port() -> int:
+    with socket.socket() as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
