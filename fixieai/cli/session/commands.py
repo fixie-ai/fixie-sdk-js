@@ -4,11 +4,11 @@ from fixieai.cli.session import console
 
 
 @click.group(help="Session-related commands.")
-def sessions():
+def session():
     pass
 
 
-@sessions.command("list", help="List sessions.")
+@session.command("list", help="Lists sessions.")
 @click.pass_context
 def list_sessions(ctx):
     client = ctx.obj["CLIENT"]
@@ -17,7 +17,7 @@ def list_sessions(ctx):
         click.secho(f"{session_id}", fg="green")
 
 
-@sessions.command("new", help="Creates a new session and opens it.")
+@session.command("new", help="Creates a new session and opens it.")
 @click.pass_context
 def new_session(ctx):
     client = ctx.obj["CLIENT"]
@@ -25,7 +25,7 @@ def new_session(ctx):
     c.run()
 
 
-@sessions.command("open", help="Show session.")
+@session.command("open", help="Opens a session.")
 @click.pass_context
 @click.argument("session_id")
 def open_session(ctx, session_id: str):

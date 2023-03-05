@@ -18,10 +18,10 @@ def fixie(ctx):
 
 # Add subcommands
 fixie.add_command(agent_commands.agent)
-fixie.add_command(session_commands.sessions)
+fixie.add_command(session_commands.session)
 
 # Add aliases for commonly used paths
-fixie.add_command(agent_commands.init, "init")
+fixie.add_command(agent_commands.init_agent, "init")
 fixie.add_command(session_commands.new_session, "console")
 
 

@@ -1,16 +1,22 @@
 import dataclasses
 import os
+import re
 from typing import Optional, TextIO, Union
 
 import dataclasses_json
 import yaml
 
 
+def _current_dirname() -> str:
+    """Returns current directory name."""
+    return _slugify(os.path.basename(os.getcwd()))
+
+
 @dataclasses.dataclass
 class AgentConfig(dataclasses_json.DataClassJsonMixin):
     """Represents an agent.yaml config file."""
 
-    agent_id: str = "agent_id"
+    agent_id: str = dataclasses.field(default_factory=_current_dirname)
     name: str = ""
     description: str = ""
     entry_point: str = "main.py"
@@ -53,3 +59,11 @@ def save_config(agent_config: AgentConfig, path: Optional[str] = None):
         path = os.path.join(os.getcwd(), "agent.yaml")
     with open(path, "w") as fp:
         fp.write(agent_config.to_yaml())
+
+
+def _slugify(s: str) -> str:
+    s = s.lower().strip()
+    s = re.sub(r'[^\w\s-]', '', s)
+    s = re.sub(r'[\s_-]+', '-', s)
+    s = s.strip("-")
+    return s

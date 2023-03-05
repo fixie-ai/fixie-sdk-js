@@ -12,8 +12,8 @@ def agent():
 def _validate_slug(ctx, param, value):
     while True:
         if not validators.slug(value):
-            click.secho(f"{param} can be alpha numerics, underscores and dashes only.")
-            value = click.prompt(param.prompt)
+            click.secho(f"{param.name} can be alpha numerics, underscores and dashes only.")
+            value = click.prompt(param.prompt, default=param.default())
         else:
             return value
 
@@ -21,8 +21,8 @@ def _validate_slug(ctx, param, value):
 def _validate_url(ctx, param, value):
     while True:
         if value and not validators.url(value):
-            click.secho(f"{param} must be a valid url.")
-            value = click.prompt(param.prompt)
+            click.secho(f"{param.name} must be a valid url.")
+            value = click.prompt(param.prompt, default=param.default())
         else:
             return value
 
@@ -56,7 +56,7 @@ def _validate_url(ctx, param, value):
     default=lambda: _current_config().public,
     type=click.BOOL,
 )
-def init(agent_id, description, entry_point, more_info_url, public):
+def init_agent(agent_id, description, entry_point, more_info_url, public):
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
