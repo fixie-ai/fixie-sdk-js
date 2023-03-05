@@ -4,6 +4,8 @@ import click
 import rich.console as rich_console
 
 import fixieai
+from fixieai import constants
+from fixieai.cli import auth
 from fixieai.cli import agent_config
 from fixieai.cli import console
 
@@ -24,7 +26,25 @@ def fixie(ctx, verbose):
     ctx.obj["VERBOSE"] = verbose
 
 
+############  fixie auth  ############
+
+
+@fixie.command("auth", help="Authenticate to fixie and save credentials.")
+@click.option("--force", "-f", is_flag=True)
+def authenticate(force: bool):
+    if not force:
+        try:
+            constants.fixie_api_key()
+            click.echo("User is already authenticated. Set --force to override.")
+            return
+        except ValueError:
+            pass
+    auth.authentication_flow()
+
+
 ############  fixie init  ############
+
+
 @fixie.command("init", help="Creates an agent.yaml file.")
 def init():
     try:

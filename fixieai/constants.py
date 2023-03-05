@@ -3,10 +3,15 @@ and your Fixie API key."""
 
 import os
 
+import yaml
+
 # Base Fixie platform URL.
 FIXIE_API_URL = os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
-# Your Fixie API key, set from environment variables.
-FIXIE_API_KEY = os.getenv("FIXIE_API_KEY")
+# Path to fixie config file.
+FIXIE_CONFIG_PATH = os.getenv(
+    "FIXIE_CONFIG_PATH",
+    os.path.expanduser("~/.config/fixie/config.yaml"),
+)
 
 # Fixie's UserStorage service URL.
 FIXIE_USER_STORAGE_URL = f"{FIXIE_API_URL}/api/userstorage"
@@ -21,3 +26,16 @@ MCowBQYDK2VwAyEANcDOXX9KOKx64wNUuq9oyGKfj5lZJjM/0Qgj/A55PTw=
 -----END PUBLIC KEY-----"""
 
 FIXIE_AGENT_API_AUDIENCE = "https://app.fixie.ai/api"
+
+
+def fixie_api_key() -> str:
+    if os.getenv("FIXIE_API_KEY"):
+        return os.getenv("FIXIE_API_KEY")
+    try:
+        return yaml.safe_load(FIXIE_CONFIG_PATH)["fixie_api_key"]
+    except (FileNotFoundError, KeyError):
+        raise ValueError(
+            "User is not authenticated. Run 'fixie auth' to authenticate, or set the "
+            "FIXIE_API_KEY environment variable, which can be obtained from your "
+            "profile page at https://app.fixie.ai/profile"
+        )
