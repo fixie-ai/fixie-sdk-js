@@ -58,6 +58,10 @@ warn_return_any = true
 warn_unused_configs = true
 plugins = [ "pydantic.mypy" ]
 
+[[tool.mypy.overrides]]
+module = "validators"
+ignore_missing_imports = true
+
 [tool.isort]
 profile = "black"
 single_line_exclusions = ["typing", "collections.abc", "typing_extensions"]
