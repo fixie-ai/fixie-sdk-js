@@ -83,7 +83,7 @@ def _current_config() -> agent_config.AgentConfig:
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
 @click.pass_context
 def list_agents(ctx, verbose):
-    client = ctx.obj["CLIENT"]
+    client = ctx.obj.client
     agents = client.get_agents()
     for agent_id, agent in agents.items():
         click.secho(f"{agent_id}", fg="green", nl=False)
