@@ -169,7 +169,7 @@ class CodeShotAgent:
 
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        metadata = AgentMetadata(self.base_prompt, self.few_shots)
+        metadata = AgentMetadata(self.base_prompt, self.few_shots)  # type: ignore[call-arg]
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
@@ -256,9 +256,9 @@ def _wrap_with_agent_response(
     value: Union[str, api.Message, api.AgentResponse]
 ) -> api.AgentResponse:
     if isinstance(value, str):
-        return api.AgentResponse(api.Message(value))
+        return api.AgentResponse(api.Message(value))  # type: ignore[call-arg]
     elif isinstance(value, api.Message):
-        return api.AgentResponse(value)
+        return api.AgentResponse(value)  # type: ignore[call-arg]
     elif isinstance(value, api.AgentResponse):
         return value
     else:
