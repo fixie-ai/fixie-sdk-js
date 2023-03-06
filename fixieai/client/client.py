@@ -131,7 +131,6 @@ class FixieClient:
         name: Optional[str] = None,
         description: Optional[str] = None,
         more_info_url: Optional[str] = None,
-        queries: Optional[List[str]] = None,
         published: Optional[bool] = None,
     ) -> Agent:
         """Create a new Agent.
@@ -142,11 +141,10 @@ class FixieClient:
             name: The name of the new Agent.
             description: A description of the new Agent.
             more_info_url: A URL with more information about the new Agent.
-            queries: A list of queries that the new Agent will respond to.
             published: Whether the new Agent should be published.
         """
         agent = Agent(self, handle)
-        agent.create_agent(name, description, queries, more_info_url, published)
+        agent.create_agent(name, description, more_info_url, published)
         return agent
 
     def get_sessions(self) -> List[str]:

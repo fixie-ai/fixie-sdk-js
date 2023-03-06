@@ -31,7 +31,7 @@ class Agent:
         self._metadata: Optional[Dict[str, Any]] = None
         try:
             self._metadata = self.get_metadata()
-        except ValueError:
+        except:
             self._metadata = None
 
     @property
@@ -68,11 +68,25 @@ class Agent:
         return self._metadata["queries"]
 
     @property
+    def more_info_url(self) -> Optional[str]:
+        """Return the more info URL for this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["moreInfoUrl"]
+
+    @property
     def published(self) -> Optional[bool]:
         """Return the published status for this Agent."""
         if self._metadata is None:
             return None
         return self._metadata["published"]
+
+    @property
+    def owner(self) -> Optional[str]:
+        """Return the owner of this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["owner"]["username"]
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
@@ -86,6 +100,7 @@ class Agent:
                     name
                     description
                     queries
+                    moreInfoUrl
                     published
                     owner {
                         username
@@ -105,7 +120,6 @@ class Agent:
         self,
         name: Optional[str] = None,
         description: Optional[str] = None,
-        queries: Optional[List[str]] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
@@ -117,7 +131,6 @@ class Agent:
                 $name: String,
                 $description: String,
                 $moreInfoUrl: String,
-                $queries: [String!],
                 $published: Boolean) {
                 createAgent(
                     agentData: {
@@ -125,7 +138,6 @@ class Agent:
                         name: $name,
                         description: $description,
                         moreInfoUrl: $moreInfoUrl,
-                        queries: $queries,
                         published: $published
                     }
                 ) {
@@ -146,8 +158,6 @@ class Agent:
             variable_values["description"] = description
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
-        if queries is not None:
-            variable_values["queries"] = queries
         if published is not None:
             variable_values["published"] = published
 
@@ -165,7 +175,6 @@ class Agent:
         new_handle: Optional[str] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
-        queries: Optional[List[str]] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
@@ -178,7 +187,6 @@ class Agent:
                 $name: String,
                 $description: String,
                 $moreInfoUrl: String,
-                $queries: [String!],
                 $published: Boolean) {
                 updateAgent(
                     agentData: {
@@ -187,7 +195,6 @@ class Agent:
                         name: $name,
                         description: $description,
                         moreInfoUrl: $moreInfoUrl,
-                        queries: $queries,
                         published: $published
                     }
                 ) {
@@ -208,8 +215,6 @@ class Agent:
             variable_values["description"] = description
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
-        if queries is not None:
-            variable_values["queries"] = queries
         if published is not None:
             variable_values["published"] = published
 
