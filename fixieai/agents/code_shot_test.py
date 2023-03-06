@@ -163,11 +163,11 @@ def bad_duck_typed_func3(query, *user_storage):
 
 
 def good_typed_func1(query: fixieai.Message) -> fixieai.AgentResponse:
-    return fixieai.AgentResponse(fixieai.Message("test"))
+    return fixieai.AgentResponse(fixieai.Message("test"))  # type: ignore[call-arg]
 
 
 def good_typed_func2(query: fixieai.Message) -> fixieai.Message:
-    return fixieai.Message("test")
+    return fixieai.Message("test")  # type: ignore[call-arg]
 
 
 def good_typed_func3(user_storage: fixieai.UserStorage) -> str:
@@ -177,7 +177,7 @@ def good_typed_func3(user_storage: fixieai.UserStorage) -> str:
 def good_typed_func4(
     user_storage: fixieai.UserStorage, oauth_handler: fixieai.OAuthHandler
 ) -> fixieai.Message:
-    return fixieai.Message("test")
+    return fixieai.Message("test")  # type: ignore[call-arg]
 
 
 def good_semi_typed_func1(query: fixieai.Message):

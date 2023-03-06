@@ -35,7 +35,7 @@ pytest-mock = "3.10.0"
 pytest-xdist = "3.0.2"
 black = "22.8.0"
 isort = "5.10.1"
-mypy = "0.991"
+mypy = "^1.0.1"
 autoflake = "1.6.1"
 requests-mock = "1.10.0"
 mkdocs = "^1.4.2"
@@ -65,11 +65,12 @@ ignore_missing_imports = true
 [tool.isort]
 profile = "black"
 single_line_exclusions = ["typing", "collections.abc", "typing_extensions"]
-skip = ["venv", "third_party"]
+skip = ["venv", "third_party", "fixie-examples"]
 
 [tool.black]
 extend-exclude = '''
 /(
+  | fixie-examples
   | third_party
   | venv
 )/

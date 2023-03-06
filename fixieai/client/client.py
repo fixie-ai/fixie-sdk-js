@@ -10,6 +10,7 @@ from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
 from fixieai import constants
+from fixieai.client.agent import Agent
 from fixieai.client.session import Session
 
 _CLIENT: Optional["FixieClient"] = None
@@ -119,6 +120,32 @@ class FixieClient:
         assert "allAgents" in result and isinstance(result["allAgents"], list)
         agents = result["allAgents"]
         return {agent["handle"]: agent for agent in agents}
+
+    def get_agent(self, handle: str) -> Agent:
+        """Return an existing Agent object."""
+        return Agent(self, handle)
+
+    def create_agent(
+        self,
+        handle: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        more_info_url: Optional[str] = None,
+        published: Optional[bool] = None,
+    ) -> Agent:
+        """Create a new Agent.
+
+        Args:
+            handle: The handle for the new Agent. This must be unique across all
+                Agents owned by this user.
+            name: The name of the new Agent.
+            description: A description of the new Agent.
+            more_info_url: A URL with more information about the new Agent.
+            published: Whether the new Agent should be published.
+        """
+        agent = Agent(self, handle)
+        agent.create_agent(name, description, more_info_url, published)
+        return agent
 
     def get_sessions(self) -> List[str]:
         """Return a list of all session IDs."""
