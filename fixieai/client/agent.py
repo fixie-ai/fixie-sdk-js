@@ -44,49 +44,49 @@ class Agent:
         """Return the agentId for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["agentId"]
+        return self._metadata["agentId"]  # type: ignore[no-any-return]
 
     @property
     def name(self) -> Optional[str]:
         """Return the name for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["name"]
+        return self._metadata["name"]  # type: ignore[no-any-return]
 
     @property
     def description(self) -> Optional[str]:
         """Return the description for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["description"]
+        return self._metadata["description"]  # type: ignore[no-any-return]
 
     @property
     def queries(self) -> Optional[List[str]]:
         """Return the queries for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["queries"]
+        return self._metadata["queries"]  # type: ignore[no-any-return]
 
     @property
     def more_info_url(self) -> Optional[str]:
         """Return the more info URL for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["moreInfoUrl"]
+        return self._metadata["moreInfoUrl"]  # type: ignore[no-any-return]
 
     @property
     def published(self) -> Optional[bool]:
         """Return the published status for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["published"]
+        return self._metadata["published"]  # type: ignore[no-any-return]
 
     @property
     def owner(self) -> Optional[str]:
         """Return the owner of this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["username"]
+        return self._metadata["owner"]["username"]  # type: ignore[no-any-return]
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
@@ -114,7 +114,7 @@ class Agent:
         )
         if "agentByHandle" not in result or result["agentByHandle"] is None:
             raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-        return result["agentByHandle"]
+        return result["agentByHandle"]  # type: ignore[no-any-return]
 
     def create_agent(
         self,
