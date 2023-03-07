@@ -44,49 +44,63 @@ class Agent:
         """Return the agentId for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["agentId"]  # type: ignore[no-any-return]
+        agent_id = self._metadata["agentId"]
+        assert isinstance(agent_id, str)
+        return agent_id
 
     @property
     def name(self) -> Optional[str]:
         """Return the name for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["name"]  # type: ignore[no-any-return]
+        name = self._metadata["name"]
+        assert isinstance(name, str)
+        return name
 
     @property
     def description(self) -> Optional[str]:
         """Return the description for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["description"]  # type: ignore[no-any-return]
+        description = self._metadata["description"]
+        assert isinstance(description, str)
+        return description
 
     @property
     def queries(self) -> Optional[List[str]]:
         """Return the queries for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["queries"]  # type: ignore[no-any-return]
+        queries = self._metadata["queries"]
+        assert isinstance(queries, list) and all(isinstance(q, str) for q in queries)
+        return queries
 
     @property
     def more_info_url(self) -> Optional[str]:
         """Return the more info URL for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["moreInfoUrl"]  # type: ignore[no-any-return]
+        more_info_url = self._metadata["moreInfoUrl"]
+        assert isinstance(more_info_url, str)
+        return more_info_url
 
     @property
     def published(self) -> Optional[bool]:
         """Return the published status for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["published"]  # type: ignore[no-any-return]
+        published = self._metadata["published"]
+        assert isinstance(published, bool)
+        return published
 
     @property
     def owner(self) -> Optional[str]:
         """Return the owner of this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["username"]  # type: ignore[no-any-return]
+        owner_username = self._metadata["owner"]["username"]
+        assert isinstance(owner_username, str)
+        return owner_username
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
