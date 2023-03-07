@@ -3,7 +3,8 @@ Fixie ecosystem."""
 
 from __future__ import annotations
 
-import dataclasses
+import requests
+import base64
 from typing import Dict, Optional
 
 from pydantic import dataclasses as pydantic_dataclasses
@@ -19,6 +20,28 @@ class Embed:
     # A public URL where the object can be downloaded. The Embed API can be used to
     # upload an Embed object to Fixie and generate a URL.
     uri: str
+
+    @property
+    def content(self) -> bytes:
+        """Retrieves the content for this Embed object."""
+        if self.uri.startswith("data:"):
+            return base64.b64decode(self.uri.split(",")[1])
+        return requests.get(self.uri).content
+
+    @content.setter
+    def set_content(self, content: bytes):
+        """Sets the content of the Embed object as a data URI."""
+        self.uri = f"data:{self.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
+
+    @property
+    def text(self) -> str:
+        """Retrieves the content of the Embed object as a string."""
+        return self.content.decode("utf-8")
+
+    @text.setter
+    def set_text(self, text: str):
+        """Sets the content of the Embed object as a string."""
+        self.set_content(text.encode("utf-8"))
 
 
 @pydantic_dataclasses.dataclass
