@@ -18,8 +18,7 @@ class Embed:
     # The MIME content type of the object, e.g., "image/png" or "application/json".
     content_type: str
 
-    # A public URL where the object can be downloaded. The Embed API can be used to
-    # upload an Embed object to Fixie and generate a URL.
+    # A public URL where the object can be downloaded. This can be a data URI.
     uri: str
 
     @property
