@@ -3,10 +3,11 @@ Fixie ecosystem."""
 
 from __future__ import annotations
 
-import requests
 import base64
+import dataclasses
 from typing import Dict, Optional
 
+import requests
 from pydantic import dataclasses as pydantic_dataclasses
 
 
@@ -29,9 +30,9 @@ class Embed:
         return requests.get(self.uri).content
 
     @content.setter
-    def set_content(self, content: bytes):
+    def content(self, content: bytes):
         """Sets the content of the Embed object as a data URI."""
-        self.uri = f"data:{self.content_type};base64,{base64.b64encode(content).decode('utf-8')}"
+        self.uri = f"data:base64,{base64.b64encode(content).decode('utf-8')}"
 
     @property
     def text(self) -> str:
@@ -39,9 +40,9 @@ class Embed:
         return self.content.decode("utf-8")
 
     @text.setter
-    def set_text(self, text: str):
+    def text(self, text: str):
         """Sets the content of the Embed object as a string."""
-        self.set_content(text.encode("utf-8"))
+        self.content = text.encode("utf-8")
 
 
 @pydantic_dataclasses.dataclass
