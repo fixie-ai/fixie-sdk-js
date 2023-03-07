@@ -1,7 +1,6 @@
-import pytest
+import requests_mock
 
 from fixieai import agents
-import requests_mock
 
 
 def test_embed_http_uri():
