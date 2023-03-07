@@ -128,7 +128,11 @@ class Agent:
         )
         if "agentByHandle" not in result or result["agentByHandle"] is None:
             raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-        return result["agentByHandle"]  # type: ignore[no-any-return]
+        agent_by_handle = result["agentByHandle"]
+        assert isinstance(agent_by_handle, dict) and all(
+            isinstance(k, str) for k in agent_by_handle.keys()
+        )
+        return agent_by_handle
 
     def create_agent(
         self,
