@@ -1,10 +1,9 @@
 import dataclasses
 import os
 import re
-from typing import Optional, TextIO, Union
+from typing import Optional
 
-import dataclasses_json
-import yaml
+from fixieai.cli import utils
 
 
 def _current_dirname() -> str:
@@ -13,7 +12,7 @@ def _current_dirname() -> str:
 
 
 @dataclasses.dataclass
-class AgentConfig(dataclasses_json.DataClassJsonMixin):
+class AgentConfig(utils.DataClassYamlMixin):
     """Represents an agent.yaml config file."""
 
     handle: str = dataclasses.field(default_factory=_current_dirname)
@@ -24,17 +23,8 @@ class AgentConfig(dataclasses_json.DataClassJsonMixin):
     deployment_url: str = ""
     public: bool = False
 
-    @classmethod
-    def from_yaml(cls, config: Union[str, TextIO]) -> "AgentConfig":
-        """Loads AgentConfig from stream or string of yaml config."""
-        return AgentConfig.from_dict(yaml.safe_load(config))
 
-    def to_yaml(self) -> str:
-        """Dumps AgentConfig as a yaml config."""
-        return yaml.dump(self.to_dict(), sort_keys=False)  # type: ignore
-
-
-def load_config(path: Optional[str] = None) -> "AgentConfig":
+def load_config(path: Optional[str] = None) -> AgentConfig:
     """Loads AgentConfig from the given path, or its default path.
 
     Args:
