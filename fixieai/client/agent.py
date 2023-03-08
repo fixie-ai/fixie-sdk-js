@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from gql import gql
@@ -88,6 +89,34 @@ class Agent:
             return None
         return self._metadata["owner"]["username"]
 
+    @property
+    def query_url(self) -> Optional[str]:
+        """Return the query URL for this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["owner"]["query_url"]
+
+    @property
+    def func_url(self) -> Optional[str]:
+        """Return the func URL for this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["owner"]["func_url"]
+
+    @property
+    def created(self) -> Optional[datetime.datetime]:
+        """Return the creation timestamp for this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["owner"]["created"]
+
+    @property
+    def modified(self) -> Optional[datetime.datetime]:
+        """Return the modification timestamp for this Agent."""
+        if self._metadata is None:
+            return None
+        return self._metadata["owner"]["modified"]
+
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
 
@@ -105,6 +134,10 @@ class Agent:
                     owner {
                         username
                     }
+                    queryUrl
+                    funcUrl
+                    created
+                    modified
                 }
             }
         """
@@ -120,6 +153,8 @@ class Agent:
         self,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
@@ -130,6 +165,8 @@ class Agent:
                 $handle: String!,
                 $name: String,
                 $description: String,
+                $queryUrl: String,
+                $funcUrl: String,
                 $moreInfoUrl: String,
                 $published: Boolean) {
                 createAgent(
@@ -137,6 +174,8 @@ class Agent:
                         handle: $handle,
                         name: $name,
                         description: $description,
+                        queryUrl: $queryUrl,
+                        funcUrl: $funcUrl,
                         moreInfoUrl: $moreInfoUrl,
                         published: $published
                     }
@@ -156,6 +195,10 @@ class Agent:
             variable_values["name"] = name
         if description is not None:
             variable_values["description"] = description
+        if query_url is not None:
+            variable_values["query_url"] = query_url
+        if func_url is not None:
+            variable_values["func_url"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
@@ -175,6 +218,8 @@ class Agent:
         new_handle: Optional[str] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
@@ -186,6 +231,8 @@ class Agent:
                 $newHandle: String,
                 $name: String,
                 $description: String,
+                $queryUrl: String,
+                $funcUrl: String,
                 $moreInfoUrl: String,
                 $published: Boolean) {
                 updateAgent(
@@ -194,6 +241,8 @@ class Agent:
                         newHandle: $newHandle,
                         name: $name,
                         description: $description,
+                        queryUrl: $queryUrl,
+                        funcUrl: $funcUrl,
                         moreInfoUrl: $moreInfoUrl,
                         published: $published
                     }
@@ -213,6 +262,10 @@ class Agent:
             variable_values["name"] = name
         if description is not None:
             variable_values["description"] = description
+        if query_url is not None:
+            variable_values["query_url"] = query_url
+        if func_url is not None:
+            variable_values["func_url"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
