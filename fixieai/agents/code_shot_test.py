@@ -25,12 +25,12 @@ A: Simple final response
 
 
 @pytest.fixture(autouse=True)
-def mock_token_verifier():
-    with mock.patch.object(code_shot._VerifiedTokenClaims, "from_token") as from_token:
-        from_token.return_value = code_shot._VerifiedTokenClaims(
-            agent_id="fake agent id"
-        )
-        yield from_token
+def mock_token_verifier(mocker):
+    return mocker.patch.object(
+        code_shot._VerifiedTokenClaims,
+        "from_token",
+        return_value=code_shot._VerifiedTokenClaims(agent_id="fake agent id"),
+    )
 
 
 @pytest.fixture
