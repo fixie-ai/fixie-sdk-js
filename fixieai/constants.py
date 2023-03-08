@@ -13,6 +13,8 @@ FIXIE_CONFIG_PATH = os.getenv(
     os.path.expanduser("~/.config/fixie/config.yaml"),
 )
 
+# Fixie's GraphQL URL.
+FIXIE_GRAPHQL_URL = f"{FIXIE_API_URL}/graphql"
 # Fixie's UserStorage service URL.
 FIXIE_USER_STORAGE_URL = f"{FIXIE_API_URL}/api/userstorage"
 # Fixie's refresh endpoint. It will be pinged when your agent comes alive.

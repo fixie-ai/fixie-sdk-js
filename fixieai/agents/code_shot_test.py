@@ -1,5 +1,3 @@
-from unittest import mock
-
 import fastapi
 import pytest
 import yaml
@@ -24,10 +22,18 @@ A: Simple final response
 """
 
 
+@pytest.fixture(autouse=True)
+def mock_token_verifier(mocker):
+    return mocker.patch.object(
+        code_shot._VerifiedTokenClaims,
+        "from_token",
+        return_value=code_shot._VerifiedTokenClaims(agent_id="fake agent id"),
+    )
+
+
 @pytest.fixture
 def dummy_agent():
     agent = agents.CodeShotAgent(
-        agent_id,
         BASE_PROMPT,
         FEW_SHOTS,
         oauth_params=fixieai.OAuthParams(
@@ -51,11 +57,7 @@ def dummy_agent():
     def simple3(query):
         return "Simple response custom"
 
-    with mock.patch.object(code_shot._VerifiedTokenClaims, "from_token") as from_token:
-        from_token.return_value = code_shot._VerifiedTokenClaims(
-            agent_id="fake agent id"
-        )
-        yield agent
+    return agent
 
 
 def test_simple_agent_handshake(dummy_agent):
@@ -72,7 +74,7 @@ def test_simple_agent_handshake(dummy_agent):
     }
 
 
-def test_simple_agent_func_calls(dummy_agent):
+def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     fast_api = fastapi.FastAPI()
     fast_api.include_router(dummy_agent.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
@@ -85,7 +87,7 @@ def test_simple_agent_func_calls(dummy_agent):
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
-    code_shot._VerifiedTokenClaims.from_token.assert_called_once_with(
+    mock_token_verifier.assert_called_once_with(
         "fixie-test-token", dummy_agent._jwks_client
     )
 
@@ -246,3 +248,16 @@ def test_registering_func_with_custom_name(dummy_agent):
     assert dummy_agent._funcs["name1"] == good_typed_func1
     assert dummy_agent._funcs["name2"] == good_typed_func2
     assert dummy_agent._funcs["name3"] == good_typed_func3
+
+
+def test_invalid_token(dummy_agent, mock_token_verifier):
+    mock_token_verifier.return_value = None
+
+    fast_api = fastapi.FastAPI()
+    fast_api.include_router(dummy_agent.api_router())
+    client = testclient.TestClient(fast_api, raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+    response = client.post(
+        "/simple1", json={"message": {"text": "Howdy"}}, headers=headers
+    )
+    assert response.status_code == 403

@@ -92,7 +92,6 @@ class CodeShotAgent:
 
     def __init__(
         self,
-        agent_id: str,
         base_prompt: str,
         few_shots: Union[str, List[str]],
         oauth_params: Optional[oauth.OAuthParams] = None,
@@ -100,7 +99,6 @@ class CodeShotAgent:
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
-        self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
         self.oauth_params = oauth_params
@@ -111,20 +109,24 @@ class CodeShotAgent:
             # Register default Funcs.
             self.register_func(_oauth)
 
-    def serve(self, host: str = "0.0.0.0", port: int = 8181):
+    def serve(
+        self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181
+    ):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
-        This pings Fixie upon startup to fetch the latest prompt and fewshots.
+        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
+            agent_id: The qualified agent id (`username/handle`)
             host: The address to start listening at.
             port: The port number to start listening at.
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, self.agent_id)
-        )
+        if agent_id:
+            fast_api.add_event_handler(
+                "startup", functools.partial(_ping_fixie_async, agent_id)
+            )
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:

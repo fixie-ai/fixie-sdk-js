@@ -94,3 +94,22 @@ def list_agents(ctx, verbose):
                 click.secho(f"    More info", fg="yellow", nl=False)
                 click.echo(f": {agent['moreInfoUrl']}")
             click.echo()
+
+
+def _default_refresh_handle():
+    """Returns the default agent handle, if there is one."""
+    try:
+        return agent_config.load_config().handle
+    except FileNotFoundError:
+        return None
+
+
+@agent.command("refresh", help="Indicate that the agent's prompts should be refreshed.")
+@click.argument(
+    "handle",
+    required=True,
+    default=_default_refresh_handle,
+)
+@click.pass_context
+def refresh(ctx, handle):
+    ctx.obj.client.refresh_agent(handle)
