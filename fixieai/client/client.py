@@ -61,7 +61,8 @@ class FixieClient:
             set, the default value of "https://app.fixie.ai " will be used.
         api_key: The API key for the Fixie API server. If not provided, the
             FIXIE_API_KEY environment variable will be used. If that is not
-            set, a ValueError will be raised.
+            set, the authenticated user API key will be used, or a ValueError
+            will be raised if the user is not authenticated.
     """
 
     def __init__(
@@ -70,13 +71,7 @@ class FixieClient:
         api_key: Optional[str] = None,
     ):
         self._api_url = api_url or constants.FIXIE_API_URL
-        self._api_key = api_key or constants.FIXIE_API_KEY
-        if not self._api_key:
-            raise ValueError(
-                "No Fixie API key provided. Set the FIXIE_API_KEY environment variable "
-                "to your API key, which can be obtained from your profile page on "
-                "https://app.fixie.ai "
-            )
+        self._api_key = api_key or constants.fixie_api_key()
         logging.info(f"Using Fixie API URL: {self._api_url}")
         transport = RequestsHTTPTransport(
             url=f"{self._api_url}/graphql",

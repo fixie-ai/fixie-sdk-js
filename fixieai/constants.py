@@ -3,10 +3,15 @@ and your Fixie API key."""
 
 import os
 
+import yaml
+
 # Base Fixie platform URL.
 FIXIE_API_URL = os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
-# Your Fixie API key, set from environment variables.
-FIXIE_API_KEY = os.getenv("FIXIE_API_KEY")
+# Path to fixie config file.
+FIXIE_CONFIG_PATH = os.getenv(
+    "FIXIE_CONFIG_PATH",
+    os.path.expanduser("~/.config/fixie/config.yaml"),
+)
 
 # Fixie's UserStorage service URL.
 FIXIE_USER_STORAGE_URL = f"{FIXIE_API_URL}/api/userstorage"
@@ -20,3 +25,37 @@ FIXIE_JWKS_URL = f"{FIXIE_API_URL}/.well-known/jwks.json"
 
 # The audience for Fixie's query JWTs.
 FIXIE_AGENT_API_AUDIENCE = "https://app.fixie.ai/api"
+
+
+def fixie_api_key() -> str:
+    """Returns authenticated user's fixie api key.
+
+    User may authenticate via `fixie auth`, or by setting FIXIE_API_KEY environment
+    variable to override any previous authentication.
+
+    If user is not authenticated and FIXIE_API_KEY is not set, a PermissionError is
+    raised.
+    """
+    if "FIXIE_API_KEY" in os.environ:
+        return os.environ["FIXIE_API_KEY"]
+    try:
+        with open(FIXIE_CONFIG_PATH) as fp:
+            api_key = yaml.safe_load(fp)["fixie_api_key"]
+            assert isinstance(api_key, str)
+            return api_key
+    except (FileNotFoundError, KeyError, AssertionError):
+        raise PermissionError(
+            "User is not authenticated. Run 'fixie auth' to authenticate, or set the "
+            "FIXIE_API_KEY environment variable, which can be obtained from your "
+            "profile page at https://app.fixie.ai/profile"
+        )
+
+
+def is_authenticated() -> bool:
+    """Returns true if the current user is authenticated."""
+    try:
+        fixie_api_key()
+    except PermissionError:
+        return False
+    else:
+        return True
