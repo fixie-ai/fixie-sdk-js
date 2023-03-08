@@ -51,8 +51,11 @@ def dummy_agent():
     def simple3(query):
         return "Simple response custom"
 
-    agent._verify_token = mock.Mock(return_value=True)
-    return agent
+    with mock.patch.object(code_shot._VerifiedTokenClaims, "from_token") as from_token:
+        from_token.return_value = code_shot._VerifiedTokenClaims(
+            agent_id="fake agent id"
+        )
+        yield agent
 
 
 def test_simple_agent_handshake(dummy_agent):
@@ -82,7 +85,9 @@ def test_simple_agent_func_calls(dummy_agent):
     assert response.status_code == 200
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
-    dummy_agent._verify_token.assert_called_once_with("fixie-test-token")
+    code_shot._VerifiedTokenClaims.from_token.assert_called_once_with(
+        "fixie-test-token", dummy_agent._jwks_client
+    )
 
     # Test Func[simple2]
     response = client.post(
