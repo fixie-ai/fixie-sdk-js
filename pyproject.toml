@@ -23,7 +23,7 @@ gql = { version = "^3.4.0", extras = ["requests"] }
 python = "^3.8"
 prompt-toolkit = "^3.0.31"
 pydantic = "*"
-PyJWT = "^2.6.0"
+PyJWT = { version = "^2.6.0", extras = ["crypto"] }
 requests = "^2.28.1"
 rich = "^12.6.0"
 dataclasses-json = "^0.5.7"
