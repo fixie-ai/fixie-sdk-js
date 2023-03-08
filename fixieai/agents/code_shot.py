@@ -24,6 +24,9 @@ from fixieai.agents import utils
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
+# The JWT claim containing the agent ID
+_AGENT_ID_JWT_CLAIM = "aid"
+
 
 @pydantic_dataclasses.dataclass
 class AgentMetadata:
@@ -89,7 +92,6 @@ class CodeShotAgent:
 
     def __init__(
         self,
-        agent_id: str,
         base_prompt: str,
         few_shots: Union[str, List[str]],
         oauth_params: Optional[oauth.OAuthParams] = None,
@@ -97,7 +99,6 @@ class CodeShotAgent:
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
-        self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
         self.oauth_params = oauth_params
@@ -108,20 +109,24 @@ class CodeShotAgent:
             # Register default Funcs.
             self.register_func(_oauth)
 
-    def serve(self, host: str = "0.0.0.0", port: int = 8181):
+    def serve(
+        self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181
+    ):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
-        This pings Fixie upon startup to fetch the latest prompt and fewshots.
+        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
+            agent_id: The qualified agent id (`username/handle`)
             host: The address to start listening at.
             port: The port number to start listening at.
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, self.agent_id)
-        )
+        if agent_id:
+            fast_api.add_event_handler(
+                "startup", functools.partial(_ping_fixie_async, agent_id)
+            )
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -169,7 +174,7 @@ class CodeShotAgent:
 
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        metadata = AgentMetadata(self.base_prompt, self.few_shots)  # type: ignore[call-arg]
+        metadata = AgentMetadata(self.base_prompt, self.few_shots)
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
@@ -184,7 +189,10 @@ class CodeShotAgent:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        if not self._verify_token(credentials.credentials):
+        token_claims = _VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client
+        )
+        if token_claims is None:
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         elif (
             query.access_token is not None
@@ -201,7 +209,7 @@ class CodeShotAgent:
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
         kwargs = self._get_func_kwargs(
-            query, inspect.signature(pyfunc).parameters.keys()
+            query, token_claims, inspect.signature(pyfunc).parameters.keys()
         )
         output = pyfunc(**kwargs)
         try:
@@ -211,36 +219,58 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
-    def _verify_token(self, token: str) -> bool:
-        try:
-            public_key = self._jwks_client.get_signing_key_from_jwt(token)
-            _ = jwt.decode(
-                token,
-                public_key.key,
-                algorithms=["EdDSA"],
-                audience=constants.FIXIE_AGENT_API_AUDIENCE,
-            )
-            return True
-        except jwt.DecodeError:
-            return False
-
     def _get_func_kwargs(
-        self, query: api.AgentQuery, arg_names: Iterable[str]
+        self,
+        query: api.AgentQuery,
+        token_claims: _VerifiedTokenClaims,
+        arg_names: Iterable[str],
     ) -> Dict[str, Any]:
         kwargs: Dict[str, Any] = {}
         for arg_name in arg_names:
             if arg_name == "query":
                 kwargs[arg_name] = query.message
             elif arg_name == "user_storage":
-                kwargs[arg_name] = user_storage.UserStorage(query, self.agent_id)
+                kwargs[arg_name] = user_storage.UserStorage(
+                    query, token_claims.agent_id
+                )
             elif arg_name == "oauth_handler":
                 assert self.oauth_params, "oauth_params is not set"
                 kwargs[arg_name] = oauth.OAuthHandler(
-                    self.oauth_params, query, self.agent_id
+                    self.oauth_params, query, token_claims.agent_id
                 )
             else:
                 raise ValueError(f"Found unknown argument {arg_name!r}.")
         return kwargs
+
+
+@pydantic_dataclasses.dataclass
+class _VerifiedTokenClaims:
+    """Verified claims from an agent token."""
+
+    agent_id: str
+
+    @staticmethod
+    def from_token(
+        token: str, jwks_client: jwt.PyJWKClient
+    ) -> Optional[_VerifiedTokenClaims]:
+        try:
+            public_key = jwks_client.get_signing_key_from_jwt(token)
+            claims = jwt.decode(
+                token,
+                public_key.key,
+                algorithms=["EdDSA"],
+                audience=constants.FIXIE_AGENT_API_AUDIENCES,
+            )
+        except jwt.DecodeError:
+            return None
+
+        if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
+            claims[_AGENT_ID_JWT_CLAIM], str
+        ):
+            # Agent id claim is required
+            return None
+
+        return _VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
 
 
 def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
@@ -256,9 +286,9 @@ def _wrap_with_agent_response(
     value: Union[str, api.Message, api.AgentResponse]
 ) -> api.AgentResponse:
     if isinstance(value, str):
-        return api.AgentResponse(api.Message(value))  # type: ignore[call-arg]
+        return api.AgentResponse(api.Message(value))
     elif isinstance(value, api.Message):
-        return api.AgentResponse(value)  # type: ignore[call-arg]
+        return api.AgentResponse(value)
     elif isinstance(value, api.AgentResponse):
         return value
     else:

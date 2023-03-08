@@ -14,7 +14,7 @@ you can create complex workflows with very little code.
 
 The easiest way to install the Fixie SDK is via `pip`:
 ```
-pip install fixie
+pip install fixieai
 ```
 
 ## Get your API key

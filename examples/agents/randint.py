@@ -6,7 +6,6 @@ import random
 
 import fixieai
 
-agent_id = "randint"
 BASE_PROMPT = (
     "I am a simple agent that generates a random number between two given values."
 )
@@ -22,7 +21,7 @@ Func[genrand] says: 8
 A: The random number is 8.
 """
 
-agent = fixieai.CodeShotAgent(agent_id, BASE_PROMPT, FEW_SHOTS)
+agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
 
 @agent.register_func
@@ -31,4 +30,5 @@ def genrand(query: fixieai.Message) -> str:
     return str(random.randint(int(low), int(high)))
 
 
-agent.serve()
+if __name__ == "__main__":
+    agent.serve()
