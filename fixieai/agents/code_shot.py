@@ -24,6 +24,16 @@ from fixieai.agents import utils
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
+# The JWT claim containing the agent ID
+_AGENT_ID_JWT_CLAIM = "aid"
+
+
+@pydantic_dataclasses.dataclass
+class VerifiedTokenClaims:
+    """Verified claims from an agent token."""
+
+    agent_id: str
+
 
 @pydantic_dataclasses.dataclass
 class AgentMetadata:
@@ -184,7 +194,8 @@ class CodeShotAgent:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        if not self._verify_token(credentials.credentials):
+        token_claims = self._verify_token(credentials.credentials)
+        if token_claims is None:
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         elif (
             query.access_token is not None
@@ -201,7 +212,7 @@ class CodeShotAgent:
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
         kwargs = self._get_func_kwargs(
-            query, inspect.signature(pyfunc).parameters.keys()
+            query, token_claims, inspect.signature(pyfunc).parameters.keys()
         )
         output = pyfunc(**kwargs)
         try:
@@ -211,32 +222,45 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
-    def _verify_token(self, token: str) -> bool:
+    def _verify_token(self, token: str) -> Optional[VerifiedTokenClaims]:
         try:
             public_key = self._jwks_client.get_signing_key_from_jwt(token)
-            _ = jwt.decode(
+            claims = jwt.decode(
                 token,
                 public_key.key,
                 algorithms=["EdDSA"],
-                audience=constants.FIXIE_AGENT_API_AUDIENCE,
+                audience=constants.FIXIE_AGENT_API_AUDIENCES,
             )
-            return True
+
+            if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
+                claims[_AGENT_ID_JWT_CLAIM], str
+            ):
+                # Agent id claim is required
+                return None
+
+            return VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
+
         except jwt.DecodeError:
-            return False
+            return None
 
     def _get_func_kwargs(
-        self, query: api.AgentQuery, arg_names: Iterable[str]
+        self,
+        query: api.AgentQuery,
+        token_claims: VerifiedTokenClaims,
+        arg_names: Iterable[str],
     ) -> Dict[str, Any]:
         kwargs: Dict[str, Any] = {}
         for arg_name in arg_names:
             if arg_name == "query":
                 kwargs[arg_name] = query.message
             elif arg_name == "user_storage":
-                kwargs[arg_name] = user_storage.UserStorage(query, self.agent_id)
+                kwargs[arg_name] = user_storage.UserStorage(
+                    query, token_claims.agent_id
+                )
             elif arg_name == "oauth_handler":
                 assert self.oauth_params, "oauth_params is not set"
                 kwargs[arg_name] = oauth.OAuthHandler(
-                    self.oauth_params, query, self.agent_id
+                    self.oauth_params, query, token_claims.agent_id
                 )
             else:
                 raise ValueError(f"Found unknown argument {arg_name!r}.")
