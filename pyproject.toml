@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixieai"
-version = "0.1.9"
+version = "0.1.10"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
@@ -36,7 +36,7 @@ pytest-mock = "3.10.0"
 pytest-xdist = "3.0.2"
 black = "22.8.0"
 isort = "5.10.1"
-mypy = "0.991"
+mypy = "^1.0.1"
 autoflake = "1.6.1"
 requests-mock = "1.10.0"
 mkdocs = "^1.4.2"
@@ -58,6 +58,7 @@ python_version = "3.8"
 warn_return_any = true
 warn_unused_configs = true
 plugins = [ "pydantic.mypy" ]
+exclude = [ "fixie-examples" ]
 
 [[tool.mypy.overrides]]
 module = ["validators", "oauth2_client"]
@@ -66,11 +67,12 @@ ignore_missing_imports = true
 [tool.isort]
 profile = "black"
 single_line_exclusions = ["typing", "collections.abc", "typing_extensions"]
-skip = ["venv", "third_party"]
+skip = ["venv", "third_party", "fixie-examples"]
 
 [tool.black]
 extend-exclude = '''
 /(
+  | fixie-examples
   | third_party
   | venv
 )/

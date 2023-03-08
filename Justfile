@@ -8,7 +8,7 @@ set dotenv-load := true
 set positional-arguments := true
 
 # Default recipe that runs if you type "just".
-default: format check test
+default: format check test build-docs
 
 # Install dependencies for local development.
 install:

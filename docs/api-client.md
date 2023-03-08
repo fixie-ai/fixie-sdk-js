@@ -8,6 +8,14 @@
     options:
       show_source: false
 
-## ::: fixieai.client.console
+## ::: fixieai.client.agent
+    options:
+      show_source: false
+
+## ::: fixieai.cli.cli
+    options:
+      show_source: false
+
+## ::: fixieai.cli.session.console
     options:
       show_source: false
