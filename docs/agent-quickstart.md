@@ -144,5 +144,5 @@ a Fixie Session and issuing a query such as:
 Congrats! You've just created your first Fixie Agent!
 
 See [Agent Protocol](agent-protocol.md) for details on how to implement an Agent directly
-in a language other than Python, as well as [Agent API](api-agents.md) for details on the
-Agent Python API.
+in a language other than Python, as well as [Agent API](agents.md) for details on the
+complete Fixie Agent API.
