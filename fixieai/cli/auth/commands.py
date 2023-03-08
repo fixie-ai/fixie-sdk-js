@@ -5,6 +5,8 @@ from fixieai.cli.auth import user_config
 
 
 def validate_not_authed(ctx, param, force):
+    """Click option callback for "fixie auth --force" that validates user is not
+    authenticated if "--force" is not set."""
     if force:
         # --force is set
         return

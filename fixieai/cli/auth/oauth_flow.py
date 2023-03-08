@@ -10,11 +10,11 @@ from fixieai import constants
 # Fixie CLI Client ID.
 CLIENT_ID = "II4FM6ToxVwSKB6DW1r114AKAuSnuZEgYehEBB-5WQA"
 # Scopes to request access for.
-SCOPES = ["fixie-api-key"]
+SCOPES = ["api-access"]
 # The authorization URL that users click on.
 AUTHORIZE_SERVICE = f"{constants.FIXIE_API_URL}/authorize"
 # The token exchange service that we use internally.
-TOKEN_SERVICE = f"{constants.FIXIE_API_URL}/oauth/token"
+TOKEN_SERVICE = f"{constants.FIXIE_API_URL}/access/token"
 # The ServiceInformation object that encapsulates all above.
 SERVICE_INFORMATION = credentials_manager.ServiceInformation(
     AUTHORIZE_SERVICE,

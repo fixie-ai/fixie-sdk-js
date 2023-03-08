@@ -11,7 +11,7 @@ from fixieai.cli.auth import commands as auth_commands
 from fixieai.cli.session import commands as session_commands
 
 
-class ContextObject:
+class CliContext:
     def __init__(self):
         self._client: Optional[fixieai.FixieClient] = None
 
@@ -35,7 +35,7 @@ class ContextObject:
 @click.pass_context
 def fixie(ctx):
     """Command-line interface to the Fixie platform."""
-    ctx.ensure_object(ContextObject)
+    ctx.ensure_object(CliContext)
 
 
 # Add subcommands
