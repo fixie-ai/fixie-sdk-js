@@ -139,6 +139,7 @@ class Agent:
         name: Optional[str] = None,
         description: Optional[str] = None,
         more_info_url: Optional[str] = None,
+        deployment_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
         """Create a new Agent with the given parameters."""
@@ -149,6 +150,7 @@ class Agent:
                 $name: String,
                 $description: String,
                 $moreInfoUrl: String,
+                $deploymentUrl: String,
                 $published: Boolean) {
                 createAgent(
                     agentData: {
@@ -156,6 +158,7 @@ class Agent:
                         name: $name,
                         description: $description,
                         moreInfoUrl: $moreInfoUrl,
+                        funcUrl: $deploymentUrl,
                         published: $published
                     }
                 ) {
@@ -176,6 +179,8 @@ class Agent:
             variable_values["description"] = description
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
+        if deployment_url is not None:
+            variable_values["deploymentUrl"] = deployment_url
         if published is not None:
             variable_values["published"] = published
 
@@ -194,6 +199,7 @@ class Agent:
         name: Optional[str] = None,
         description: Optional[str] = None,
         more_info_url: Optional[str] = None,
+        deployment_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
         """Update the Agent with the given parameters."""
@@ -205,6 +211,7 @@ class Agent:
                 $name: String,
                 $description: String,
                 $moreInfoUrl: String,
+                $deploymentUrl: String,
                 $published: Boolean) {
                 updateAgent(
                     agentData: {
@@ -213,6 +220,7 @@ class Agent:
                         name: $name,
                         description: $description,
                         moreInfoUrl: $moreInfoUrl,
+                        funcUrl: $deploymentUrl,
                         published: $published
                     }
                 ) {
@@ -235,6 +243,8 @@ class Agent:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
             variable_values["published"] = published
+        if deployment_url is not None:
+            variable_values["deploymentUrl"] = deployment_url
 
         result = self._gqlclient.execute(query, variable_values=variable_values)
         if "updateAgent" not in result or result["updateAgent"] is None:
@@ -243,6 +253,8 @@ class Agent:
         assert isinstance(result["updateAgent"]["agent"], dict)
         assert isinstance(result["updateAgent"]["agent"]["agentId"], str)
         self._metadata = self.get_metadata()
+        if new_handle:
+            self._handle = new_handle
         return result["updateAgent"]["agent"]["agentId"]
 
     def delete_agent(self) -> None:

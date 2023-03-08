@@ -1,7 +1,11 @@
+import os
+
 import click
 import validators
 
+import fixieai.client
 from fixieai.cli.agent import agent_config
+from fixieai.cli.agent import loader
 
 
 @click.group(help="Agent-related commands.")
@@ -96,20 +100,59 @@ def list_agents(ctx, verbose):
             click.echo()
 
 
-def _default_refresh_handle():
-    """Returns the default agent handle, if there is one."""
-    try:
-        return agent_config.load_config().handle
-    except FileNotFoundError:
-        return None
+def _validate_agent_path(ctx, param, value):
+    normalized = agent_config.normalize_path(value)
+    if not os.path.exists(normalized):
+        raise click.BadParameter(f"{normalized} does not exist")
+    return normalized
 
 
-@agent.command("refresh", help="Indicate that the agent's prompts should be refreshed.")
-@click.argument(
-    "handle",
-    required=True,
-    default=_default_refresh_handle,
-)
+def _ensure_agent_updated(
+    client: fixieai.client.FixieClient,
+    config: agent_config.AgentConfig,
+):
+    agent = client.get_agent(config.handle)
+    if agent.agent_id is None:
+        agent.create_agent(
+            name=config.name,
+            description=config.description,
+            more_info_url=config.more_info_url,
+            deployment_url=config.deployment_url,
+            published=config.public,
+        )
+    else:
+        agent.update_agent(
+            new_handle=config.handle,
+            name=config.name,
+            description=config.description,
+            more_info_url=config.more_info_url,
+            deployment_url=config.deployment_url,
+            published=config.public,
+        )
+
+    return agent
+
+
+@agent.command("serve", help="Start serving the current agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--host", default="0.0.0.0")
+@click.option("--port", type=int, default=8181)
 @click.pass_context
-def refresh(ctx, handle):
-    ctx.obj.client.refresh_agent(handle)
+def serve(ctx, path, host, port):
+    # TODO: add tunneling and deployment url update
+    config, agent_impl = loader.load_agent_from_path(path)
+    agent_api = _ensure_agent_updated(ctx.obj.client, config)
+    agent_impl.serve(agent_api.agent_id, host, port)
+
+
+@agent.command("deploy", help="Deploy the current agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.pass_context
+def deploy(ctx, path):
+    config = agent_config.load_config(path)
+    agent_api = _ensure_agent_updated(ctx.obj.client, config)
+    if config.deployment_url is None:
+        raise NotImplementedError("Managed deployment is not yet implemented")
+
+    # Trigger a refresh with the updated deployment
+    ctx.obj.client.refresh_agent(config.handle)
