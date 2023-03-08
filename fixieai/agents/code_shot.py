@@ -29,13 +29,6 @@ _AGENT_ID_JWT_CLAIM = "aid"
 
 
 @pydantic_dataclasses.dataclass
-class VerifiedTokenClaims:
-    """Verified claims from an agent token."""
-
-    agent_id: str
-
-
-@pydantic_dataclasses.dataclass
 class AgentMetadata:
     """Metadata for a Fixie CodeShot Agent.
 
@@ -194,7 +187,9 @@ class CodeShotAgent:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        token_claims = self._verify_token(credentials.credentials)
+        token_claims = _VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client
+        )
         if token_claims is None:
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
         elif (
@@ -222,31 +217,10 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
-    def _verify_token(self, token: str) -> Optional[VerifiedTokenClaims]:
-        try:
-            public_key = self._jwks_client.get_signing_key_from_jwt(token)
-            claims = jwt.decode(
-                token,
-                public_key.key,
-                algorithms=["EdDSA"],
-                audience=constants.FIXIE_AGENT_API_AUDIENCES,
-            )
-
-            if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
-                claims[_AGENT_ID_JWT_CLAIM], str
-            ):
-                # Agent id claim is required
-                return None
-
-            return VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
-
-        except jwt.DecodeError:
-            return None
-
     def _get_func_kwargs(
         self,
         query: api.AgentQuery,
-        token_claims: VerifiedTokenClaims,
+        token_claims: _VerifiedTokenClaims,
         arg_names: Iterable[str],
     ) -> Dict[str, Any]:
         kwargs: Dict[str, Any] = {}
@@ -265,6 +239,36 @@ class CodeShotAgent:
             else:
                 raise ValueError(f"Found unknown argument {arg_name!r}.")
         return kwargs
+
+
+@pydantic_dataclasses.dataclass
+class _VerifiedTokenClaims:
+    """Verified claims from an agent token."""
+
+    agent_id: str
+
+    @staticmethod
+    def from_token(
+        token: str, jwks_client: jwt.PyJWKClient
+    ) -> Optional[_VerifiedTokenClaims]:
+        try:
+            public_key = jwks_client.get_signing_key_from_jwt(token)
+            claims = jwt.decode(
+                token,
+                public_key.key,
+                algorithms=["EdDSA"],
+                audience=constants.FIXIE_AGENT_API_AUDIENCES,
+            )
+        except jwt.DecodeError:
+            return None
+
+        if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
+            claims[_AGENT_ID_JWT_CLAIM], str
+        ):
+            # Agent id claim is required
+            return None
+
+        return _VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
 
 
 def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
