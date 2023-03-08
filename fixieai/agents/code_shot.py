@@ -5,12 +5,10 @@ import functools
 import inspect
 import json
 import re
-import threading
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
 import jwt
-import requests
 import uvicorn
 import yaml
 from pydantic import dataclasses as pydantic_dataclasses
@@ -92,7 +90,6 @@ class CodeShotAgent:
 
     def __init__(
         self,
-        agent_id: str,
         base_prompt: str,
         few_shots: Union[str, List[str]],
         oauth_params: Optional[oauth.OAuthParams] = None,
@@ -100,7 +97,6 @@ class CodeShotAgent:
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
-        self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
         self.oauth_params = oauth_params
@@ -122,9 +118,6 @@ class CodeShotAgent:
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, self.agent_id)
-        )
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -303,14 +296,3 @@ def _split_few_shots(few_shots: str) -> List[str]:
         "Q:" + few_shot for few_shot in few_shot_splits[1:]
     ]
     return few_shot_splits
-
-
-def _ping_fixie_async(agent_id: str):
-    """Asynchronously pings Fixie to refresh the given agent_id."""
-    thread = threading.Thread(target=_ping_fixie_sync, args=(agent_id,))
-    thread.start()
-
-
-def _ping_fixie_sync(agent_id: str):
-    response = requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
-    response.raise_for_status()

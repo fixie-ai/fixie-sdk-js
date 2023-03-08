@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
+import requests
 from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
@@ -73,9 +74,10 @@ class FixieClient:
         self._api_url = api_url or constants.FIXIE_API_URL
         self._api_key = api_key or constants.fixie_api_key()
         logging.info(f"Using Fixie API URL: {self._api_url}")
+        self._request_headers = {"Authorization": f"Bearer {self._api_key}"}
         transport = RequestsHTTPTransport(
             url=f"{self._api_url}/graphql",
-            headers={"Authorization": f"Bearer {self._api_key}"},
+            headers=self._request_headers,
         )
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
 
@@ -166,3 +168,28 @@ class FixieClient:
     def get_session(self, session_id: str) -> Session:
         """Return an existing Session object."""
         return Session(self, session_id)
+
+    def get_current_username(self) -> str:
+        """Returns the username of the current user."""
+        query = gql(
+            """
+            query getUsername {
+                user {
+                    username
+                }
+            }
+        """
+        )
+        result = self._gqlclient.execute(query)
+        assert "user" in result and isinstance(result["user"], dict)
+        user = result["user"]
+        assert "username" in user and isinstance(user["username"], str)
+        return user["username"]
+
+    def refresh_agent(self, agent_handle: str):
+        """Indicates that an agent's prompts should be refreshed."""
+        username = self.get_current_username()
+        requests.post(
+            f"{self._api_url}/api/refresh/{username}/{agent_handle}",
+            headers=self._request_headers,
+        ).raise_for_status()
