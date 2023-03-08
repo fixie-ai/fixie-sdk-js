@@ -1,5 +1,3 @@
-from unittest import mock
-
 import fastapi
 import pytest
 import yaml
