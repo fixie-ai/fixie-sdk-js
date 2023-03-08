@@ -108,28 +108,36 @@ class Agent:
         """Return the query URL for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["query_url"]
+        url = self._metadata["owner"]["query_url"]
+        assert isinstance(url, str)
+        return url
 
     @property
     def func_url(self) -> Optional[str]:
         """Return the func URL for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["func_url"]
+        url = self._metadata["owner"]["func_url"]
+        assert isinstance(url, str)
+        return url
 
     @property
     def created(self) -> Optional[datetime.datetime]:
         """Return the creation timestamp for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["created"]
+        ts = self._metadata["owner"]["created"]
+        assert isinstance(ts, datetime.datetime)
+        return ts
 
     @property
     def modified(self) -> Optional[datetime.datetime]:
         """Return the modification timestamp for this Agent."""
         if self._metadata is None:
             return None
-        return self._metadata["owner"]["modified"]
+        ts = self._metadata["owner"]["modified"]
+        assert isinstance(ts, datetime.datetime)
+        return ts
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
