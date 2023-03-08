@@ -30,4 +30,5 @@ def genrand(query: fixieai.Message) -> str:
     return str(random.randint(int(low), int(high)))
 
 
-agent.serve()
+if __name__ == "__main__":
+    agent.serve()
