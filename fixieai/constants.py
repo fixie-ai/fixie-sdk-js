@@ -30,12 +30,12 @@ FIXIE_AGENT_API_AUDIENCE = "https://app.fixie.ai/api"
 def fixie_api_key() -> str:
     """Returns authenticated user's fixie api key.
 
-     User may authenticate via `fixie auth`, or by setting FIXIE_API_KEY environment
-     variable to override any previous authentication.
+    User may authenticate via `fixie auth`, or by setting FIXIE_API_KEY environment
+    variable to override any previous authentication.
 
-     If user is not authenticated and FIXIE_API_KEY is not set, a PermissionError is
-     raised.
-     """
+    If user is not authenticated and FIXIE_API_KEY is not set, a PermissionError is
+    raised.
+    """
     if "FIXIE_API_KEY" in os.environ:
         return os.environ["FIXIE_API_KEY"]
     try:
