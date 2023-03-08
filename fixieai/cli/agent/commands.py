@@ -58,12 +58,12 @@ def _validate_url(ctx, param, value):
     default=lambda: _current_config().public,
     type=click.BOOL,
 )
-def init_agent(agent_id, description, entry_point, more_info_url, public):
+def init_agent(handle, description, entry_point, more_info_url, public):
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
         current_config = agent_config.AgentConfig()
-    current_config.agent_id = agent_id
+    current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
     current_config.more_info_url = more_info_url
