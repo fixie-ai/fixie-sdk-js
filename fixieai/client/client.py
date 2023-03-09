@@ -119,8 +119,8 @@ class FixieClient:
     def create_agent(
         self,
         handle: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        name: str,
+        description: str,
         query_url: Optional[str] = None,
         func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,

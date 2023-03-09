@@ -177,8 +177,8 @@ class Agent:
 
     def create_agent(
         self,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        name: str,
+        description: str,
         query_url: Optional[str] = None,
         func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
@@ -189,8 +189,8 @@ class Agent:
             """
             mutation CreateAgent(
                 $handle: String!,
-                $name: String,
-                $description: String,
+                $name: String!,
+                $description: String!,
                 $queryUrl: String,
                 $funcUrl: String,
                 $moreInfoUrl: String,
@@ -214,13 +214,9 @@ class Agent:
             """
         )
 
-        # TODO(mdw): This might not be right if GraphQL requires all variables to be populated
-        # in the mutation.
         variable_values: Dict[str, Any] = {"handle": self._handle}
-        if name is not None:
-            variable_values["name"] = name
-        if description is not None:
-            variable_values["description"] = description
+        variable_values["name"] = name
+        variable_values["description"] = description
         if query_url is not None:
             variable_values["query_url"] = query_url
         if func_url is not None:
