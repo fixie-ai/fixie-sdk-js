@@ -18,17 +18,23 @@ class Agent:
 
     Args:
         client: The FixieClient instance to use.
-        handle: The handle of the Agent.
+        agent_id: The Agent ID, e.g., "fixie/calc", or handle, e.g., "dice".
     """
 
     def __init__(
         self,
         client: FixieClient,
-        handle: str,
+        agent_id: str,
     ):
         self._client = client
         self._gqlclient = self._client.gqlclient
-        self._handle = handle
+
+        self._owner: Optional[str] = None
+        if "/" in agent_id:
+            self._owner, self._handle = agent_id.split("/")
+        else:
+            self._handle = agent_id
+
         self._metadata: Optional[Dict[str, Any]] = None
         try:
             self._metadata = self.get_metadata()
@@ -36,18 +42,18 @@ class Agent:
             self._metadata = None
 
     @property
-    def handle(self) -> Optional[str]:
-        """Return the handle for this Agent."""
-        return self._handle
-
-    @property
     def agent_id(self) -> Optional[str]:
         """Return the agentId for this Agent."""
         if self._metadata is None:
             return None
         agent_id = self._metadata["agentId"]
-        assert isinstance(agent_id, str)
+        assert agent_id is None or isinstance(agent_id, str)
         return agent_id
+
+    @property
+    def handle(self) -> Optional[str]:
+        """Return the handle for this Agent."""
+        return self._handle
 
     @property
     def name(self) -> Optional[str]:
@@ -55,7 +61,7 @@ class Agent:
         if self._metadata is None:
             return None
         name = self._metadata["name"]
-        assert isinstance(name, str)
+        assert name is None or isinstance(name, str)
         return name
 
     @property
@@ -64,7 +70,7 @@ class Agent:
         if self._metadata is None:
             return None
         description = self._metadata["description"]
-        assert isinstance(description, str)
+        assert description is None or isinstance(description, str)
         return description
 
     @property
@@ -73,7 +79,9 @@ class Agent:
         if self._metadata is None:
             return None
         queries = self._metadata["queries"]
-        assert isinstance(queries, list) and all(isinstance(q, str) for q in queries)
+        assert queries is None or (
+            isinstance(queries, list) and all(isinstance(q, str) for q in queries)
+        )
         return queries
 
     @property
@@ -82,7 +90,7 @@ class Agent:
         if self._metadata is None:
             return None
         more_info_url = self._metadata["moreInfoUrl"]
-        assert isinstance(more_info_url, str)
+        assert more_info_url is None or isinstance(more_info_url, str)
         return more_info_url
 
     @property
@@ -91,7 +99,7 @@ class Agent:
         if self._metadata is None:
             return None
         published = self._metadata["published"]
-        assert isinstance(published, bool)
+        assert published is None or isinstance(published, bool)
         return published
 
     @property
@@ -100,7 +108,7 @@ class Agent:
         if self._metadata is None:
             return None
         owner_username = self._metadata["owner"]["username"]
-        assert isinstance(owner_username, str)
+        assert owner_username is None or isinstance(owner_username, str)
         return owner_username
 
     @property
@@ -108,8 +116,8 @@ class Agent:
         """Return the query URL for this Agent."""
         if self._metadata is None:
             return None
-        url = self._metadata["owner"]["query_url"]
-        assert isinstance(url, str)
+        url = self._metadata["queryUrl"]
+        assert url is None or isinstance(url, str)
         return url
 
     @property
@@ -117,8 +125,8 @@ class Agent:
         """Return the func URL for this Agent."""
         if self._metadata is None:
             return None
-        url = self._metadata["owner"]["func_url"]
-        assert isinstance(url, str)
+        url = self._metadata["funcUrl"]
+        assert url is None or isinstance(url, str)
         return url
 
     @property
@@ -126,54 +134,94 @@ class Agent:
         """Return the creation timestamp for this Agent."""
         if self._metadata is None:
             return None
-        ts = self._metadata["owner"]["created"]
-        assert isinstance(ts, datetime.datetime)
-        return ts
+        ts = self._metadata["created"]
+        if ts is not None:
+            return datetime.datetime.fromisoformat(ts)
+        else:
+            return None
 
     @property
     def modified(self) -> Optional[datetime.datetime]:
         """Return the modification timestamp for this Agent."""
         if self._metadata is None:
             return None
-        ts = self._metadata["owner"]["modified"]
-        assert isinstance(ts, datetime.datetime)
-        return ts
+        ts = self._metadata["modified"]
+        if ts is not None:
+            return datetime.datetime.fromisoformat(ts)
+        else:
+            return None
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
 
-        query = gql(
-            """
-            query getAgentByHandle($handle: String!) {
-                agentByHandle(handle: $handle) {
-                    agentId
-                    handle
-                    name
-                    description
-                    queries
-                    moreInfoUrl
-                    published
-                    owner {
-                        username
+        if self._owner is None:
+            # Query by handle.
+            query = gql(
+                """
+                query getAgentByHandle($handle: String!) {
+                    agentByHandle(handle: $handle) {
+                        agentId
+                        handle
+                        name
+                        description
+                        queries
+                        moreInfoUrl
+                        published
+                        owner {
+                            username
+                        }
+                        queryUrl
+                        funcUrl
+                        created
+                        modified
                     }
-                    queryUrl
-                    funcUrl
-                    created
-                    modified
                 }
-            }
-        """
+            """
+            )
+            result = self._gqlclient.execute(
+                query, variable_values={"handle": self._handle}
+            )
+            if "agentByHandle" not in result or result["agentByHandle"] is None:
+                raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
+            agent_dict = result["agentByHandle"]
+
+        else:
+            # Query by agent ID.
+            query = gql(
+                """
+                query getAgentById($agentId: String!) {
+                    agentById(agentId: $agentId) {
+                        agentId
+                        handle
+                        name
+                        description
+                        queries
+                        moreInfoUrl
+                        published
+                        owner {
+                            username
+                        }
+                        queryUrl
+                        funcUrl
+                        created
+                        modified
+                    }
+                }
+            """
+            )
+            result = self._gqlclient.execute(
+                query, variable_values={"agentId": f"{self._owner}/{self._handle}"}
+            )
+            if "agentById" not in result or result["agentById"] is None:
+                raise ValueError(
+                    f"Cannot fetch agent metadata for {self._owner}/{self._handle}"
+                )
+            agent_dict = result["agentById"]
+
+        assert isinstance(agent_dict, dict) and all(
+            isinstance(k, str) for k in agent_dict.keys()
         )
-        result = self._gqlclient.execute(
-            query, variable_values={"handle": self._handle}
-        )
-        if "agentByHandle" not in result or result["agentByHandle"] is None:
-            raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-        agent_by_handle = result["agentByHandle"]
-        assert isinstance(agent_by_handle, dict) and all(
-            isinstance(k, str) for k in agent_by_handle.keys()
-        )
-        return agent_by_handle
+        return agent_dict
 
     def create_agent(
         self,
