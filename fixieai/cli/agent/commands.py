@@ -1,5 +1,7 @@
 import io
 import os
+import re
+import subprocess
 from contextlib import contextmanager
 from typing import BinaryIO, Dict
 
@@ -137,16 +139,90 @@ def _ensure_agent_updated(
     return agent
 
 
-@agent.command("serve", help="Start serving the current agent.")
+class Tunnel:
+    """Start an Internet-accessible tunnel to the Agent running at the given host:port.
+
+    Returns the public URL on which the Agent can be contacted.
+
+    Shuts down the tunnel when the context manager exits.
+    """
+
+    def __init__(self, host: str, port: int):
+        self._host = host
+        self._port = port
+        self._tunnel_url = None
+
+    @property
+    def tunnel_url(self) -> str:
+        if self._tunnel_url is None:
+            raise RuntimeError("Tunnel not yet open")
+        return self._tunnel_url
+
+    def __enter__(self):
+        # ssh -R 80:localhost:8080 nokey@localhost.run
+        tunnel_re = re.compile(r"\S+ tunneled with tls termination, (.*)")
+        console = rich_console.Console()
+        self._proc = subprocess.Popen(
+            ["ssh", "-R", f"80:localhost:{self._port}", "nokey@localhost.run"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        )
+        assert self._proc.stdout is not None
+        while True:
+            line = self._proc.stdout.readline()
+            if not line:
+                break
+            if match := tunnel_re.match(line.decode("utf-8")):
+                return match.group(1)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._proc.terminate()
+        self._proc.wait()
+
+
+@agent.command(
+    "serve", help="Serve the current agent locally via a publicly-accessible URL."
+)
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.option("--host", default="0.0.0.0")
 @click.option("--port", type=int, default=8181)
 @click.pass_context
 def serve(ctx, path, host, port):
-    # TODO: add tunneling and deployment url update
+    console = rich_console.Console()
     config, agent_impl = loader.load_agent_from_path(path)
+
+    if config.deployment_url:
+        console.print(
+            f"[yellow]Ignoring existing deployment URL {config.deployment_url}[/yellow]"
+        )
+
+    # Start up an SSH tunnel via localhost.run.
+    console.print(f"Opening tunnel to {host}:{port}...")
+    with Tunnel(host, port) as tunnel_url:
+        print(f"Tunneling {host}:{port} via {tunnel_url}\n")
+        config.deployment_url = tunnel_url
+        agent_api = _ensure_agent_updated(ctx.obj.client, config)
+        agent_impl.serve(agent_api.agent_id, host, port)
+        console.print(f"Press Ctrl-C to stop.")
+
+
+@agent.command("local", help="Run an agent locally.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--host", default="0.0.0.0")
+@click.option("--port", type=int, default=8181)
+@click.pass_context
+def local(ctx, path, host, port):
+    console = rich_console.Console()
+    config, agent_impl = loader.load_agent_from_path(path)
+
+    if config.deployment_url:
+        console.print(
+            f"[yellow]Ignoring deployment URL {config.deployment_url}[/yellow]"
+        )
+
     agent_api = _ensure_agent_updated(ctx.obj.client, config)
     agent_impl.serve(agent_api.agent_id, host, port)
+    console.print(f"Press Ctrl-C to stop.")
 
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """

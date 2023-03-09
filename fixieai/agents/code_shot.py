@@ -6,6 +6,7 @@ import inspect
 import json
 import re
 import threading
+import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
@@ -131,6 +132,7 @@ class CodeShotAgent:
             fast_api.add_event_handler(
                 "startup", functools.partial(_ping_fixie_async, agent_id)
             )
+        print(f"XXXX MDW: Serving agent at {host}:{port}")
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -318,5 +320,7 @@ def _ping_fixie_async(agent_id: str):
 
 
 def _ping_fixie_sync(agent_id: str):
+    # Pause a second to give the agent a moment to start up.
+    time.sleep(1)
     response = requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
     response.raise_for_status()
