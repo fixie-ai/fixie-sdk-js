@@ -184,18 +184,22 @@ def deploy(ctx, path):
         # Deploy the agent to fixie with some bootstrapping code.
         file_streams: Dict[str, BinaryIO] = {}
         deploy_root = os.path.dirname(path)
-        for root, dirs, files in os.walk(deploy_root):
-            # Exclude any hidden files
+        for root, dirs, files in os.walk(deploy_root, topdown=True):
+            # Exclude any hidden files by removing them from the dirs list.
+            # As per https://docs.python.org/3/library/os.html#os.walk
+            # removing them from the dirs list with topdown=True skips
+            # them from the walk.
             for i, dir in reversed(list(enumerate(dirs))):
-                if dir and dir[0] == ".":
+                if dir.startswith("."):
                     console.print(
                         f"Ignoring hidden directory {os.path.join(root, dir)}",
                         style="grey53",
                     )
+                    # N.B. We're iterating in reverse to avoid needing to adjust i.
                     del dirs[i]
 
             for filename in files:
-                if filename and filename[0] == ".":
+                if filename.startswith("."):
                     console.print(
                         f"Ignoring hidden file {os.path.join(root, filename)}",
                         style="grey53",
