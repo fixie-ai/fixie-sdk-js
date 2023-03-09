@@ -52,7 +52,7 @@ class AgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
-    corpora: List[DocumentCorpus]
+    corpora: Optional[List[DocumentCorpus]]
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)

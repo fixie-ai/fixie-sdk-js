@@ -1,6 +1,4 @@
-
- 
-from unittest import mock
+import dataclasses
 
 import fastapi
 import pytest
