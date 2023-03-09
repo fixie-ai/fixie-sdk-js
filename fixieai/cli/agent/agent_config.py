@@ -18,10 +18,26 @@ class AgentConfig(utils.DataClassYamlMixin):
     handle: str = dataclasses.field(default_factory=_current_dirname)
     name: str = ""
     description: str = ""
-    entry_point: str = "main.py"
+    entry_point: str = "main:agent"
     more_info_url: str = ""
-    deployment_url: str = ""
+    deployment_url: Optional[str] = None
     public: bool = False
+
+
+def normalize_path(path: Optional[str] = None) -> str:
+    """Normalizes paths to an AgentConfig.
+
+    Args:
+        path: Optional path to either a directory or YAML file. If unspecified,
+            will return "{cwd}/agent.yaml".
+    """
+    if path is None:
+        path = os.getcwd()
+
+    if os.path.isdir(path):
+        path = os.path.join(path, "agent.yaml")
+
+    return path
 
 
 def load_config(path: Optional[str] = None) -> AgentConfig:
@@ -31,8 +47,7 @@ def load_config(path: Optional[str] = None) -> AgentConfig:
         path: Optional path to load config from. By default, config is loaded from
             "{cwd}/agent.yaml".
     """
-    if path is None:
-        path = os.path.join(os.getcwd(), "agent.yaml")
+    path = normalize_path(path)
     with open(path, "r") as fp:
         return AgentConfig.from_yaml(fp)
 
@@ -45,8 +60,7 @@ def save_config(agent_config: AgentConfig, path: Optional[str] = None):
         path: Optional path to save. By default, it's saved to the default path at
             "{cwd}/agent.yaml".
     """
-    if path is None:
-        path = os.path.join(os.getcwd(), "agent.yaml")
+    path = normalize_path(path)
     with open(path, "w") as fp:
         fp.write(agent_config.to_yaml())
 
