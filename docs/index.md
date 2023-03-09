@@ -38,5 +38,19 @@ Now, import the Fixie SDK and use it to run queries:
 
 # Documentation
 
-Check out the links on the left navigation bar for more information on how to
+Check out the links below for more information on how to
 get started using Fixie.
+
+## Tutorials
+
+* [Fixie Architecture Overview](architecture.md)
+* [Agent Quickstart](agent-quickstart.md)
+* [Building Fixie Agents](agents.md)
+* [Agent Protocol](agent-protocol.md)
+
+## Reference
+
+* [Fixie CLI Reference](cli.md)
+* [Python Client API](python-client-api.md)
+* [Python Agent API](python-agent-api.md)
+* [Fixie GraphQL API Reference](https://app.fixie.ai/static/docs/index.html)
