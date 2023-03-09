@@ -17,6 +17,7 @@ from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
 from fixieai.agents import api
+from fixieai.agents import corpora
 from fixieai.agents import oauth
 from fixieai.agents import user_storage
 from fixieai.agents import utils
@@ -29,21 +30,6 @@ _AGENT_ID_JWT_CLAIM = "aid"
 
 
 @pydantic_dataclasses.dataclass
-class DocumentLoader:
-    """Document loader for a Fixie CodeShot Agent."""
-
-    name: str
-
-
-@pydantic_dataclasses.dataclass
-class DocumentCorpus:
-    """Document corpus for a Fixie CodeShot Agent."""
-
-    urls: List[str]
-    loader: DocumentLoader
-
-
-@pydantic_dataclasses.dataclass
 class AgentMetadata:
     """Metadata for a Fixie CodeShot Agent.
 
@@ -52,7 +38,7 @@ class AgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
-    corpora: Optional[List[DocumentCorpus]]
+    corpora: Optional[List[corpora.DocumentCorpus]]
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
@@ -110,7 +96,7 @@ class CodeShotAgent:
         self,
         base_prompt: str,
         few_shots: Union[str, List[str]],
-        corpora: Optional[List[DocumentCorpus]] = None,
+        corpora: Optional[List[corpora.DocumentCorpus]] = None,
         oauth_params: Optional[oauth.OAuthParams] = None,
     ):
         if isinstance(few_shots, str):
