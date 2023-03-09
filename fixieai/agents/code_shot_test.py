@@ -1,3 +1,4 @@
+import dataclasses
 from unittest import mock
 
 import fastapi
@@ -22,6 +23,11 @@ Ask Func[simple2]: Simple argument
 Func[simple2] says: Simple response
 A: Simple final response
 """
+CORPORA = [
+    agents.DocumentCorpus(  # type: ignore[call-arg]
+        urls=["http://example.com/doc1.txt"], loader=agents.DocumentLoader("text")  # type: ignore[call-arg]
+    ),
+]
 
 
 @pytest.fixture
@@ -30,6 +36,7 @@ def dummy_agent():
         agent_id,
         BASE_PROMPT,
         FEW_SHOTS,
+        CORPORA,
         oauth_params=fixieai.OAuthParams(
             client_id="dummy",
             client_secret="dummy",
@@ -66,6 +73,7 @@ def test_simple_agent_handshake(dummy_agent):
     assert yaml_content == {
         "base_prompt": dummy_agent.base_prompt,
         "few_shots": dummy_agent.few_shots,
+        "corpora": [dataclasses.asdict(c) for c in dummy_agent.corpora],
     }
 
 

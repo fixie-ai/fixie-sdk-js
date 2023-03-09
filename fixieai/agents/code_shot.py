@@ -26,6 +26,21 @@ ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
 
 @pydantic_dataclasses.dataclass
+class DocumentLoader:
+    """Document loader for a Fixie CodeShot Agent."""
+
+    name: str
+
+
+@pydantic_dataclasses.dataclass
+class DocumentCorpus:
+    """Document corpus for a Fixie CodeShot Agent."""
+
+    urls: List[str]
+    loader: DocumentLoader
+
+
+@pydantic_dataclasses.dataclass
 class AgentMetadata:
     """Metadata for a Fixie CodeShot Agent.
 
@@ -34,6 +49,7 @@ class AgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
+    corpora: List[DocumentCorpus]
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
@@ -92,6 +108,7 @@ class CodeShotAgent:
         agent_id: str,
         base_prompt: str,
         few_shots: Union[str, List[str]],
+        corpora: Optional[List[DocumentCorpus]] = None,
         oauth_params: Optional[oauth.OAuthParams] = None,
     ):
         if isinstance(few_shots, str):
@@ -100,6 +117,7 @@ class CodeShotAgent:
         self.agent_id = agent_id
         self.base_prompt = base_prompt
         self.few_shots = few_shots
+        self.corpora = corpora
         self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
@@ -169,7 +187,7 @@ class CodeShotAgent:
 
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        metadata = AgentMetadata(self.base_prompt, self.few_shots)  # type: ignore[call-arg]
+        metadata = AgentMetadata(self.base_prompt, self.few_shots, self.corpora)  # type: ignore[call-arg]
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
