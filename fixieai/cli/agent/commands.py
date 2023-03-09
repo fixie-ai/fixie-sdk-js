@@ -239,5 +239,5 @@ def deploy(ctx, path, metadata_only):
 
     suggested_message = shlex.quote(f"@{agent_api.agent_id} {suggested_query}")
     console.print(
-        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\nfixie session new {suggested_message}"
+        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\nfixie console {suggested_message}"
     )
