@@ -1,4 +1,7 @@
+from typing import Optional
+
 import prompt_toolkit
+import prompt_toolkit.history
 import requests
 import rich.console as rich_console
 
@@ -21,15 +24,24 @@ class Console:
         self._history_file = history_file
         self._response_index = 0
 
-    def run(self) -> None:
+    def run(self, initial_message: Optional[str] = None) -> None:
         """Run the console application."""
+
+        PROMPT = "fixie 🚲❯ "
 
         textconsole.print("[blue]Welcome to Fixie!")
         textconsole.print(f"Connected to: {self._session.session_url}")
+
+        history = prompt_toolkit.history.FileHistory(self._history_file)
+        if initial_message:
+            prompt_toolkit.print_formatted_text(f"{PROMPT}{initial_message}")
+            history.append_string(initial_message)
+            self._query(initial_message)
+
         while True:
             in_text = prompt_toolkit.prompt(
-                "fixie 🚲❯ ",
-                history=prompt_toolkit.history.FileHistory(self._history_file),
+                PROMPT,
+                history=history,
                 auto_suggest=prompt_toolkit.auto_suggest.AutoSuggestFromHistory(),
             )
             self._query(in_text)

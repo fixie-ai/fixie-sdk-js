@@ -1,5 +1,7 @@
 import io
 import os
+import random
+import shlex
 from contextlib import contextmanager
 from typing import BinaryIO, Dict
 
@@ -8,6 +10,7 @@ import rich.console as rich_console
 import validators
 
 import fixieai.client
+from fixieai import constants
 from fixieai.cli.agent import agent_config
 from fixieai.cli.agent import loader
 
@@ -174,13 +177,18 @@ def _spinner(console: rich_console.Console, text: str):
 
 @agent.command("deploy", help="Deploy the current agent.")
 @click.argument("path", callback=_validate_agent_path, required=False)
+@click.option(
+    "--metadata-only",
+    is_flag=True,
+    help="Only publish metadata and refresh, do not redeploy.",
+)
 @click.pass_context
-def deploy(ctx, path):
+def deploy(ctx, path, metadata_only):
     console = rich_console.Console()
     config = agent_config.load_config(path)
     agent_api = _ensure_agent_updated(ctx.obj.client, config)
 
-    if config.deployment_url is None:
+    if config.deployment_url is None and not metadata_only:
         # Deploy the agent to fixie with some bootstrapping code.
         file_streams: Dict[str, BinaryIO] = {}
         deploy_root = os.path.dirname(path)
@@ -222,3 +230,14 @@ def deploy(ctx, path):
     # Trigger a refresh with the updated deployment
     with _spinner(console, "Refreshing..."):
         ctx.obj.client.refresh_agent(config.handle)
+
+    agent_api.update_agent()
+    if agent_api.queries:
+        suggested_query = random.choice(agent_api.queries)
+    else:
+        suggested_query = "Hello!"
+
+    suggested_message = shlex.quote(f"@{agent_api.agent_id} {suggested_query}")
+    console.print(
+        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\nfixie console {suggested_message}"
+    )
