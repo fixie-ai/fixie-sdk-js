@@ -1,4 +1,4 @@
-# Fixie Client API
+# Fixie Client Python API Reference
 
 ## ::: fixieai.client.client
     options:

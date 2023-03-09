@@ -117,7 +117,7 @@ def _ensure_agent_updated(
             name=config.name,
             description=config.description,
             more_info_url=config.more_info_url,
-            deployment_url=config.deployment_url,
+            func_url=config.deployment_url,
             published=config.public,
         )
     else:
@@ -126,7 +126,7 @@ def _ensure_agent_updated(
             name=config.name,
             description=config.description,
             more_info_url=config.more_info_url,
-            deployment_url=config.deployment_url,
+            func_url=config.deployment_url,
             published=config.public,
         )
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from gql import gql
@@ -102,6 +103,42 @@ class Agent:
         assert isinstance(owner_username, str)
         return owner_username
 
+    @property
+    def query_url(self) -> Optional[str]:
+        """Return the query URL for this Agent."""
+        if self._metadata is None:
+            return None
+        url = self._metadata["owner"]["query_url"]
+        assert isinstance(url, str)
+        return url
+
+    @property
+    def func_url(self) -> Optional[str]:
+        """Return the func URL for this Agent."""
+        if self._metadata is None:
+            return None
+        url = self._metadata["owner"]["func_url"]
+        assert isinstance(url, str)
+        return url
+
+    @property
+    def created(self) -> Optional[datetime.datetime]:
+        """Return the creation timestamp for this Agent."""
+        if self._metadata is None:
+            return None
+        ts = self._metadata["owner"]["created"]
+        assert isinstance(ts, datetime.datetime)
+        return ts
+
+    @property
+    def modified(self) -> Optional[datetime.datetime]:
+        """Return the modification timestamp for this Agent."""
+        if self._metadata is None:
+            return None
+        ts = self._metadata["owner"]["modified"]
+        assert isinstance(ts, datetime.datetime)
+        return ts
+
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
 
@@ -119,6 +156,10 @@ class Agent:
                     owner {
                         username
                     }
+                    queryUrl
+                    funcUrl
+                    created
+                    modified
                 }
             }
         """
@@ -138,8 +179,9 @@ class Agent:
         self,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
-        deployment_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
         """Create a new Agent with the given parameters."""
@@ -149,16 +191,18 @@ class Agent:
                 $handle: String!,
                 $name: String,
                 $description: String,
+                $queryUrl: String,
+                $funcUrl: String,
                 $moreInfoUrl: String,
-                $deploymentUrl: String,
                 $published: Boolean) {
                 createAgent(
                     agentData: {
                         handle: $handle,
                         name: $name,
                         description: $description,
+                        queryUrl: $queryUrl,
+                        funcUrl: $funcUrl,
                         moreInfoUrl: $moreInfoUrl,
-                        funcUrl: $deploymentUrl,
                         published: $published
                     }
                 ) {
@@ -177,10 +221,12 @@ class Agent:
             variable_values["name"] = name
         if description is not None:
             variable_values["description"] = description
+        if query_url is not None:
+            variable_values["query_url"] = query_url
+        if func_url is not None:
+            variable_values["func_url"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
-        if deployment_url is not None:
-            variable_values["deploymentUrl"] = deployment_url
         if published is not None:
             variable_values["published"] = published
 
@@ -198,8 +244,9 @@ class Agent:
         new_handle: Optional[str] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
-        deployment_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> str:
         """Update the Agent with the given parameters."""
@@ -210,8 +257,9 @@ class Agent:
                 $newHandle: String,
                 $name: String,
                 $description: String,
+                $queryUrl: String,
+                $funcUrl: String,
                 $moreInfoUrl: String,
-                $deploymentUrl: String,
                 $published: Boolean) {
                 updateAgent(
                     agentData: {
@@ -219,8 +267,9 @@ class Agent:
                         newHandle: $newHandle,
                         name: $name,
                         description: $description,
+                        queryUrl: $queryUrl,
+                        funcUrl: $funcUrl,
                         moreInfoUrl: $moreInfoUrl,
-                        funcUrl: $deploymentUrl,
                         published: $published
                     }
                 ) {
@@ -239,12 +288,14 @@ class Agent:
             variable_values["name"] = name
         if description is not None:
             variable_values["description"] = description
+        if query_url is not None:
+            variable_values["query_url"] = query_url
+        if func_url is not None:
+            variable_values["func_url"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
             variable_values["published"] = published
-        if deployment_url is not None:
-            variable_values["deploymentUrl"] = deployment_url
 
         result = self._gqlclient.execute(query, variable_values=variable_values)
         if "updateAgent" not in result or result["updateAgent"] is None:

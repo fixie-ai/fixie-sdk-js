@@ -1,7 +1,7 @@
 # Fixie Agent Protocol
 
 Fixie Agents can be implemented in any programming language. The Fixie
-[Agent API](api-agents.md) provides a Python SDK that makes it easy to
+[Python Agent API](python-agent-api.md) provides a Python SDK that makes it easy to
 implement Agents in Python, however, it is possible to implement Fixie
 Agents in any programming language, as long as the Agent code conforms
 to the following protocol.
@@ -101,6 +101,6 @@ which contains the JSON `message` object from the HTTP POST request. The functio
 should return a string, which will be the value of the `text` field in the response
 message returned by the Agent.
 
-See [api-agents.md](api-agents.md) for more information on the Fixie Python Agent API,
+See [python-agent-api.md](python-agent-api.md) for more information on the Fixie Python Agent API,
 and [agent-quickstart.md](agent-quickstart.md) for a quickstart guide on how to
 implement Agents in Fixie.
