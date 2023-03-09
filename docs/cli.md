@@ -1,4 +1,4 @@
-# CLI Reference
+# Fixie CLI Reference
 
 This page provides documentation for the Fixie command line tool.
 

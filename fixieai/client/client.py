@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
+import requests
 from gql import Client
 from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
@@ -56,31 +57,22 @@ class FixieClient:
     """FixieClient is a client to the Fixie system.
 
     Args:
-        api_url: The URL of the Fixie API server. If not provided, the
-            FIXIE_API_URL environment variable will be used. If that is not
-            set, the default value of "https://app.fixie.ai " will be used.
         api_key: The API key for the Fixie API server. If not provided, the
             FIXIE_API_KEY environment variable will be used. If that is not
-            set, a ValueError will be raised.
+            set, the authenticated user API key will be used, or a ValueError
+            will be raised if the user is not authenticated.
     """
 
     def __init__(
         self,
-        api_url: Optional[str] = None,
         api_key: Optional[str] = None,
     ):
-        self._api_url = api_url or constants.FIXIE_API_URL
-        self._api_key = api_key or constants.FIXIE_API_KEY
-        if not self._api_key:
-            raise ValueError(
-                "No Fixie API key provided. Set the FIXIE_API_KEY environment variable "
-                "to your API key, which can be obtained from your profile page on "
-                "https://app.fixie.ai "
-            )
-        logging.info(f"Using Fixie API URL: {self._api_url}")
+        self._api_key = api_key or constants.fixie_api_key()
+        logging.info(f"Using Fixie API URL: {constants.FIXIE_API_URL}")
+        self._request_headers = {"Authorization": f"Bearer {self._api_key}"}
         transport = RequestsHTTPTransport(
-            url=f"{self._api_url}/graphql",
-            headers={"Authorization": f"Bearer {self._api_key}"},
+            url=constants.FIXIE_GRAPHQL_URL,
+            headers=self._request_headers,
         )
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
 
@@ -92,12 +84,11 @@ class FixieClient:
     @property
     def url(self) -> str:
         """Return the URL of the Fixie API server."""
-        assert self._api_url is not None
-        return self._api_url
+        return constants.FIXIE_API_URL
 
     def clone(self) -> "FixieClient":
         """Return a new FixieClient instance with the same configuration."""
-        return FixieClient(api_url=self._api_url, api_key=self._api_key)
+        return FixieClient(api_key=self._api_key)
 
     def get_agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -130,6 +121,8 @@ class FixieClient:
         handle: str,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> Agent:
@@ -140,11 +133,15 @@ class FixieClient:
                 Agents owned by this user.
             name: The name of the new Agent.
             description: A description of the new Agent.
+            query_url: The URL of the new Agent's query endpoint.
+            func_url: The URL of the new Agent's func endpoint.
             more_info_url: A URL with more information about the new Agent.
             published: Whether the new Agent should be published.
         """
         agent = Agent(self, handle)
-        agent.create_agent(name, description, more_info_url, published)
+        agent.create_agent(
+            name, description, query_url, func_url, more_info_url, published
+        )
         return agent
 
     def get_sessions(self) -> List[str]:
@@ -171,3 +168,28 @@ class FixieClient:
     def get_session(self, session_id: str) -> Session:
         """Return an existing Session object."""
         return Session(self, session_id)
+
+    def get_current_username(self) -> str:
+        """Returns the username of the current user."""
+        query = gql(
+            """
+            query getUsername {
+                user {
+                    username
+                }
+            }
+        """
+        )
+        result = self._gqlclient.execute(query)
+        assert "user" in result and isinstance(result["user"], dict)
+        user = result["user"]
+        assert "username" in user and isinstance(user["username"], str)
+        return user["username"]
+
+    def refresh_agent(self, agent_handle: str):
+        """Indicates that an agent's prompts should be refreshed."""
+        username = self.get_current_username()
+        requests.post(
+            f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}",
+            headers=self._request_headers,
+        ).raise_for_status()

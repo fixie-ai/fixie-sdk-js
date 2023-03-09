@@ -51,10 +51,11 @@ nav:
     - Architecture: 'architecture.md'
     - Agents:
       - Agent QuickStart: 'agent-quickstart.md'
+      - Fixie Agent API: 'agents.md'
       - Agent Protocol: 'agent-protocol.md'
     - Python SDK:
-        - Client API: 'api-client.md'
-        - Agent API: 'api-agents.md'
+        - Python Client API: 'python-client-api.md'
+        - Python Agent API: 'python-agent-api.md'
     - CLI: 'cli.md'
     - GraphQL: 'https://app.fixie.ai/static/docs/index.html'
 

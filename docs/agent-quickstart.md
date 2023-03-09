@@ -35,7 +35,7 @@ A: The random number is 8.
 agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 
 @agent.register_func()
-def genrand(query: fixieai.AgentQuery) -> str:
+def genrand(query: fixieai.Message) -> str:
     high, low = query.text.replace(" ", "").split(",")
     return str(random.randint(int(low), int(high)))
 
@@ -142,3 +142,7 @@ a Fixie Session and issuing a query such as:
 ```
 
 Congrats! You've just created your first Fixie Agent!
+
+See [Agent Protocol](agent-protocol.md) for details on how to implement an Agent directly
+in a language other than Python, as well as [Agent API](agents.md) for details on the
+complete Fixie Agent API.
