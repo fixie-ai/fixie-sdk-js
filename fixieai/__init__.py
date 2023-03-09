@@ -1,6 +1,8 @@
 from fixieai.agents import AgentQuery
 from fixieai.agents import AgentResponse
 from fixieai.agents import CodeShotAgent
+from fixieai.agents import DocumentCorpus
+from fixieai.agents import DocumentLoader
 from fixieai.agents import Embed
 from fixieai.agents import Message
 from fixieai.agents import OAuthHandler
@@ -18,6 +20,8 @@ __all__ = [
     "Embed",
     "Message",
     "CodeShotAgent",
+    "DocumentCorpus",
+    "DocumentLoader",
     "OAuthParams",
     "OAuthHandler",
     "UserStorage",
