@@ -1,6 +1,10 @@
+import io
 import os
+from contextlib import contextmanager
+from typing import BinaryIO, Dict
 
 import click
+import rich.console as rich_console
 import validators
 
 import fixieai.client
@@ -145,14 +149,72 @@ def serve(ctx, path, host, port):
     agent_impl.serve(agent_api.agent_id, host, port)
 
 
+_DEPLOYMENT_BOOTSTRAP_SOURCE = """
+import os
+from fixieai.cli.agent import loader
+
+if __name__ == "__main__":    
+    config, agent = loader.load_agent_from_path("agent")
+    agent.serve(port=int(os.getenv("PORT", "8080")))
+"""
+
+
+@contextmanager
+def _spinner(console: rich_console.Console, text: str):
+    """A context manager that renders a spinner and ✅/❌ on completion."""
+
+    try:
+        with console.status(text):
+            yield
+        console.print(f":white_check_mark: {text}")
+    except:
+        console.print(f":cross_mark: {text}")
+        raise
+
+
 @agent.command("deploy", help="Deploy the current agent.")
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.pass_context
 def deploy(ctx, path):
+    console = rich_console.Console()
     config = agent_config.load_config(path)
     agent_api = _ensure_agent_updated(ctx.obj.client, config)
+
     if config.deployment_url is None:
-        raise NotImplementedError("Managed deployment is not yet implemented")
+        # Deploy the agent to fixie with some bootstrapping code.
+        file_streams: Dict[str, BinaryIO] = {}
+        deploy_root = os.path.dirname(path)
+        for root, dirs, files in os.walk(deploy_root):
+            # Exclude any hidden files
+            for i, dir in reversed(list(enumerate(dirs))):
+                if dir and dir[0] == ".":
+                    console.print(
+                        f"Ignoring hidden directory {os.path.join(root, dir)}",
+                        style="grey53",
+                    )
+                    del dirs[i]
+
+            for filename in files:
+                if filename and filename[0] == ".":
+                    console.print(
+                        f"Ignoring hidden file {os.path.join(root, filename)}",
+                        style="grey53",
+                    )
+                    continue
+
+                full_path = os.path.join(root, filename)
+                upload_path = os.path.join(
+                    "agent", os.path.relpath(full_path, deploy_root)
+                )
+                file_streams[upload_path] = open(full_path, "rb")
+
+        file_streams["main.py"] = io.BytesIO(_DEPLOYMENT_BOOTSTRAP_SOURCE.encode())
+        with _spinner(console, "Deploying..."):
+            ctx.obj.client.deploy_agent(
+                config.handle,
+                file_streams,
+            )
 
     # Trigger a refresh with the updated deployment
-    ctx.obj.client.refresh_agent(config.handle)
+    with _spinner(console, "Refreshing..."):
+        ctx.obj.client.refresh_agent(config.handle)
