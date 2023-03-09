@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, BinaryIO, Dict, List, Optional
 
 import requests
 from gql import Client
@@ -119,8 +119,8 @@ class FixieClient:
     def create_agent(
         self,
         handle: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        name: str,
+        description: str,
         query_url: Optional[str] = None,
         func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
@@ -192,4 +192,13 @@ class FixieClient:
         requests.post(
             f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}",
             headers=self._request_headers,
+        ).raise_for_status()
+
+    def deploy_agent(self, agent_handle: str, files: Dict[str, BinaryIO]):
+        """Deploys an agent implementation."""
+        username = self.get_current_username()
+        requests.post(
+            f"{constants.FIXIE_DEPLOYMENT_URL}/{username}/{agent_handle}",
+            headers=self._request_headers,
+            files=files,
         ).raise_for_status()
