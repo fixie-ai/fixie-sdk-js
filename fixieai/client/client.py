@@ -121,6 +121,8 @@ class FixieClient:
         handle: str,
         name: Optional[str] = None,
         description: Optional[str] = None,
+        query_url: Optional[str] = None,
+        func_url: Optional[str] = None,
         more_info_url: Optional[str] = None,
         published: Optional[bool] = None,
     ) -> Agent:
@@ -131,11 +133,15 @@ class FixieClient:
                 Agents owned by this user.
             name: The name of the new Agent.
             description: A description of the new Agent.
+            query_url: The URL of the new Agent's query endpoint.
+            func_url: The URL of the new Agent's func endpoint.
             more_info_url: A URL with more information about the new Agent.
             published: Whether the new Agent should be published.
         """
         agent = Agent(self, handle)
-        agent.create_agent(name, description, more_info_url, published)
+        agent.create_agent(
+            name, description, query_url, func_url, more_info_url, published
+        )
         return agent
 
     def get_sessions(self) -> List[str]:
