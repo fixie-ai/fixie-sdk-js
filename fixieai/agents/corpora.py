@@ -15,4 +15,4 @@ class DocumentCorpus:
     """Document corpus for a Fixie CodeShot Agent."""
 
     urls: List[str]
-    loader: Optional[DocumentLoader]
+    loader: Optional[DocumentLoader] = None

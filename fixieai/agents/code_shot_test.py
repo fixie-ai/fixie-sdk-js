@@ -23,8 +23,8 @@ Func[simple2] says: Simple response
 A: Simple final response
 """
 CORPORA = [
-    agents.DocumentCorpus(  # type: ignore[call-arg]
-        urls=["http://example.com/doc1.txt"], loader=agents.DocumentLoader("text")  # type: ignore[call-arg]
+    agents.DocumentCorpus(
+        urls=["http://example.com/doc1.txt"], loader=agents.DocumentLoader("text")
     ),
 ]
 

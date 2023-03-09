@@ -38,7 +38,7 @@ class AgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
-    corpora: Optional[List[corpora.DocumentCorpus]]
+    corpora: Optional[List[corpora.DocumentCorpus]] = None
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
@@ -178,7 +178,7 @@ class CodeShotAgent:
 
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        metadata = AgentMetadata(self.base_prompt, self.few_shots, self.corpora)  # type: ignore[call-arg]
+        metadata = AgentMetadata(self.base_prompt, self.few_shots, self.corpora)
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
