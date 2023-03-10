@@ -17,11 +17,11 @@ def _ensure_serving_disabled():
             "agent.serve() must not be called while your agent is being imported."
         )
 
-    agents.CodeShotAgent.serve = _fail
+    agents.CodeShotAgent.serve = _fail  # type: ignore[assignment]
     try:
         yield
     finally:
-        agents.CodeShotAgent.serve = original_serve
+        agents.CodeShotAgent.serve = original_serve  # type: ignore[assignment]
 
 
 def load_agent_from_path(
