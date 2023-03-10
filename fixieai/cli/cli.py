@@ -46,6 +46,7 @@ fixie.add_command(session_commands.session)
 # Add aliases for commonly used paths
 fixie.add_command(agent_commands.init_agent, "init")
 fixie.add_command(agent_commands.deploy, "deploy")
+fixie.add_command(agent_commands.serve, "serve")
 fixie.add_command(session_commands.new_session, "console")
 
 
