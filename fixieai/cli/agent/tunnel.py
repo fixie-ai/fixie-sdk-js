@@ -20,6 +20,8 @@ class Tunnel:
                 "ssh",
                 "-R",
                 f"80:localhost:{self._port}",
+                "-o",
+                "StrictHostKeyChecking=accept-new",
                 "nokey@localhost.run",
                 "--",
                 "--output=json",
