@@ -209,7 +209,8 @@ class Session:
     def query(self, text: str) -> str:
         """Run a single query against the Fixie API and return the response."""
         self.add_message(text)
-        # The reply to the query comes in as the most recent 'response' message in the session.
+        # The reply to the query comes in as the most recent 'response' message in the
+        # session.
         response = self.get_messages()[-1]
         assert isinstance(response["text"], str)
         return response["text"]
@@ -225,20 +226,18 @@ class Session:
         response_received = False
         while not response_received:
             time.sleep(1)
-            messages = self._get_messages_since(self._last_message_timestamp)
+            messages = self.get_messages_since_last_time()
             for message in messages:
-                timestamp = datetime.datetime.fromisoformat(message["timestamp"])
-                self._last_message_timestamp = timestamp
                 response_received = message["type"] == "response"
                 yield message
 
-    def _get_messages_since(
-        self, timestamp: Optional[datetime.datetime]
-    ) -> List[Dict[str, Any]]:
+    def get_messages_since_last_time(self) -> List[Dict[str, Any]]:
         """Return all messages since the given timestamp."""
-        messages = self.get_messages()
-        return [
-            m
-            for m in messages
-            if timestamp is None or m["timestamp"] > timestamp.isoformat()
-        ]
+        timestamp = self._last_message_timestamp
+        messages_since_last_time = []
+        for message in self.get_messages():
+            message_timestamp = datetime.datetime.fromisoformat(message["timestamp"])
+            if timestamp is None or message_timestamp > timestamp:
+                messages_since_last_time.append(message)
+                self._last_message_timestamp = message_timestamp
+        return messages_since_last_time

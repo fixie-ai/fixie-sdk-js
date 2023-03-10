@@ -32,6 +32,6 @@ def new_session(ctx, agent, message):
 @click.argument("session_id")
 def open_session(ctx, session_id: str):
     client = ctx.obj.client
-    session = client.get_session(session_id)
-    messages = session.get_messages()
-    click.echo(messages)
+    selected_session = client.get_session(session_id)
+    c = console.Console(client, session=selected_session)
+    c.run()
