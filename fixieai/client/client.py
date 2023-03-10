@@ -99,7 +99,7 @@ class FixieClient:
             """
             query getAgents {
                 allAgents {
-                    handle
+                    agentId
                     name
                     description
                     moreInfoUrl
@@ -110,11 +110,11 @@ class FixieClient:
         result = self._gqlclient.execute(query)
         assert "allAgents" in result and isinstance(result["allAgents"], list)
         agents = result["allAgents"]
-        return {agent["handle"]: agent for agent in agents}
+        return {agent["agentId"]: agent for agent in agents}
 
-    def get_agent(self, handle: str) -> Agent:
+    def get_agent(self, agent_id: str) -> Agent:
         """Return an existing Agent object."""
-        return Agent(self, handle)
+        return Agent(self, agent_id)
 
     def create_agent(
         self,

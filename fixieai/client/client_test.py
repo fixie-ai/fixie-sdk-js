@@ -12,10 +12,12 @@ def fixie_client():
 def test_get_agents(fixie_client, requests_mock):
     requests_mock.post(
         constants.FIXIE_GRAPHQL_URL,
-        json={"data": {"allAgents": [{"handle": "test", "name": "Test Agent"}]}},
+        json={
+            "data": {"allAgents": [{"agentId": "testuser/test", "name": "Test Agent"}]}
+        },
     )
     assert fixie_client.get_agents() == {
-        "test": {"handle": "test", "name": "Test Agent"}
+        "testuser/test": {"agentId": "testuser/test", "name": "Test Agent"}
     }
 
 
