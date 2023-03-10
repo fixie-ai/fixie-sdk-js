@@ -5,8 +5,9 @@ from typing import Any, Dict, List, Optional
 import prompt_toolkit
 import prompt_toolkit.history
 import requests
-import rich.console as rich_console
 from PIL import Image
+from rich import console as rich_console
+from rich import markup
 
 from fixieai import FixieClient
 from fixieai.client.client import Session
@@ -78,12 +79,17 @@ class Console:
         )
         if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
-                textconsole.print(f"{PROMPT}{message['text']}")
+                textconsole.print(f"{PROMPT}{markup.escape(message['text'])}")
         elif message["type"] != "response":
-            textconsole.print(f"   [dim]@{sender_handle}: {message['text']}[/]")
+            textconsole.print(
+                f"   [dim]@{sender_handle}: "
+                f"{markup.escape(message['text'])}[/]"
+            )
         else:
             self._response_index += 1
-            textconsole.print(f"{self._response_index}❯ {message['text']}")
+            textconsole.print(
+                f"{self._response_index}❯ {markup.escape(message['text'])}"
+            )
             self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
@@ -101,7 +107,7 @@ class Console:
         for embed_id in embed_ids:
             if embed_id not in embeds:
                 textconsole.print(
-                    f"   [dim]embed #{embed_id}[/] not found in session", style="red"
+                    f"   [dim]embed #{embed_id} not found in session[/]", style="red"
                 )
                 continue
             _show_embed(

@@ -251,19 +251,24 @@ def serve(ctx, path, host, port, tunnel, reload):
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
 
+        # Change into the agent's directory to ensure that all agent paths resolve like they will during deployment.
+        os.chdir(os.path.dirname(path))
+
         if reload:
+            # When using reload=True the only way to pass arguments is via environment variable.
+            os.environ["FIXIE_AGENT_PATH"] = path
             os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
             uvicorn.run(
-                config.entry_point + ".app",
+                "fixieai.cli.agent.loader:uvicorn_app_factory",
                 host=host,
                 port=port,
                 factory=True,
                 reload=True,
-                reload_dirs=[os.path.dirname(path)],
-                app_dir=os.path.dirname(path),
+                app_dir=".",
+                reload_dirs=["."],
             )
         else:
-            _, agent_impl = loader.load_agent_from_path(path)
+            _, agent_impl = loader.load_agent_from_path(".")
             agent_impl.serve(agent_api.agent_id, host, port)
 
 
@@ -271,8 +276,9 @@ _DEPLOYMENT_BOOTSTRAP_SOURCE = """
 import os
 from fixieai.cli.agent import loader
 
-if __name__ == "__main__":    
-    config, agent = loader.load_agent_from_path("agent")
+if __name__ == "__main__":
+    os.chdir("agent")
+    config, agent = loader.load_agent_from_path(".")
     agent.serve(port=int(os.getenv("PORT", "8080")))
 """
 
@@ -352,7 +358,9 @@ def deploy(ctx, path, metadata_only):
     else:
         suggested_query = "Hello!"
 
-    suggested_message = shlex.quote(f"@{agent_api.agent_id} {suggested_query}")
+    suggested_command = (
+        f"fixie console --agent {agent_api.agent_id} {shlex.quote(suggested_query)}"
+    )
     console.print(
-        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\nfixie console {suggested_message}"
+        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\n{suggested_command}"
     )
