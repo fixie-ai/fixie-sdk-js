@@ -13,21 +13,28 @@ you can create complex workflows with very little code.
 ## Installation
 
 The easiest way to install the Fixie SDK is via `pip`:
+
 ```
-pip install fixie
+pip install fixieai
 ```
 
-## Get your API key
+## Build Agents
 
-You can get your Fixie API key on your profile page at https://app.fixie.ai.
+Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. To get started, check out our [examples repo](https://github.com/fixie-ai/fixie-examples) or [read the docs](https://docs.fixie.ai/agents/).
+
+## Using the Fixie CLI
+
+In order to get started making requests to Fixie, you'll need an API key. You can get your Fixie API key on your profile page at https://app.fixie.ai.
 Set the value of the `FIXIE_API_KEY` environment variable to your API key:
+
 ```
 $ export FIXIE_API_KEY=" -- your API key here -- "
 ```
 
-## Using the Fixie CLI
-
 The Fixie CLI tool lets you use Fixie interactively from the command line.
+
+Run `fixie --help` to see a list of available commands.
+
 ```
 $ fixie console
 Welcome to Fixie!
@@ -42,13 +49,14 @@ fixie 🚲❯ Hello there
 fixie 🚲❯
 ```
 
-## Client API
+## Integrate with our Client API
 
 The simplest way to use Fixie from your app is to use the `fixie.query` method
 to send a query:
+
 ```
-import fixie
-response = fixie.query("Hello there!")
+import fixieai
+response = fixieai.query("Hello there!")
 print(response)
 ```
 
@@ -56,11 +64,9 @@ For more control, you can also create a `FixieClient` object and use it to
 create a `Session` and send queries within the `Session`:
 
 ```
-import fixie
-client = fixie.FixieClient()
+import fixieai
+client = fixieai.FixieClient()
 session = client.create_session()
 response = session.query("What is 38 * 20302?")
 print(response)
 ```
-
-
