@@ -22,19 +22,19 @@ Install the Fixie SDK using pip:
 $ pip install fixieai
 ```
 
-Set your `FIXIE_API_KEY` environment variable to your API key, which
-you can find in the Fixie web interface:
-```shell
-$ export FIXIE_API_KEY=<YOUR API KEY>
-```
-
+Once installed, run `fixie auth` to authenticate with Fixie and start building.
 Now, import the Fixie SDK and use it to run queries:
 
 ```pycon
 >>> import fixieai
->>> response = fixieai.query("How many GitHub issues are assigned to me?")
+>>> response = fixieai.query("How many countries start with the letter R ?")
 >>> print(response)
 ```
+
+# Agent Examples
+
+Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. To get started you can scaffold out a default agent by running: `fixie init`. For more examples
+check out [Building Fixie Agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
 
 # Documentation
 
