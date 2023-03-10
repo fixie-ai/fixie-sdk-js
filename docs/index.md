@@ -22,7 +22,13 @@ Install the Fixie SDK using pip:
 $ pip install fixieai
 ```
 
-Set your `FIXIE_API_KEY` environment variable to your API key, which
+You can then authenticate using the Fixie CLI:
+
+```shell
+$ fixie auth
+```
+
+Alternately, you can set your `FIXIE_API_KEY` environment variable to your API key, which
 you can find in the Fixie web interface:
 ```shell
 $ export FIXIE_API_KEY=<YOUR API KEY>

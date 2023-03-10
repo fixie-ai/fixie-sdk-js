@@ -29,6 +29,7 @@ class Agent:
         self._client = client
         self._gqlclient = self._client.gqlclient
 
+        self._agent_id = agent_id
         self._owner: Optional[str] = None
         if "/" in agent_id:
             self._owner, self._handle = agent_id.split("/")
@@ -42,18 +43,19 @@ class Agent:
             self._metadata = None
 
     @property
-    def agent_id(self) -> Optional[str]:
+    def agent_id(self) -> str:
         """Return the agentId for this Agent."""
-        if self._metadata is None:
-            return None
-        agent_id = self._metadata["agentId"]
-        assert agent_id is None or isinstance(agent_id, str)
-        return agent_id
+        return self._agent_id
 
     @property
-    def handle(self) -> Optional[str]:
+    def handle(self) -> str:
         """Return the handle for this Agent."""
         return self._handle
+
+    @property
+    def valid(self) -> bool:
+        """Return whether this Agent is valid."""
+        return self._metadata is not None
 
     @property
     def name(self) -> Optional[str]:
