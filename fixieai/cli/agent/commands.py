@@ -232,7 +232,6 @@ def serve(ctx, path, host, port, tunnel):
 
     with contextlib.ExitStack() as stack:
         if tunnel:
-
             # Start up a tunnel via localhost.run.
             console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
             console.print(
