@@ -129,7 +129,9 @@ def _current_config() -> agent_config.AgentConfig:
 def list_agents(ctx, verbose):
     client = ctx.obj.client
     agents = client.get_agents()
-    for agent_id, agent in agents.items():
+    agent_ids = sorted(agents.keys())
+    for agent_id in agent_ids:
+        agent = agents[agent_id]
         click.secho(f"{agent_id}", fg="green", nl=False)
         click.echo(f": {agent['name']}")
         if verbose:
@@ -138,6 +140,44 @@ def list_agents(ctx, verbose):
                 click.secho(f"    More info", fg="yellow", nl=False)
                 click.echo(f": {agent['moreInfoUrl']}")
             click.echo()
+
+
+@agent.command("show", help="Show an agent.")
+@click.argument("agent_id")
+@click.pass_context
+def show_agent(ctx, agent_id: str):
+    client = ctx.obj.client
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        click.echo(f"Agent {agent_id} not found.")
+        return
+    click.secho(f"{agent.agent_id}", fg="green", nl=False)
+    click.echo(f"Owner: {agent.owner}")
+    if agent.name:
+        click.echo(f": {agent.name}")
+    if agent.description:
+        click.echo(f"Description: {agent.description}")
+    if agent.more_info_url:
+        click.echo(f"More info URL: {agent.more_info_url}")
+    click.echo(f"Published: {agent.published}")
+    if agent.func_url:
+        click.echo(f"Func URL: {agent.func_url}")
+    if agent.query_url:
+        click.echo(f"Query URL: {agent.query_url}")
+    click.echo(f"Created: {agent.created}")
+    click.echo(f"Modified: {agent.modified}")
+    if agent.queries:
+        click.echo(f"Queries: {agent.queries}")
+
+
+@agent.command("delete", help="Delete an agent.")
+@click.argument("handle")
+@click.pass_context
+def delete_agent(ctx, handle: str):
+    client = ctx.obj.client
+    agent = client.get_agent(handle)
+    agent.delete_agent()
+    click.echo(f"Deleted agent {agent.agent_id}")
 
 
 def _validate_agent_path(ctx, param, value):
