@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional
 import prompt_toolkit
 import prompt_toolkit.history
 import requests
+from PIL import Image
 from rich import console as rich_console
 from rich import markup
-from PIL import Image
 
 from fixieai import FixieClient
 from fixieai.client.client import Session
@@ -59,13 +59,13 @@ class Console:
             self._query(in_text)
 
     def _query(self, in_text: str) -> None:
-        # with textconsole.status("Working...", spinner="bouncingBall"):
-        try:
-            for message in self._session.run(in_text):
-                self._show_message(message)
-        except requests.exceptions.HTTPError as e:
-            textconsole.print(f"🚨 {e}")
-            return
+        with textconsole.status("Working...", spinner="bouncingBall"):
+            try:
+                for message in self._session.run(in_text):
+                    self._show_message(message)
+            except requests.exceptions.HTTPError as e:
+                textconsole.print(f"🚨 {e}")
+                return
 
     def _show_message(self, message: Dict[str, Any], show_user_message: bool = False):
         """Shows a message dict from FixieClient.
