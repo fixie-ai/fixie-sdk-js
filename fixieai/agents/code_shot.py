@@ -132,7 +132,6 @@ class CodeShotAgent:
             fast_api.add_event_handler(
                 "startup", functools.partial(_ping_fixie_async, agent_id)
             )
-        print(f"XXXX MDW: Serving agent at {host}:{port}")
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
