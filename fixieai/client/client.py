@@ -161,9 +161,9 @@ class FixieClient:
         sessions = result["allSessions"]
         return [session["handle"] for session in sessions]
 
-    def create_session(self) -> Session:
+    def create_session(self, frontend_agent_id: Optional[str]) -> Session:
         """Create a new Session."""
-        return Session(self)
+        return Session(self, frontend_agent_id=frontend_agent_id)
 
     def get_session(self, session_id: str) -> Session:
         """Return an existing Session object."""
