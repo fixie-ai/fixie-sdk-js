@@ -11,7 +11,7 @@ See [Fixie Agent Python API](python-agent-api.md) for the full API reference.
 
 ## CodeShotAgent
 
-The base class for Agents in Fixie is [ `CodeShotAgent` ][fixieai.agents.code_shot. CodeShotAgent].
+The base class for Agents in Fixie is [`CodeShotAgent`][fixieai.agents.code_shot. CodeShotAgent].
 This class takes care of communicating with the Fixie platform via the [Agent Protocol](agent-protocol.md), 
 and provides a simple API for registering functions that can be invoked by the few-shot examples
 used by the Agent.
@@ -46,20 +46,31 @@ on what kinds of queries this Agent can support.
 The `FEW_SHOTS` provided to an Agent must be a string consisting of one or more *stanzas*, where
 each stanza consists of a question, one or more rounds of internal actions taken by the Agent, 
 and a final answer. Stanzas must be separated from each other by a blank line. The query line
-in the stanza must start with `Q:` , and the answer line must start with `A:` .
+in the stanza must start with `Q:`, and the answer line must start with `A:`.
 
 Internal actions taken by the Agent can be of one of two forms:
+
 * `Ask Func[<func_name>]: <query_text>`: This indicates that the function `<func_name>` should
-  be invoked when the output of the underlying LLM starts with this string. The string following
+be invoked when the output of the underlying LLM starts with this string. The string following
 `Ask Func[<func_name>]:` is passed to the function as the `query.text` parameter.
 * `Ask Agent[<agent_name>]: <query_text>`: This indicates that the Agent `<agent_name>` should
-  be invoked when the output of the underlying LLM starts with this string. The string following
+be invoked when the output of the underlying LLM starts with this string. The string following
 `Ask Agent[<agent_name>]:` is passed to the Agent as the `query.text` parameter.
 
 The `register_func` decorator is used to register a function that can be invoked by the Agent.
-The function must take a single parameter, which is a [ `Message` ][fixieai.agents.api. Message]
-object, and must return either a string or a `Message` . The `Message` object contains the text of
+The function must take a single parameter, which is a [`Message`][fixieai.agents.api.Message]
+object, and must return either a string or a `Message`. The `Message` object contains the text of
 the query, as well as any Embeds associated with the Message (see [Embeds](#Embeds) below).
+
+## Built-in functions
+
+All Fixie agents have access to the following set of built-in functions that they can invoke.
+
+* `Ask Func[base_prompt]`: Returns the base prompt for the agent.
+* `Ask Func[local_datetime]`: Returns the current datetime in the user's local timezone.
+* `Ask Func[utc_datetime]`: Returns the current datetime in UTC timezone.
+* `Ask Func[query_embed]`: Runs the prompt in the query against the contents of the embed.
+* `Ask Func[query_corpus]`: Runs the prompt in the query against the contents of the agent-defined corpus.
 
 ## Embeds
 
@@ -67,7 +78,7 @@ the query, as well as any Embeds associated with the Message (see [Embeds](#Embe
 Fixie, similar to email attachments. Embeds can be used to store images, video, text, or
 any other binary data.
 
-Embeds are represented by the [ `Embed` ][fixieai.agents.api. Embed] class. Agents can access
+Embeds are represented by the [`Embed`][fixieai.agents.api.Embed] class. Agents can access
 the Embeds associated with a Message as follows:
 
 ```python
@@ -100,6 +111,7 @@ store for each Fixie user. This can be used to maintain state about a particular
 user that persists across Agent invocations.
 
 The `UserStorage` instance for a given query can be obtained by providing a `user_storage`
+
 parameter to an Agent function. The `UserStorage` object acts as a Python `dict` that stores
 state associated with an arbitrary string key. `UserStorage` values may consist of Python
 primitive types, such as `str`, `int`, `float`, `bool`, `None`, or `bytes`, as well as
@@ -113,7 +125,6 @@ def my_func(query: fixieai.Message, user_storage: fixieai.UserStorage) -> str:
     user_storage["my_key"] = "my_value"
     return user_storage["my_key"]
 ```
-
 
 ## Agent OAuth Support
 
