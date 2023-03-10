@@ -70,3 +70,7 @@ build-docs:
 # Deploy docs to Github Pages.
 publish-docs:
     poetry run mkdocs gh-deploy --force
+
+# Run the fixie CLI.
+fixie *FLAGS:
+    poetry run fixie {{FLAGS}}

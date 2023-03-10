@@ -30,6 +30,7 @@ class Session:
         self,
         client: FixieClient,
         session_id: Optional[str] = None,
+        frontend_agent_id: Optional[str] = None,
     ):
         self._client = client
         self._gqlclient = self._client.gqlclient
@@ -37,8 +38,12 @@ class Session:
         if session_id:
             # Test that the session exists.
             _ = self.get_metadata()
+            assert (
+                frontend_agent_id is None
+            ), "Cannot specify frontend_agent_id when using an existing session"
         else:
-            self._session_id = self._create_session()
+            self._session_id = self._create_session(frontend_agent_id)
+        self._frontend_agent_id: Optional[str] = None
         self._last_message_timestamp: Optional[datetime.datetime] = None
 
     @property
@@ -51,30 +56,40 @@ class Session:
         """Return the URL of the Fixie session."""
         return f"{self._client.url}/sessions/{self.session_id}"
 
+    @property
+    def frontend_agent_id(self) -> Optional[str]:
+        """Return the frontend agent ID used by this Fixie client."""
+        return self._frontend_agent_id
+
     def clone(self) -> "Session":
         """Return a new Session instance with the same configuration."""
         return Session(self._client.clone(), session_id=self._session_id)
 
-    def _create_session(self) -> str:
+    def _create_session(self, frontend_agent_id: Optional[str] = None) -> str:
         """Create a new session."""
         assert self._session_id is None
 
         query = gql(
             """
-            mutation CreateSession {
-                createSession(sessionData: {}) {
+            mutation CreateSession($frontendAgentId: String) {
+                createSession(sessionData: {frontendAgentId: $frontendAgentId}) {
                     session {
                         handle
+                        frontendAgentId
                     }
                 }
             }
             """
         )
-        result = self._gqlclient.execute(query)
+
+        result = self._gqlclient.execute(
+            query, variable_values={"frontendAgentId": frontend_agent_id}
+        )
         if "createSession" not in result or result["createSession"] is None:
             raise ValueError(f"Failed to create Session")
         assert isinstance(result["createSession"], dict)
         assert isinstance(result["createSession"]["session"], dict)
+        self._frontend_agent_id = result["createSession"]["session"]["frontendAgentId"]
         assert isinstance(result["createSession"]["session"]["handle"], str)
         return result["createSession"]["session"]["handle"]
 
@@ -88,6 +103,7 @@ class Session:
                     handle
                     name
                     description
+                    frontendAgentId
                 }
             }
         """
@@ -98,6 +114,7 @@ class Session:
         assert "sessionByHandle" in result and isinstance(
             result["sessionByHandle"], dict
         )
+        self._frontend_agent_id = result["sessionByHandle"]["frontendAgentId"]
         return result["sessionByHandle"]
 
     def delete_session(self) -> None:
