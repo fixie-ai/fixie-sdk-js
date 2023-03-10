@@ -10,10 +10,36 @@ provides bindings only for Python. See the [Agent Protocol](agent-protocol.md) f
 on implementing your own Agent in a language other than Python. We'll be shipping bindings for
 other languages soon!
 
-## Example Agent code
+## Create a Fixie Agent
 
-Here is the complete code for an Agent, which you get from `examples/agents/randint.py` in the
-Fixie SDK tree.
+The first step is to create a new Agent directory using the `fixie init` command:
+
+```bash
+$ mkdir myagent
+$ cd myagent
+$ fixie init
+Handle [myagent]: 
+Description []: A simple test agent.
+Entry point [main:agent]: 
+More info url []: 
+Public [False]: 
+```
+
+`fixie init` will prompt you to enter some information about your Agent. The Agent **Handle**
+is its unique identifier, and is used to identify the Agent in the Fixie Platform. 
+The **Description** is an optional plain-text description of the Agent's abilities.
+The **Entry point** is the name of the Python module that contains the Agent code, which
+we will create in the next step below. The **More info url** is an optional URL that
+you can provide that provides more information about the Agent; this can point to any website.
+The **Public** flag indicates whether the Agent should be publicly visible in the Fixie
+Platform for other users. If you set this to `True`, then anyone can use your Agent in their own applications.
+
+Running `fixie init` will create the file `agent.yaml` in the current directory, containing
+metadata on the Agent.
+
+## Write the Agent code
+
+Next, paste the following code into a file called `main.py`:
 
 ```python
 import random
@@ -38,8 +64,6 @@ agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS)
 def genrand(query: fixieai.Message) -> str:
     high, low = query.text.replace(" ", "").split(",")
     return str(random.randint(int(low), int(high)))
-
-agent.serve("random")
 ```
 
 The code consists of two main parts:
@@ -57,7 +81,19 @@ The values following `Ask Func[genrand]:` are passed to the function as the `que
 parameter. In this case, the function parses out the values and returns a random number
 between those two values.
 
-## Test the Agent locally
+## Test your Agent
+
+To test your Agent, you have two options: (1) Run it on your local machine using the
+`fixie serve` command, or (2) Deploy it to the Fixie platform using the `fixie deploy`
+command. Using `fixie serve` allows you to debug the agent as it runs locally, but
+is generally only advisable for initial development. 
+
+```bash
+$ fixie serve
+```
+
+
+
 
 To test an Agent locally, run it on your machine, and send it an HTTP GET request on
 the port 8181. This will return the list of few-shot examples supported by the Agent,
