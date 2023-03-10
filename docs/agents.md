@@ -57,10 +57,40 @@ be invoked when the output of the underlying LLM starts with this string. The st
 be invoked when the output of the underlying LLM starts with this string. The string following
 `Ask Agent[<agent_name>]:` is passed to the Agent as the `query.text` parameter.
 
+## Agent Funcs
+
+A **Func** is a function, defined in Python, that can be invoked by the Agent.
+(Note that Funcs need not be implemented in Python; you can implement Agents in other
+languages, as long as they adhere to the Fixie [Agent Protocol](agent-protocol.md).)
+As described above, when the language model for an Agent emits the token `Ask Func[<func_name>]`,
+the function `<func_name>` will be invoked.
+
 The `register_func` decorator is used to register a function that can be invoked by the Agent.
-The function must take a single parameter, which is a [`Message`][fixieai.agents.api.Message]
-object, and must return either a string or a `Message`. The `Message` object contains the text of
-the query, as well as any Embeds associated with the Message (see [Embeds](#Embeds) below).
+
+A function registered with the `register_func` decorator has the signature:
+
+```python
+@agent.register_func()
+def my_func(query, user_storage=None, oauth_handler=None):
+    ...
+```
+
+The `query` parameter is either a `str` a [`Message`][fixieai.agents.api.Message] object.
+If the query parameter is a string, this parameter contains the text of the Agent query.
+If the query parameter is a `Message` object, this parameter contains the text of the Agent
+along with zero or more [`Embed`][fixieai.agents.api.Embed] objects, as described in the
+[Embeds](#embeds) section below.
+
+The optional `user_storage` parameter provides the Func an interface to the Fixie
+[User Storage](#user-storage) service, as described below.
+
+The optional `oauth_handler` parameter provides the Func an interface to performing
+OAuth authentication with external services, as described in the [OAuth](#agent-oauth-support) section
+below.
+
+The function must return either a `str` or a [`Message`][fixieai.agents.api.Message] object.
+Returning a string is equivalent to returning a `Message` object with the string as its `text`
+field, and no `embeds`.
 
 ## Built-in functions
 
