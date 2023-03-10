@@ -18,17 +18,17 @@ class Agent:
 
     Args:
         client: The FixieClient instance to use.
-        handle: The handle of the Agent.
+        agent_id: The Agent ID of the Agent.
     """
 
     def __init__(
         self,
         client: FixieClient,
-        handle: str,
+        agent_id: str,
     ):
         self._client = client
         self._gqlclient = self._client.gqlclient
-        self._handle = handle
+        self._agent_id = agent_id
         self._metadata: Optional[Dict[str, Any]] = None
         try:
             self._metadata = self.get_metadata()
@@ -36,18 +36,14 @@ class Agent:
             self._metadata = None
 
     @property
-    def handle(self) -> Optional[str]:
-        """Return the handle for this Agent."""
-        return self._handle
+    def agent_id(self) -> str:
+        """Return the agentId for this Agent."""
+        return self._agent_id
 
     @property
-    def agent_id(self) -> Optional[str]:
-        """Return the agentId for this Agent."""
-        if self._metadata is None:
-            return None
-        agent_id = self._metadata["agentId"]
-        assert isinstance(agent_id, str)
-        return agent_id
+    def valid(self) -> bool:
+        """Return whether this Agent is valid."""
+        return self._metadata is not None
 
     @property
     def name(self) -> Optional[str]:
@@ -144,10 +140,9 @@ class Agent:
 
         query = gql(
             """
-            query getAgentByHandle($handle: String!) {
-                agentByHandle(handle: $handle) {
-                    agentId
-                    handle
+            query getAgentById($agentId: String!) {
+                agentById(agentId: $agentId) {
+                    agentId                    
                     name
                     description
                     queries
@@ -165,15 +160,15 @@ class Agent:
         """
         )
         result = self._gqlclient.execute(
-            query, variable_values={"handle": self._handle}
+            query, variable_values={"agentId": self._agent_id}
         )
-        if "agentByHandle" not in result or result["agentByHandle"] is None:
-            raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-        agent_by_handle = result["agentByHandle"]
-        assert isinstance(agent_by_handle, dict) and all(
-            isinstance(k, str) for k in agent_by_handle.keys()
+        if "agentById" not in result or result["agentById"] is None:
+            raise ValueError(f"Cannot fetch agent metadata for {self._agent_id}")
+        agent_by_id = result["agentById"]
+        assert isinstance(agent_by_id, dict) and all(
+            isinstance(k, str) for k in agent_by_id.keys()
         )
-        return agent_by_handle
+        return agent_by_id
 
     def create_agent(
         self,

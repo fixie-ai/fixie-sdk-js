@@ -72,5 +72,5 @@ publish-docs:
     poetry run mkdocs gh-deploy --force
 
 # Run the fixie CLI.
-cli *FLAGS:
-    poetry run python fixieai/cli/cli.py {{FLAGS}}
+fixie *FLAGS:
+    poetry run fixie {{FLAGS}}

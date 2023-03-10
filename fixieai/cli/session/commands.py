@@ -3,6 +3,14 @@ import click
 from fixieai.cli.session import console
 
 
+def validate_agent_exists(ctx, param, agent_id):
+    client = ctx.obj.client
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        click.echo(f"Agent {agent_id} not found.")
+        ctx.exit(1)
+
+
 @click.group(help="Session-related commands.")
 def session():
     pass
@@ -18,7 +26,13 @@ def list_sessions(ctx):
 
 
 @session.command("new", help="Creates a new session and opens it.")
-@click.option("-a", "--agent", required=False)
+@click.option(
+    "-a",
+    "--agent",
+    required=False,
+    callback=validate_agent_exists,
+    help="A specific agent to talk to. If unset, `fixie` is used.",
+)
 @click.argument("message", required=False)
 @click.pass_context
 def new_session(ctx, agent, message):
