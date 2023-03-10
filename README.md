@@ -34,7 +34,7 @@ Run `fixie --help` to see a list of available commands.
 $ fixie console
 Welcome to Fixie!
 Connected to: https://app.fixie.ai/sessions/spark-typical-hardware
-fixie 🚲❯  What's the price of Nvidia?
+fixie 🦊❯  What's the price of Nvidia?
    @user: What's the price of Nvidia?
    @fixie: What's the price of Nvidia?
    @fixie: Thought: This is an atomic task.
