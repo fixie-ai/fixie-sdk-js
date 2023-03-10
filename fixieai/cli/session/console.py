@@ -76,7 +76,7 @@ class Console:
             embed_dict["key"]: embed_dict["embed"]
             for embed_dict in self._session.get_embeds()
         }
-        # Show what we can find
+        # Show what we can find.
         for embed_id in embed_ids:
             if embed_id not in embeds:
                 textconsole.print(
