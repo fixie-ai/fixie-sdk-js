@@ -237,13 +237,12 @@ def serve(ctx, path, host, port, tunnel):
 
     with contextlib.ExitStack() as stack:
         if tunnel:
-            if config.deployment_url:
-                console.print(
-                    f"[yellow]Ignoring existing deployment URL {config.deployment_url}[/yellow]"
-                )
 
             # Start up a tunnel via localhost.run.
-            console.print(f"Opening tunnel to {host}:{port} via localhost.run...")
+            console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
+            console.print(
+                f"[red]This will replace any existing deployment until you run [bold]fixie deploy[/bold]![/red]"
+            )
             config.deployment_url = stack.enter_context(Tunnel(host, port))
             console.print(f"{host}:{port} can be reached at {config.deployment_url}")
 
