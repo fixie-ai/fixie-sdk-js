@@ -5,7 +5,8 @@ from typing import Any, Dict, List, Optional
 import prompt_toolkit
 import prompt_toolkit.history
 import requests
-import rich.console as rich_console
+from rich import console as rich_console
+from rich import markup
 from PIL import Image
 
 from fixieai import FixieClient
@@ -58,13 +59,13 @@ class Console:
             self._query(in_text)
 
     def _query(self, in_text: str) -> None:
-        with textconsole.status("Working...", spinner="bouncingBall"):
-            try:
-                for message in self._session.run(in_text):
-                    self._show_message(message)
-            except requests.exceptions.HTTPError as e:
-                textconsole.print(f"🚨 {e}")
-                return
+        # with textconsole.status("Working...", spinner="bouncingBall"):
+        try:
+            for message in self._session.run(in_text):
+                self._show_message(message)
+        except requests.exceptions.HTTPError as e:
+            textconsole.print(f"🚨 {e}")
+            return
 
     def _show_message(self, message: Dict[str, Any], show_user_message: bool = False):
         """Shows a message dict from FixieClient.
@@ -75,14 +76,17 @@ class Console:
         """
         if message["type"] == "query" and message["sentBy"]["handle"] == "user":
             if show_user_message:
-                textconsole.print(f"{PROMPT}{message['text']}")
+                textconsole.print(f"{PROMPT}{markup.escape(message['text'])}")
         elif message["type"] != "response":
             textconsole.print(
-                f"   [dim]@{message['sentBy']['handle']}: {message['text']}[/]"
+                f"   [dim]@{message['sentBy']['handle']}: "
+                f"{markup.escape(message['text'])}[/]"
             )
         else:
             self._response_index += 1
-            textconsole.print(f"{self._response_index}❯ {message['text']}")
+            textconsole.print(
+                f"{self._response_index}❯ {markup.escape(message['text'])}"
+            )
             self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
@@ -100,7 +104,7 @@ class Console:
         for embed_id in embed_ids:
             if embed_id not in embeds:
                 textconsole.print(
-                    f"   [dim]embed #{embed_id}[/] not found in session", style="red"
+                    f"   [dim]embed #{embed_id} not found in session[/]", style="red"
                 )
                 continue
             _show_embed(
