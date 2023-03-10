@@ -251,6 +251,9 @@ def serve(ctx, path, host, port, tunnel, reload):
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
 
+        # Change into the agent's directory to ensure that all agent paths resolve like they will during deployment.
+        os.chdir(os.path.dirname(path))
+
         if reload:
             os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
             uvicorn.run(
@@ -259,11 +262,11 @@ def serve(ctx, path, host, port, tunnel, reload):
                 port=port,
                 factory=True,
                 reload=True,
-                reload_dirs=[os.path.dirname(path)],
-                app_dir=os.path.dirname(path),
+                app_dir=".",
+                reload_dirs=["."],
             )
         else:
-            _, agent_impl = loader.load_agent_from_path(path)
+            _, agent_impl = loader.load_agent_from_path(".")
             agent_impl.serve(agent_api.agent_id, host, port)
 
 
