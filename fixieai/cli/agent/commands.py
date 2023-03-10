@@ -10,6 +10,7 @@ from typing import BinaryIO, Dict
 
 import click
 import rich.console as rich_console
+import uvicorn
 import validators
 
 import fixieai.client
@@ -223,12 +224,15 @@ def _ensure_agent_updated(
     "--tunnel/--no-tunnel",
     is_flag=True,
     default=True,
-    help="Create a tunnel using localhost.run",
+    help="Create a tunnel using localhost.run.",
+)
+@click.option(
+    "--reload/--no-reload", is_flag=True, default=True, help="Enable auto-reload."
 )
 @click.pass_context
-def serve(ctx, path, host, port, tunnel):
+def serve(ctx, path, host, port, tunnel, reload):
     console = rich_console.Console()
-    config, agent_impl = loader.load_agent_from_path(path)
+    config = agent_config.load_config(path)
 
     with contextlib.ExitStack() as stack:
         if tunnel:
@@ -241,7 +245,21 @@ def serve(ctx, path, host, port, tunnel):
             console.print(f"{host}:{port} can be reached at {config.deployment_url}")
 
         agent_api = _ensure_agent_updated(ctx.obj.client, config)
-        agent_impl.serve(agent_api.agent_id, host, port)
+
+        if reload:
+            os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
+            uvicorn.run(
+                config.entry_point + ".app",
+                host=host,
+                port=port,
+                factory=True,
+                reload=True,
+                reload_dirs=[os.path.dirname(path)],
+                app_dir=os.path.dirname(path),
+            )
+        else:
+            _, agent_impl = loader.load_agent_from_path(path)
+            agent_impl.serve(agent_api.agent_id, host, port)
 
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
