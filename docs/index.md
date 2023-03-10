@@ -20,7 +20,7 @@ To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
 * 2. Install the fixie CLI with `pip install fixieai` and run `fixie auth` to ensure your are successfully authenticated
 * 3. Fork the [examples repo](https://github.com/fixie-ai/fixie-examples)
 * 4. Choose any of the example agents, `cd` into the directory, and run `fixie agent deploy`
-* 5. Test that agent by running `fixie console -a agent_name` and inputting a test query. You can also run `fixie console` and then @ your specific agent (e.g. `@username/agent_name this is the query`)
+* 5. Test that agent by running `fixie console -a username/agent_name` and inputting a test query. You can also run `fixie console` and then @ your specific agent (e.g. `@username/agent_name this is the query`)
 * 6. You can also talk to deployed agents directly at [app.fixie.ai](http://app.fixie.ai)
 * 7. For local development and testing, you can also run your agent locally with `fixie agent serve`. This is easier for debugging what’s happening when things go wrong. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent just like in step 5.
 
