@@ -1,11 +1,9 @@
 import contextlib
 import io
-import json
 import os
 import random
 import re
 import shlex
-import subprocess
 import urllib.request
 from contextlib import contextmanager
 from typing import BinaryIO, Dict
@@ -18,6 +16,7 @@ import fixieai.client
 from fixieai import constants
 from fixieai.cli.agent import agent_config
 from fixieai.cli.agent import loader
+from fixieai.cli.agent import tunnel as tunnel_
 
 # Regex pattern to match valid entry points: "module:object"
 VAR_NAME_RE = r"(?![0-9])\w+"
@@ -174,50 +173,6 @@ def _ensure_agent_updated(
     return agent
 
 
-class Tunnel:
-    """Start an Internet-accessible tunnel to the Agent running at the given host:port.
-
-    Returns the public URL on which the Agent can be contacted.
-
-    Shuts down the tunnel when the context manager exits.
-    """
-
-    def __init__(self, host: str, port: int):
-        self._host = host
-        self._port = port
-
-    def __enter__(self):
-        self._proc = subprocess.Popen(
-            [
-                "ssh",
-                "-R",
-                f"80:localhost:{self._port}",
-                "nokey@localhost.run",
-                "--",
-                "--output=json",
-            ],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            encoding="utf-8",
-        )
-        assert self._proc.stdout is not None
-        while True:
-            line = self._proc.stdout.readline()
-            if not line:
-                break
-            try:
-                parsed = json.loads(line)
-                if "address" in parsed:
-                    return f"https://{parsed['address']}"
-            except:
-                pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._proc.terminate()
-        self._proc.wait()
-
-
 @agent.command(
     "serve", help="Serve the current agent locally via a publicly-accessible URL."
 )
@@ -243,7 +198,7 @@ def serve(ctx, path, host, port, tunnel):
             console.print(
                 f"[red]This will replace any existing deployment until you run [bold]fixie deploy[/bold]![/red]"
             )
-            config.deployment_url = stack.enter_context(Tunnel(host, port))
+            config.deployment_url = stack.enter_context(tunnel_.Tunnel(host, port))
             console.print(f"{host}:{port} can be reached at {config.deployment_url}")
 
         agent_api = _ensure_agent_updated(ctx.obj.client, config)
