@@ -224,10 +224,13 @@ def _ensure_agent_updated(
     "--tunnel/--no-tunnel",
     is_flag=True,
     default=True,
-    help="Create a tunnel using localhost.run.",
+    help="(default enabled) Create a tunnel using localhost.run.",
 )
 @click.option(
-    "--reload/--no-reload", is_flag=True, default=True, help="Enable auto-reload."
+    "--reload/--no-reload",
+    is_flag=True,
+    default=True,
+    help="(default enabled) Reload automatically.",
 )
 @click.pass_context
 def serve(ctx, path, host, port, tunnel, reload):
