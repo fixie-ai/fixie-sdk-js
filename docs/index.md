@@ -24,7 +24,7 @@ To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
 * 6. You can also talk to deployed agents directly at [app.fixie.ai](http://app.fixie.ai)
 * 7. For local development and testing, you can also run your agent locally with `fixie agent serve`. This is easier for debugging what’s happening when things go wrong. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent just like in step 5.
 
-Example of querry using SDK:
+Example of query using SDK:
 
 ```py
 import fixieai
