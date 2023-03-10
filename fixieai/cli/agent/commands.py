@@ -3,7 +3,9 @@ import os
 import random
 import shlex
 from contextlib import contextmanager
+import re
 from typing import BinaryIO, Dict
+import urllib.request
 
 import click
 import rich.console as rich_console
@@ -13,6 +15,15 @@ import fixieai.client
 from fixieai import constants
 from fixieai.cli.agent import agent_config
 from fixieai.cli.agent import loader
+
+
+# Regex pattern to match valid entry points: "module:object"
+VAR_NAME_RE = r"(?![0-9])\w+"
+ENTRY_POINT_PATTERN = re.compile(rf"^{VAR_NAME_RE}(\.{VAR_NAME_RE})*:{VAR_NAME_RE}$")
+# The agent template main.py file
+AGENT_TEMPLATE_URL = (
+    "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
+)
 
 
 @click.group(help="Agent-related commands.")
@@ -34,7 +45,16 @@ def _validate_slug(ctx, param, value):
 def _validate_url(ctx, param, value):
     while True:
         if value and not validators.url(value):
-            click.secho(f"{param.name} must be a valid url.")
+            click.echo(f"{param.name} must be a valid url.")
+            value = click.prompt(param.prompt, default=param.default())
+        else:
+            return value
+
+
+def _validate_entry_point(ctx, param, value):
+    while True:
+        if value and not ENTRY_POINT_PATTERN.match(value):
+            click.echo(f"{param.name} must be in module:obj format (e.g. 'main:agent')")
             value = click.prompt(param.prompt, default=param.default())
         else:
             return value
@@ -54,8 +74,9 @@ def _validate_url(ctx, param, value):
 )
 @click.option(
     "--entry-point",
-    prompt=True,
+    prompt="Entry point (module:object)",
     default=lambda: _current_config().entry_point,
+    callback=_validate_entry_point,
 )
 @click.option(
     "--more-info-url",
@@ -80,6 +101,17 @@ def init_agent(handle, description, entry_point, more_info_url, public):
     current_config.more_info_url = more_info_url
     current_config.public = public
     agent_config.save_config(current_config)
+
+    entry_module, _ = entry_point.split(":")
+    expected_main_path = entry_module.replace(".", "/") + ".py"
+    if not os.path.exists(expected_main_path):
+        urllib.request.urlretrieve(AGENT_TEMPLATE_URL, expected_main_path)
+        click.secho(
+            f"Initialized agent.yaml and made a template agent file at {expected_main_path}",
+            fg="green",
+        )
+    else:
+        click.secho(f"Initialized agent.yaml.", fg="green")
 
 
 def _current_config() -> agent_config.AgentConfig:
