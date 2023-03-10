@@ -60,7 +60,7 @@ class Console:
                         )
                     else:
                         textconsole.print(f"{self._response_index}❯ {message['text']}")
-                        self._show_embeds(message['text'])
+                        self._show_embeds(message["text"])
             except requests.exceptions.HTTPError as e:
                 textconsole.print(f"🚨 {e}")
                 return
@@ -80,8 +80,7 @@ class Console:
         for embed_id in embed_ids:
             if embed_id not in embeds:
                 textconsole.print(
-                    f"   [dim]embed #{embed_id}[/] not found in session",
-                    style="red"
+                    f"   [dim]embed #{embed_id}[/] not found in session", style="red"
                 )
                 continue
             _show_embed(
