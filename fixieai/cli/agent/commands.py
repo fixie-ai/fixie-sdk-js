@@ -1,3 +1,4 @@
+import contextlib
 import io
 import os
 import random
@@ -15,6 +16,7 @@ import fixieai.client
 from fixieai import constants
 from fixieai.cli.agent import agent_config
 from fixieai.cli.agent import loader
+from fixieai.cli.agent import tunnel as tunnel_
 
 # Regex pattern to match valid entry points: "module:object"
 VAR_NAME_RE = r"(?![0-9])\w+"
@@ -189,8 +191,8 @@ def _ensure_agent_updated(
     client: fixieai.client.FixieClient,
     config: agent_config.AgentConfig,
 ):
-    agent = client.get_agent(config.handle)
-    if agent.agent_id is None:
+    agent = client.get_agent(f"{client.get_current_username()}/{config.handle}")
+    if not agent.valid:
         agent.create_agent(
             name=config.name,
             description=config.description,
@@ -211,16 +213,35 @@ def _ensure_agent_updated(
     return agent
 
 
-@agent.command("serve", help="Start serving the current agent.")
+@agent.command(
+    "serve", help="Serve the current agent locally via a publicly-accessible URL."
+)
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.option("--host", default="0.0.0.0")
 @click.option("--port", type=int, default=8181)
+@click.option(
+    "--tunnel/--no-tunnel",
+    is_flag=True,
+    default=True,
+    help="Create a tunnel using localhost.run",
+)
 @click.pass_context
-def serve(ctx, path, host, port):
-    # TODO: add tunneling and deployment url update
+def serve(ctx, path, host, port, tunnel):
+    console = rich_console.Console()
     config, agent_impl = loader.load_agent_from_path(path)
-    agent_api = _ensure_agent_updated(ctx.obj.client, config)
-    agent_impl.serve(agent_api.agent_id, host, port)
+
+    with contextlib.ExitStack() as stack:
+        if tunnel:
+            # Start up a tunnel via localhost.run.
+            console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
+            console.print(
+                f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
+            )
+            config.deployment_url = stack.enter_context(tunnel_.Tunnel(host, port))
+            console.print(f"{host}:{port} can be reached at {config.deployment_url}")
+
+        agent_api = _ensure_agent_updated(ctx.obj.client, config)
+        agent_impl.serve(agent_api.agent_id, host, port)
 
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """

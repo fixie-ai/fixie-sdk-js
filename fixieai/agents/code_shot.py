@@ -6,6 +6,7 @@ import inspect
 import json
 import re
 import threading
+import time
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
@@ -318,5 +319,7 @@ def _ping_fixie_async(agent_id: str):
 
 
 def _ping_fixie_sync(agent_id: str):
+    # Pause a second to give the agent a moment to start up.
+    time.sleep(1)
     response = requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
     response.raise_for_status()

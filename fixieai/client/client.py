@@ -138,7 +138,7 @@ class FixieClient:
             more_info_url: A URL with more information about the new Agent.
             published: Whether the new Agent should be published.
         """
-        agent = Agent(self, handle)
+        agent = Agent(self, f"{self.get_current_username()}/{handle}")
         agent.create_agent(
             name, description, query_url, func_url, more_info_url, published
         )

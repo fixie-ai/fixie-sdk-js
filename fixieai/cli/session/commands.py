@@ -4,11 +4,11 @@ from fixieai.cli.session import console
 
 
 def validate_agent_exists(ctx, param, agent_id):
-    client = ctx.obj.client
-    agent = client.get_agent(agent_id)
-    if not agent.valid:
-        click.echo(f"Agent {agent_id} not found.")
-        ctx.exit(1)
+    if agent_id is not None:
+        client = ctx.obj.client
+        agent = client.get_agent(agent_id)
+        if not agent.valid:
+            raise click.BadParameter(f"Agent {agent_id} does not exist")
 
 
 @click.group(help="Session-related commands.")
