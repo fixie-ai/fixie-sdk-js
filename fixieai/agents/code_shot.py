@@ -4,7 +4,6 @@ import dataclasses
 import functools
 import inspect
 import json
-import os
 import re
 import threading
 import time
@@ -123,8 +122,7 @@ class CodeShotAgent:
     ):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
-        If agent_id is specified as an argument or via the FIXIE_REFRESH_AGENT_ID environment variable,
-        this pings Fixie upon startup to fetch the latest prompt and fewshots.
+        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
             agent_id: The qualified agent id (`username/handle`)
@@ -136,15 +134,14 @@ class CodeShotAgent:
     def app(self, agent_id: Optional[str] = None) -> fastapi.FastAPI:
         """Returns a fastapi.FastAPI application that serves the agent.
 
-        If agent_id is specified as an argument or via the FIXIE_REFRESH_AGENT_ID environment variable,
-        this pings Fixie upon startup to fetch the latest prompt and fewshots.
+        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
             agent_id: The qualified agent id (`username/handle`)
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        agent_id = agent_id or os.getenv("FIXIE_REFRESH_AGENT_ID")
+        agent_id = agent_id
         if agent_id:
             fast_api.add_event_handler(
                 "startup", functools.partial(_ping_fixie_async, agent_id)
