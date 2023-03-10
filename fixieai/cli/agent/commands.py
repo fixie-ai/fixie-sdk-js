@@ -116,16 +116,22 @@ def show_agent(ctx, agent_id: str):
         click.echo(f"Agent {agent_id} not found.")
         return
     click.secho(f"{agent.agent_id}", fg="green", nl=False)
-    click.echo(f": {agent.name}")
     click.echo(f"Owner: {agent.owner}")
-    click.echo(f"Description: {agent.description}")
-    click.echo(f"More info URL: {agent.more_info_url}")
+    if agent.name:
+        click.echo(f": {agent.name}")
+    if agent.description:
+        click.echo(f"Description: {agent.description}")
+    if agent.more_info_url:
+        click.echo(f"More info URL: {agent.more_info_url}")
     click.echo(f"Published: {agent.published}")
-    click.echo(f"Func URL: {agent.func_url}")
-    click.echo(f"Query URL: {agent.query_url}")
+    if agent.func_url:
+        click.echo(f"Func URL: {agent.func_url}")
+    if agent.query_url:
+        click.echo(f"Query URL: {agent.query_url}")
     click.echo(f"Created: {agent.created}")
     click.echo(f"Modified: {agent.modified}")
-    click.echo(f"Queries: {agent.queries}")
+    if agent.queries:
+        click.echo(f"Queries: {agent.queries}")
 
 
 @agent.command("delete", help="Delete an agent.")
