@@ -245,9 +245,11 @@ def serve(ctx, path, host, port, tunnel, reload):
                 f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
             config.deployment_url = stack.enter_context(tunnel_.Tunnel(host, port))
-            console.print(f"{host}:{port} can be reached at {config.deployment_url}")
 
         agent_api = _ensure_agent_updated(ctx.obj.client, config)
+        console.print(
+            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
+        )
 
         if reload:
             os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
