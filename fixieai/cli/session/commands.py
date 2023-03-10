@@ -9,6 +9,7 @@ def validate_agent_exists(ctx, param, agent_id):
         agent = client.get_agent(agent_id)
         if not agent.valid:
             raise click.BadParameter(f"Agent {agent_id} does not exist")
+    return agent_id
 
 
 @click.group(help="Session-related commands.")
@@ -34,6 +35,8 @@ def web_option(func):
 
 
 @session.command("new", help="Creates a new session and opens it.")
+@click.argument("message", required=False)
+@web_option
 @click.option(
     "-a",
     "--agent",
@@ -41,8 +44,6 @@ def web_option(func):
     callback=validate_agent_exists,
     help="A specific agent to talk to. If unset, `fixie` is used.",
 )
-@web_option
-@click.argument("message", required=False)
 @click.pass_context
 def new_session(ctx, agent, web, message):
     client = ctx.obj.client
@@ -56,9 +57,9 @@ def new_session(ctx, agent, web, message):
 
 
 @session.command("open", help="Opens a session.")
+@click.argument("session_id")
 @web_option
 @click.pass_context
-@click.argument("session_id")
 def open_session(ctx, web, session_id: str):
     client = ctx.obj.client
     session = client.get_session(session_id)
