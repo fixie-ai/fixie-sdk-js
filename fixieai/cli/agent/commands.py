@@ -235,7 +235,7 @@ def serve(ctx, path, host, port, tunnel):
             # Start up a tunnel via localhost.run.
             console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
             console.print(
-                f"[red]This will replace any existing deployment until you run [bold]fixie deploy[/bold]![/red]"
+                f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
             config.deployment_url = stack.enter_context(tunnel_.Tunnel(host, port))
             console.print(f"{host}:{port} can be reached at {config.deployment_url}")
