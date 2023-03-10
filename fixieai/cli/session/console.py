@@ -1,9 +1,12 @@
-from typing import Optional
+import io
+import re
+from typing import List, Optional
 
 import prompt_toolkit
 import prompt_toolkit.history
 import requests
 import rich.console as rich_console
+from PIL import Image
 
 from fixieai import FixieClient
 
@@ -57,6 +60,47 @@ class Console:
                         )
                     else:
                         textconsole.print(f"{self._response_index}❯ {message['text']}")
+                        self._show_embeds(message["text"])
             except requests.exceptions.HTTPError as e:
                 textconsole.print(f"🚨 {e}")
                 return
+
+    def _show_embeds(self, message: str):
+        """Shows embeds referenced in `message_text`."""
+        # Check embed references in message (denoted by #id).
+        embed_ids = _extract_embed_refs(message)
+        if not embed_ids:
+            return
+        # Get a dict of all embed_id -> embeds in the session.
+        embeds = {
+            embed_dict["key"]: embed_dict["embed"]
+            for embed_dict in self._session.get_embeds()
+        }
+        # Show what we can find.
+        for embed_id in embed_ids:
+            if embed_id not in embeds:
+                textconsole.print(
+                    f"   [dim]embed #{embed_id}[/] not found in session", style="red"
+                )
+                continue
+            _show_embed(
+                embeds[embed_id]["url"],
+                embeds[embed_id]["contentType"],
+            )
+
+
+def _extract_embed_refs(message: str) -> List[int]:
+    """Returns a list of embed ids referenced in `message_text`."""
+    embed_refs = []
+    odd_number_of_sharps = r"(?<!#)(##)*#(?!#)"
+    for match in re.finditer(odd_number_of_sharps + r"(?P<embed_num>\d+)", message):
+        embed_refs.append(int(match.group("embed_num")))
+    return embed_refs
+
+
+def _show_embed(url: str, content_type: str):
+    if content_type.startswith("image/"):
+        response = requests.get(url)
+        response.raise_for_status()
+        image = Image.open(io.BytesIO(response.content))
+        image.show()
