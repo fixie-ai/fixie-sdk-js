@@ -74,7 +74,7 @@ def test_create_agent(fixie_client, requests_mock):
                     "data": {
                         "createAgent": {
                             "agent": {
-                                "agentId": "testuser/test-agent-id",
+                                "agentId": "testuser/test-agent-handle",
                             }
                         }
                     }
@@ -83,7 +83,7 @@ def test_create_agent(fixie_client, requests_mock):
             {
                 "json": {
                     "data": {
-                        "agentByHandle": {
+                        "agentById": {
                             "agentId": "testuser/test-agent-handle",
                             "handle": "test-agent-handle",
                             "name": "Test Agent",
