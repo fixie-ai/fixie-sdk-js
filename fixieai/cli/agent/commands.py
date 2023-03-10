@@ -1,11 +1,11 @@
 import io
 import os
 import random
-import shlex
-from contextlib import contextmanager
 import re
-from typing import BinaryIO, Dict
+import shlex
 import urllib.request
+from contextlib import contextmanager
+from typing import BinaryIO, Dict
 
 import click
 import rich.console as rich_console
@@ -15,7 +15,6 @@ import fixieai.client
 from fixieai import constants
 from fixieai.cli.agent import agent_config
 from fixieai.cli.agent import loader
-
 
 # Regex pattern to match valid entry points: "module:object"
 VAR_NAME_RE = r"(?![0-9])\w+"
