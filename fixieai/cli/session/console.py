@@ -73,13 +73,14 @@ class Console:
         This option is useful for showing previous messages in the chat when connecting
         to a session.
         """
-        if message["type"] == "query" and message["sentBy"]["handle"] == "user":
+        sender_handle = (
+            message["sentBy"]["handle"] if message["sentBy"] else "<unknown>"
+        )
+        if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
                 textconsole.print(f"{PROMPT}{message['text']}")
         elif message["type"] != "response":
-            textconsole.print(
-                f"   [dim]@{message['sentBy']['handle']}: {message['text']}[/]"
-            )
+            textconsole.print(f"   [dim]@{sender_handle}: {message['text']}[/]")
         else:
             self._response_index += 1
             textconsole.print(f"{self._response_index}❯ {message['text']}")
