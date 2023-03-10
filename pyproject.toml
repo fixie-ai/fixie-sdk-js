@@ -14,6 +14,7 @@ build-backend = "poetry.masonry.api"
 # Install the "fixie" commandline script.
 [tool.poetry.scripts]
 fixie = "fixieai.cli.cli:fixie"
+fixieai = "fixieai.cli.cli:fixie"
 
 [tool.poetry.dependencies]
 click = "^8.1.3"
