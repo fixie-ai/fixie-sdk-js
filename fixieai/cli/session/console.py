@@ -1,6 +1,6 @@
 import io
 import re
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import prompt_toolkit
 import prompt_toolkit.history
@@ -9,9 +9,11 @@ import rich.console as rich_console
 from PIL import Image
 
 from fixieai import FixieClient
+from fixieai.client.client import Session
 
 HISTORY_FILE = "history.txt"
 textconsole = rich_console.Console()
+PROMPT = "fixie 🦊❯ "
 
 
 class Console:
@@ -20,20 +22,23 @@ class Console:
     def __init__(
         self,
         client: FixieClient,
+        session: Optional[Session] = None,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
-        self._session = client.create_session()
+        self._session = session or client.create_session()
         self._history_file = history_file
         self._response_index = 0
 
     def run(self, initial_message: Optional[str] = None) -> None:
         """Run the console application."""
 
-        PROMPT = "fixie 🚲❯ "
-
         textconsole.print("[blue]Welcome to Fixie!")
         textconsole.print(f"Connected to: {self._session.session_url}")
+
+        # Show what's already in the session thus far.
+        for message in self._session.get_messages_since_last_time():
+            self._show_message(message, show_user_message=True)
 
         history = prompt_toolkit.history.FileHistory(self._history_file)
         if initial_message:
@@ -52,18 +57,30 @@ class Console:
     def _query(self, in_text: str) -> None:
         with textconsole.status("Working...", spinner="bouncingBall"):
             try:
-                self._response_index += 1
                 for message in self._session.run(in_text):
-                    if message["type"] != "response":
-                        textconsole.print(
-                            f"   [dim]@{message['sentBy']['handle']}: {message['text']}[/]"
-                        )
-                    else:
-                        textconsole.print(f"{self._response_index}❯ {message['text']}")
-                        self._show_embeds(message["text"])
+                    self._show_message(message)
             except requests.exceptions.HTTPError as e:
                 textconsole.print(f"🚨 {e}")
                 return
+
+    def _show_message(self, message: Dict[str, Any], show_user_message: bool = False):
+        """Shows a message dict from FixieClient.
+
+        If show_user_message is set, the user messages are also printed with the PROMPT.
+        This option is useful for showing previous messages in the chat when connecting
+        to a session.
+        """
+        if message["type"] == "query" and message["sentBy"]["handle"] == "user":
+            if show_user_message:
+                textconsole.print(f"{PROMPT}{message['text']}")
+        elif message["type"] != "response":
+            textconsole.print(
+                f"   [dim]@{message['sentBy']['handle']}: {message['text']}[/]"
+            )
+        else:
+            self._response_index += 1
+            textconsole.print(f"{self._response_index}❯ {message['text']}")
+            self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
         """Shows embeds referenced in `message_text`."""
