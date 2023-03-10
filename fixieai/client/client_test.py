@@ -24,7 +24,7 @@ def test_get_agent(fixie_client, requests_mock):
         constants.FIXIE_GRAPHQL_URL,
         json={
             "data": {
-                "agentByHandle": {
+                "agentById": {
                     "agentId": "testuser/test-agent-handle",
                     "handle": "test-agent-handle",
                     "name": "Test Agent",
@@ -39,7 +39,8 @@ def test_get_agent(fixie_client, requests_mock):
             }
         },
     )
-    agent = fixie_client.get_agent("test-agent-handle")
+    agent = fixie_client.get_agent("testuser/test-agent-handle")
+    assert agent.valid
     assert agent.handle == "test-agent-handle"
     assert agent.agent_id == "testuser/test-agent-handle"
     assert agent.name == "Test Agent"
@@ -58,9 +59,10 @@ def test_create_agent(fixie_client, requests_mock):
             "errors": ["GraphQL error: No such agent: testuser/test-agent-handle"],
         },
     )
-    agent = fixie_client.get_agent("test-agent-handle")
+    agent = fixie_client.get_agent("testuser/test-agent-handle")
     assert agent.handle == "test-agent-handle"
-    assert agent.agent_id is None
+    assert agent.agent_id == "testuser/test-agent-handle"
+    assert not agent.valid
 
     # There are two GraphQL calls resulting from create_agent, we need
     # to mock both of the responses.
@@ -72,7 +74,7 @@ def test_create_agent(fixie_client, requests_mock):
                     "data": {
                         "createAgent": {
                             "agent": {
-                                "agentId": "testuser/test-agent-id",
+                                "agentId": "testuser/test-agent-handle",
                             }
                         }
                     }
@@ -81,7 +83,7 @@ def test_create_agent(fixie_client, requests_mock):
             {
                 "json": {
                     "data": {
-                        "agentByHandle": {
+                        "agentById": {
                             "agentId": "testuser/test-agent-handle",
                             "handle": "test-agent-handle",
                             "name": "Test Agent",
@@ -104,6 +106,7 @@ def test_create_agent(fixie_client, requests_mock):
         more_info_url="https://test.com",
         published=True,
     )
+    assert agent.valid
     assert agent.agent_id == "testuser/test-agent-handle"
     assert agent.name == "Test Agent"
     assert agent.description == "Test Agent Description"
@@ -128,9 +131,7 @@ def test_get_session(fixie_client, requests_mock):
         constants.FIXIE_GRAPHQL_URL,
         json={
             "data": {
-                "sessionByHandle": {
-                    "handle": "test-handle",
-                }
+                "sessionByHandle": {"handle": "test-handle", "frontendAgentId": None}
             }
         },
     )

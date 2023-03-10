@@ -22,15 +22,18 @@ class Console:
     def __init__(
         self,
         client: FixieClient,
-        session: Optional[Session] = None,
+        session: Session,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
-        self._session = session or client.create_session()
+        self._session = session
         self._history_file = history_file
         self._response_index = 0
 
-    def run(self, initial_message: Optional[str] = None) -> None:
+    def run(
+        self,
+        initial_message: Optional[str] = None,
+    ) -> None:
         """Run the console application."""
 
         textconsole.print("[blue]Welcome to Fixie!")
