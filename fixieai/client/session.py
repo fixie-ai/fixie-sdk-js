@@ -56,6 +56,11 @@ class Session:
         """Return the URL of the Fixie session."""
         return f"{self._client.url}/sessions/{self.session_id}"
 
+    @property
+    def frontend_agent_id(self) -> Optional[str]:
+        """Return the frontend agent ID used by this Fixie client."""
+        return self._frontend_agent_id
+
     def clone(self) -> "Session":
         """Return a new Session instance with the same configuration."""
         return Session(self._client.clone(), session_id=self._session_id)
@@ -70,6 +75,7 @@ class Session:
                 createSession(sessionData: {frontendAgentId: $frontendAgentId}) {
                     session {
                         handle
+                        frontendAgentId
                     }
                 }
             }
@@ -83,6 +89,7 @@ class Session:
             raise ValueError(f"Failed to create Session")
         assert isinstance(result["createSession"], dict)
         assert isinstance(result["createSession"]["session"], dict)
+        self._frontend_agent_id = result["createSession"]["session"]["frontendAgentId"]
         assert isinstance(result["createSession"]["session"]["handle"], str)
         return result["createSession"]["session"]["handle"]
 
@@ -107,6 +114,7 @@ class Session:
         assert "sessionByHandle" in result and isinstance(
             result["sessionByHandle"], dict
         )
+        self._frontend_agent_id = result["sessionByHandle"]["frontendAgentId"]
         return result["sessionByHandle"]
 
     def delete_session(self) -> None:

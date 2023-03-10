@@ -22,12 +22,11 @@ class Console:
     def __init__(
         self,
         client: FixieClient,
-        frontend_agent_id: Optional[str] = None,
-        session: Optional[Session] = None,
+        session: Session,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
-        self._session = session or client.create_session(frontend_agent_id)
+        self._session = session
         self._history_file = history_file
         self._response_index = 0
 
