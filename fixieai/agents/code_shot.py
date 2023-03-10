@@ -40,6 +40,7 @@ class AgentMetadata:
     base_prompt: str
     few_shots: List[str]
     corpora: Optional[List[corpora.DocumentCorpus]] = None
+    conversational: bool = False
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
@@ -98,6 +99,7 @@ class CodeShotAgent:
         base_prompt: str,
         few_shots: Union[str, List[str]],
         corpora: Optional[List[corpora.DocumentCorpus]] = None,
+        conversational: bool = False,
         oauth_params: Optional[oauth.OAuthParams] = None,
     ):
         if isinstance(few_shots, str):
@@ -106,6 +108,7 @@ class CodeShotAgent:
         self.base_prompt = base_prompt
         self.few_shots = few_shots
         self.corpora = corpora
+        self.conversational = conversational
         self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
@@ -179,7 +182,9 @@ class CodeShotAgent:
 
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        metadata = AgentMetadata(self.base_prompt, self.few_shots, self.corpora)
+        metadata = AgentMetadata(
+            self.base_prompt, self.few_shots, self.corpora, self.conversational
+        )
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")
 
