@@ -1,23 +1,32 @@
 from __future__ import annotations
 
+import dataclasses
 import functools
+import inspect
+import json
 import re
 import threading
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
+import jwt
 import requests
 import uvicorn
+import yaml
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
+from fixieai.agents import api
+from fixieai.agents import corpora
+from fixieai.agents import oauth
+from fixieai.agents import user_storage
 from fixieai.agents import utils
-from fixieai.agents.api import AgentQuery
-from fixieai.agents.api import AgentResponse
-from fixieai.agents.api import Message
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
+
+# The JWT claim containing the agent ID
+_AGENT_ID_JWT_CLAIM = "aid"
 
 
 @pydantic_dataclasses.dataclass
@@ -29,6 +38,7 @@ class AgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
+    corpora: Optional[List[corpora.DocumentCorpus]] = None
 
     def __post_init__(self):
         utils.strip_prompt_lines(self)
@@ -69,7 +79,7 @@ class CodeShotAgent:
     `@agent.register_func`. Example:
 
         @agent.register_func
-        def func_name(query: fixieai.AgentQuery) -> ReturnType:
+        def func_name(query: fixieai.Message) -> ReturnType:
             ...
 
         , where ReturnType is one of `str`, `fixieai.Message`, or `fixie.AgentResponse`.
@@ -82,29 +92,45 @@ class CodeShotAgent:
 
     """
 
-    def __init__(self, base_prompt: str, few_shots: Union[str, List[str]]):
+    def __init__(
+        self,
+        base_prompt: str,
+        few_shots: Union[str, List[str]],
+        corpora: Optional[List[corpora.DocumentCorpus]] = None,
+        oauth_params: Optional[oauth.OAuthParams] = None,
+    ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
 
         self.base_prompt = base_prompt
         self.few_shots = few_shots
+        self.corpora = corpora
+        self.oauth_params = oauth_params
         self._funcs: Dict[str, Callable] = {}
+        self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
 
-    def serve(self, agent_id: str, host: str = "0.0.0.0", port: int = 8181):
+        if oauth_params is not None:
+            # Register default Funcs.
+            self.register_func(_oauth)
+
+    def serve(
+        self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181
+    ):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
-        This pings Fixie upon startup to fetch the latest prompt and fewshots.
+        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
 
         Args:
-            agent_id: Fixie agent_id that this agent will serve.
+            agent_id: The qualified agent id (`username/handle`)
             host: The address to start listening at.
             port: The port number to start listening at.
         """
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_event_handler(
-            "startup", functools.partial(_ping_fixie_async, agent_id)
-        )
+        if agent_id:
+            fast_api.add_event_handler(
+                "startup", functools.partial(_ping_fixie_async, agent_id)
+            )
         uvicorn.run(fast_api, host=host, port=port)
 
     def api_router(self) -> fastapi.APIRouter:
@@ -143,24 +169,53 @@ class CodeShotAgent:
                     f"Function names may only be alphanumerics, got {func_name!r}."
                 )
 
-        utils.validate_registered_pyfunc(func, duck_typing_okay=True)
+        utils.validate_registered_pyfunc(func, self)
         name = func_name or func.__name__
         if name in self._funcs:
             raise ValueError(f"Func[{name}] is already registered with agent.")
         self._funcs[name] = func
         return func
 
-    def _handshake(self) -> AgentMetadata:
-        return AgentMetadata(self.base_prompt, self.few_shots)
+    def _handshake(self) -> fastapi.Response:
+        """Returns the agent's metadata in YAML format."""
+        metadata = AgentMetadata(self.base_prompt, self.few_shots, self.corpora)
+        yaml_content = yaml.dump(dataclasses.asdict(metadata))
+        return fastapi.Response(yaml_content, media_type="application/yaml")
 
-    def _serve_func(self, func_name: str, query: AgentQuery) -> AgentResponse:
+    def _serve_func(
+        self,
+        func_name: str,
+        query: api.AgentQuery,
+        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
+            fastapi.security.HTTPBearer()
+        ),
+    ) -> api.AgentResponse:
+        """Verifies the request is a valid request from Fixie, and dispatches it to
+        the appropriate function.
+        """
+        token_claims = _VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client
+        )
+        if token_claims is None:
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        elif (
+            query.access_token is not None
+            and query.access_token != credentials.credentials
+        ):
+            raise fastapi.HTTPException(status_code=403, detail="Mismatched tokens")
+        else:
+            query.access_token = credentials.credentials
+
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
-        output = pyfunc(query)
+        kwargs = self._get_func_kwargs(
+            query, token_claims, inspect.signature(pyfunc).parameters.keys()
+        )
+        output = pyfunc(**kwargs)
         try:
             return _wrap_with_agent_response(output)
         except TypeError:
@@ -168,15 +223,77 @@ class CodeShotAgent:
                 f"Func[{func_name}] returned unexpected output of type {type(output)}."
             )
 
+    def _get_func_kwargs(
+        self,
+        query: api.AgentQuery,
+        token_claims: _VerifiedTokenClaims,
+        arg_names: Iterable[str],
+    ) -> Dict[str, Any]:
+        kwargs: Dict[str, Any] = {}
+        for arg_name in arg_names:
+            if arg_name == "query":
+                kwargs[arg_name] = query.message
+            elif arg_name == "user_storage":
+                kwargs[arg_name] = user_storage.UserStorage(
+                    query, token_claims.agent_id
+                )
+            elif arg_name == "oauth_handler":
+                assert self.oauth_params, "oauth_params is not set"
+                kwargs[arg_name] = oauth.OAuthHandler(
+                    self.oauth_params, query, token_claims.agent_id
+                )
+            else:
+                raise ValueError(f"Found unknown argument {arg_name!r}.")
+        return kwargs
+
+
+@pydantic_dataclasses.dataclass
+class _VerifiedTokenClaims:
+    """Verified claims from an agent token."""
+
+    agent_id: str
+
+    @staticmethod
+    def from_token(
+        token: str, jwks_client: jwt.PyJWKClient
+    ) -> Optional[_VerifiedTokenClaims]:
+        try:
+            public_key = jwks_client.get_signing_key_from_jwt(token)
+            claims = jwt.decode(
+                token,
+                public_key.key,
+                algorithms=["EdDSA"],
+                audience=constants.FIXIE_AGENT_API_AUDIENCES,
+            )
+        except jwt.DecodeError:
+            return None
+
+        if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
+            claims[_AGENT_ID_JWT_CLAIM], str
+        ):
+            # Agent id claim is required
+            return None
+
+        return _VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
+
+
+def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
+    """Serves Func[_oauth] which is used upon auth redirect callback."""
+    auth_request = json.loads(query.text)
+    state = auth_request["state"]
+    code = auth_request["code"]
+    oauth_handler.authorize(state, code)
+    return "Authorization successful!"
+
 
 def _wrap_with_agent_response(
-    value: Union[str, Message, AgentResponse]
-) -> AgentResponse:
+    value: Union[str, api.Message, api.AgentResponse]
+) -> api.AgentResponse:
     if isinstance(value, str):
-        return AgentResponse(Message(value))
-    elif isinstance(value, Message):
-        return AgentResponse(value)
-    elif isinstance(value, AgentResponse):
+        return api.AgentResponse(api.Message(value))
+    elif isinstance(value, api.Message):
+        return api.AgentResponse(value)
+    elif isinstance(value, api.AgentResponse):
         return value
     else:
         raise TypeError(f"Unexpected type to wrap: {type(value)}")

@@ -2,10 +2,27 @@ site_name: Fixie Developer Portal
 site_description: API and SDK documentation for Fixie
 site_url: https://fixie.ai/
 
+# theme:
+#   palette:
+#   - media: "(prefers-color-scheme: light)"
+#     scheme: default
+#     primary: teal
+#     accent: purple
+#     toggle:
+#       icon: material/weather-sunny
+#       name: Switch to dark mode
+#   - media: "(prefers-color-scheme: dark)"
+#     scheme: slate
+#     primary: black
+#     accent: lime
+#     toggle:
+#       icon: material/weather-night
+#       name: Switch to light mode
+
 theme:
+    name: cinder
     logo: assets/fixie-logo.png
     favicon: assets/fixie-logo.png
-    name: 'readthedocs'
     palette:
       - scheme: 'default'
         media: '(prefers-color-scheme: light)'
@@ -14,13 +31,16 @@ theme:
           name: "Switch to dark mode"
       - scheme: 'slate'
         media: '(prefers-color-scheme: dark)'
-        primary: 'black'
+        primary: black
+        accent: lime
         toggle:
           icon: 'material/lightbulb-outline'
           name: 'Switch to light mode'
-    features:
-        - navigation.sections
-        - navigation.tabs
+#    features:
+#      - content.code.annotate
+#      - navigation.tabs
+#      - navigation.tabs.sticky
+#      - navigation.top
 
 repo_name: fixie-ai/fixie-sdk
 repo_url: https://github.com/fixie-ai/fixie-sdk
@@ -28,13 +48,16 @@ edit_uri: ""
 
 nav:
     - Introduction: 'index.md'
-    - Usage:
-        - QuickStart: 'quickstart.md'
-    - Python SDK Reference:
-        - Client API: 'api-client.md'
-        - Agent API: 'api-agents.md'
-    - CLI Reference: 'cli.md'
-    - GraphQL Reference: 'https://app.fixie.ai/static/docs/index.html'
+    - Architecture: 'architecture.md'
+    - Agents:
+      - Agent QuickStart: 'agent-quickstart.md'
+      - Fixie Agent API: 'agents.md'
+      - Agent Protocol: 'agent-protocol.md'
+    - Python SDK:
+        - Python Client API: 'python-client-api.md'
+        - Python Agent API: 'python-agent-api.md'
+    - CLI: 'cli.md'
+    - GraphQL: 'https://app.fixie.ai/static/docs/index.html'
 
 
 markdown_extensions:

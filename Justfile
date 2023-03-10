@@ -8,7 +8,7 @@ set dotenv-load := true
 set positional-arguments := true
 
 # Default recipe that runs if you type "just".
-default: format check test
+default: format check test build-docs
 
 # Install dependencies for local development.
 install:
@@ -57,7 +57,7 @@ build:
 # This uses the PyPI API Token stored in the Google Cloud Secrets Manager, which you need
 # access to in order to publish the wheel.
 publish: build
-    poetry publish -u __token__ -p $(gcloud secrets versions access --secret=llamalabs-sdk-pypi-api-token latest)
+    poetry publish -u __token__ -p $(gcloud secrets versions access --secret=fixie-sdk-pypi-api-token latest)
 
 # Serve documentation locally.
 serve-docs:

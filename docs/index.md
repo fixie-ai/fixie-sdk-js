@@ -1,14 +1,16 @@
-# Fixie
+# Fixie Developer Portal
 
-Fixie is a platform for building applications using Large Language
+[Fixie](https://fixie.ai) is a platform for building applications using Large Language
 Models. With Fixie, you can write apps that communicate, in natural
-language, with one or more *agents* that can access individual APIs or
+language, with one or more *Agents* that can access individual APIs or
 sources of data, such as GitHub, Google Calendar, or a database.
 
 You can access the Fixie web interface at [app.fixie.ai](https://app.fixie.ai).
 Using the Fixie SDK allows you to connect your own
 applications to the Fixie platform, either as a client, or by
 building custom agents that plug into the platform.
+
+To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
 
 ---
 
@@ -20,10 +22,35 @@ Install the Fixie SDK using pip:
 $ pip install fixieai
 ```
 
-Now, let's get started:
+Set your `FIXIE_API_KEY` environment variable to your API key, which
+you can find in the Fixie web interface:
+```shell
+$ export FIXIE_API_KEY=<YOUR API KEY>
+```
+
+Now, import the Fixie SDK and use it to run queries:
 
 ```pycon
 >>> import fixieai
->>> client = fixieai.FixieClient()
+>>> response = fixieai.query("How many GitHub issues are assigned to me?")
+>>> print(response)
 ```
 
+# Documentation
+
+Check out the links below for more information on how to
+get started using Fixie.
+
+## Tutorials
+
+* [Fixie Architecture Overview](architecture.md)
+* [Agent Quickstart](agent-quickstart.md)
+* [Building Fixie Agents](agents.md)
+* [Agent Protocol](agent-protocol.md)
+
+## Reference
+
+* [Fixie CLI Reference](cli.md)
+* [Python Client API](python-client-api.md)
+* [Python Agent API](python-agent-api.md)
+* [Fixie GraphQL API Reference](https://app.fixie.ai/static/docs/index.html)

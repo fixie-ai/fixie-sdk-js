@@ -1,7 +1,7 @@
 import enum
 import inspect
 import re
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, get_type_hints
 from unittest import mock
 
 if TYPE_CHECKING:
@@ -26,55 +26,76 @@ def validate_code_shot_agent(agent_metadata: code_shot.AgentMetadata):
         _validate_few_shot_prompt(fewshot)
 
 
-def validate_registered_pyfunc(func: Callable, duck_typing_okay: bool = False):
+def validate_registered_pyfunc(func: Callable, agent: code_shot.CodeShotAgent):
     """Validates `func`'s signature to be a valid CodeShot Func.
 
     Args:
         func: The function to be validated.
-        duck_typing_okay: If set, registered function may be duck typed.
+        agent: The CodeShotAgent that this func is going to be registered for.
     """
-    # Validate that func has a proper api.AgentQuery -> api.AgentResponse signature.
+    # Delayed import to avoid circular dependency
+    from fixieai.agents import api
+    from fixieai.agents import oauth
+    from fixieai.agents import user_storage
+
+    ALLOWED_FUNC_PARAMS = {
+        "query": api.Message,
+        "user_storage": user_storage.UserStorage,
+        "oauth_handler": oauth.OAuthHandler,
+    }
+
+    # Validate that func is a function type.
     if not inspect.isfunction(func):
         raise TypeError(
             f"Registered function {func!r} is not a function, but a {type(func)!r}."
         )
     signature = inspect.signature(func)
+    func_name = func.__name__
     params = signature.parameters
-    if len(params) != 1:
-        raise TypeError(
-            f"Expected function to get a single argument but it gets {len(params)}."
-        )
-    param = list(params.values())[0]
-    if param.kind not in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD):
-        raise TypeError(
-            f"Expected function get a positional argument,"
-            f" but it gets {param.kind.name!r}."
-        )
-    param_type = param.annotation
-    return_type = signature.return_annotation
-    if not duck_typing_okay and inspect.Signature.empty in (param_type, return_type):
-        raise TypeError(
-            f"Expected registered function to set type annotation for its argument and "
-            "return type."
-        )
-    # Delayed import to avoid circular dependency
-    from fixieai.agents import api
 
-    # TODO(hessam): Allow return_type to be a Union of the allowed types.
-    if param_type not in (
-        api.AgentQuery,
-        inspect.Signature.empty,
-    ) or return_type not in (
+    # Validate that there are not var args (*args or **kwargs).
+    if any(
+        param.kind in (param.VAR_KEYWORD, param.VAR_POSITIONAL)
+        for param in params.values()
+    ):
+        raise TypeError(
+            f"Registered function {func_name} cannot accept variable args: {params!r}."
+        )
+
+    # Validate that all argument names are known.
+    unknown_params = set(params.keys()) - set(ALLOWED_FUNC_PARAMS.keys())
+    if unknown_params:
+        raise TypeError(
+            f"Registered function {func_name} gets unknown arguments {unknown_params}. "
+            f"List of allowed Func arguments are {list(ALLOWED_FUNC_PARAMS.keys())}."
+        )
+
+    # Check the type annotations match what's expected, if func is type annotated.
+    type_hints = get_type_hints(func)
+    for arg_name, arg_type in ALLOWED_FUNC_PARAMS.items():
+        if arg_name in type_hints and type_hints[arg_name] != arg_type:
+            raise TypeError(
+                f"Expected argument {arg_name!r} to be of type {arg_type!r}, but it's "
+                f"typed as {type_hints[arg_name]!r}."
+            )
+    if "return" in type_hints and type_hints["return"] not in (
         api.AgentResponse,
         api.Message,
         str,
-        inspect.Signature.empty,
     ):
         raise TypeError(
-            f"Expected registered function to get a single api.AgentQuery "
-            "argument and output an api.AgentResponse but it gets "
-            f"{list(params.values())} and returns {return_type}."
+            f"Expected registered function to return an AgentResponse, a Message, "
+            f"or str but it returns {type_hints['return']}."
         )
+
+    # Some custom checks.
+    if "oauth_handler" in params and agent.oauth_params is None:
+        raise TypeError(
+            f"Function {func_name} who accepts 'oauth_handler' as an argument cannot "
+            f"be registered with agent {agent!r} who hasn't set 'oauth_params' in its "
+            "constructor."
+        )
+
     return func
 
 
