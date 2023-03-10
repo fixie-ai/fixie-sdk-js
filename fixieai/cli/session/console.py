@@ -82,8 +82,7 @@ class Console:
                 textconsole.print(f"{PROMPT}{markup.escape(message['text'])}")
         elif message["type"] != "response":
             textconsole.print(
-                f"   [dim]@{sender_handle}: "
-                f"{markup.escape(message['text'])}[/]"
+                f"   [dim]@{sender_handle}: {markup.escape(message['text'])}[/]"
             )
         else:
             self._response_index += 1
