@@ -252,9 +252,11 @@ def serve(ctx, path, host, port, tunnel, reload):
         )
 
         if reload:
+            # When using reload=True the only way to pass arguments is via environment variable.
+            os.environ["FIXIE_AGENT_PATH"] = path
             os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
             uvicorn.run(
-                config.entry_point + ".app",
+                "fixieai.cli.agent.loader:uvicorn_app_factory",
                 host=host,
                 port=port,
                 factory=True,
