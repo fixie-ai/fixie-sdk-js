@@ -160,7 +160,7 @@ class Tunnel:
 
     def __enter__(self):
         # ssh -R 80:localhost:8080 nokey@localhost.run
-        tunnel_re = re.compile(r"\S+ tunneled with tls termination, (.*)")
+        tunnel_re = re.compile(r"\S+ tunneled with tls termination, ([^\s]+)")
         console = rich_console.Console()
         self._proc = subprocess.Popen(
             ["ssh", "-R", f"80:localhost:{self._port}", "nokey@localhost.run"],

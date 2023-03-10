@@ -218,9 +218,9 @@ class Agent:
         variable_values["name"] = name
         variable_values["description"] = description
         if query_url is not None:
-            variable_values["query_url"] = query_url
+            variable_values["queryUrl"] = query_url
         if func_url is not None:
-            variable_values["func_url"] = func_url
+            variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
@@ -285,9 +285,9 @@ class Agent:
         if description is not None:
             variable_values["description"] = description
         if query_url is not None:
-            variable_values["query_url"] = query_url
+            variable_values["queryUrl"] = query_url
         if func_url is not None:
-            variable_values["func_url"] = func_url
+            variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
         if published is not None:
