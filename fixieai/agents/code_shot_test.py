@@ -44,6 +44,7 @@ def dummy_agent():
         BASE_PROMPT,
         FEW_SHOTS,
         CORPORA,
+        conversational=False,
         oauth_params=fixieai.OAuthParams(
             client_id="dummy",
             client_secret="dummy",
@@ -80,6 +81,7 @@ def test_simple_agent_handshake(dummy_agent):
         "base_prompt": dummy_agent.base_prompt,
         "few_shots": dummy_agent.few_shots,
         "corpora": [dataclasses.asdict(c) for c in dummy_agent.corpora],
+        "conversational": dummy_agent.conversational,
     }
 
 
