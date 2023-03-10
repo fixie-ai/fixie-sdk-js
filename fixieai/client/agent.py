@@ -29,11 +29,17 @@ class Agent:
         self._client = client
         self._gqlclient = self._client.gqlclient
         self._agent_id = agent_id
+        self._handle = agent_id.split("/")[1]
         self._metadata: Optional[Dict[str, Any]] = None
         try:
             self._metadata = self.get_metadata()
         except:
             self._metadata = None
+
+    @property
+    def handle(self) -> str:
+        """Return the handle for this Agent."""
+        return self._handle
 
     @property
     def agent_id(self) -> str:

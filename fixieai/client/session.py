@@ -43,7 +43,7 @@ class Session:
             ), "Cannot specify frontend_agent_id when using an existing session"
         else:
             self._session_id = self._create_session(frontend_agent_id)
-
+        self._frontend_agent_id: Optional[str] = None
         self._last_message_timestamp: Optional[datetime.datetime] = None
 
     @property
