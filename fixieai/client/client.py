@@ -112,9 +112,9 @@ class FixieClient:
         agents = result["allAgents"]
         return {agent["handle"]: agent for agent in agents}
 
-    def get_agent(self, handle: str) -> Agent:
+    def get_agent(self, agent_id: str) -> Agent:
         """Return an existing Agent object."""
-        return Agent(self, handle)
+        return Agent(self, agent_id)
 
     def create_agent(
         self,
@@ -138,7 +138,7 @@ class FixieClient:
             more_info_url: A URL with more information about the new Agent.
             published: Whether the new Agent should be published.
         """
-        agent = Agent(self, handle)
+        agent = Agent(self, f"{self.get_current_username()}/{handle}")
         agent.create_agent(
             name, description, query_url, func_url, more_info_url, published
         )

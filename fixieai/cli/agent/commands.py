@@ -2,10 +2,10 @@ import contextlib
 import io
 import json
 import os
-import subprocess
 import random
 import re
 import shlex
+import subprocess
 import urllib.request
 from contextlib import contextmanager
 from typing import BinaryIO, Dict
@@ -152,8 +152,8 @@ def _ensure_agent_updated(
     client: fixieai.client.FixieClient,
     config: agent_config.AgentConfig,
 ):
-    agent = client.get_agent(config.handle)
-    if agent.agent_id is None:
+    agent = client.get_agent(f"{client.get_current_username()}/{config.handle}")
+    if not agent.valid:
         agent.create_agent(
             name=config.name,
             description=config.description,
