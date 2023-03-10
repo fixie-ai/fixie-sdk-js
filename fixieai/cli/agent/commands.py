@@ -146,7 +146,7 @@ def list_agents(ctx, verbose):
 def show_agent(ctx, agent_id: str):
     client = ctx.obj.client
     agent = client.get_agent(agent_id)
-    if not agent.agent_id:
+    if not agent.valid:
         click.echo(f"Agent {agent_id} not found.")
         return
     click.secho(f"{agent.agent_id}", fg="green", nl=False)
