@@ -17,17 +17,21 @@ class Console:
     def __init__(
         self,
         client: FixieClient,
+        frontend_agent_id: Optional[str] = None,
         history_file: str = HISTORY_FILE,
     ):
         self._client = client
-        self._session = client.create_session()
+        self._session = client.create_session(frontend_agent_id)
         self._history_file = history_file
         self._response_index = 0
 
-    def run(self, initial_message: Optional[str] = None) -> None:
+    def run(
+        self,
+        initial_message: Optional[str] = None,
+    ) -> None:
         """Run the console application."""
 
-        PROMPT = "fixie 🚲❯ "
+        PROMPT = "fixie 🦊❯ "
 
         textconsole.print("[blue]Welcome to Fixie!")
         textconsole.print(f"Connected to: {self._session.session_url}")

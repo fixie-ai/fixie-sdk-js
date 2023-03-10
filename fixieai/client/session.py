@@ -30,6 +30,7 @@ class Session:
         self,
         client: FixieClient,
         session_id: Optional[str] = None,
+        frontend_agent_id: Optional[str] = None,
     ):
         self._client = client
         self._gqlclient = self._client.gqlclient
@@ -37,8 +38,12 @@ class Session:
         if session_id:
             # Test that the session exists.
             _ = self.get_metadata()
+            assert (
+                frontend_agent_id is None
+            ), "Cannot specify frontend_agent_id when using an existing session"
         else:
-            self._session_id = self._create_session()
+            self._session_id = self._create_session(frontend_agent_id)
+
         self._last_message_timestamp: Optional[datetime.datetime] = None
 
     @property
@@ -55,14 +60,14 @@ class Session:
         """Return a new Session instance with the same configuration."""
         return Session(self._client.clone(), session_id=self._session_id)
 
-    def _create_session(self) -> str:
+    def _create_session(self, frontend_agent_id: Optional[str] = None) -> str:
         """Create a new session."""
         assert self._session_id is None
 
         query = gql(
             """
-            mutation CreateSession {
-                createSession(sessionData: {}) {
+            mutation CreateSession($frontendAgentId: String) {
+                createSession(sessionData: {frontendAgentId: $frontendAgentId}) {
                     session {
                         handle
                     }
@@ -70,7 +75,10 @@ class Session:
             }
             """
         )
-        result = self._gqlclient.execute(query)
+
+        result = self._gqlclient.execute(
+            query, variable_values={"frontendAgentId": frontend_agent_id}
+        )
         if "createSession" not in result or result["createSession"] is None:
             raise ValueError(f"Failed to create Session")
         assert isinstance(result["createSession"], dict)
@@ -88,6 +96,7 @@ class Session:
                     handle
                     name
                     description
+                    frontendAgentId
                 }
             }
         """

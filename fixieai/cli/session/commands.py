@@ -18,11 +18,12 @@ def list_sessions(ctx):
 
 
 @session.command("new", help="Creates a new session and opens it.")
+@click.option("-a", "--agent", required=False)
 @click.argument("message", required=False)
 @click.pass_context
-def new_session(ctx, message):
+def new_session(ctx, agent, message):
     client = ctx.obj.client
-    c = console.Console(client)
+    c = console.Console(client, agent)
     c.run(message)
 
 
