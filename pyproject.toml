@@ -22,7 +22,7 @@ fastapi = { version = "^0.89.1" }
 uvicorn = { version = "^0.20.0", extras = ["standard"] }
 gql = { version = "^3.4.0", extras = ["requests"] }
 python = "^3.8"
-prompt-toolkit = "^3.0.31"
+prompt-toolkit = "*"
 pydantic = "*"
 PyJWT = { version = "^2.6.0", extras = ["crypto"] }
 requests = "^2.28.1"
