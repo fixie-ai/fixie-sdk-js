@@ -234,7 +234,7 @@ def _ensure_agent_updated(
 )
 @click.pass_context
 def serve(ctx, path, host, port, tunnel, reload):
-    console = rich_console.Console()
+    console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
 
     with contextlib.ExitStack() as stack:
@@ -305,7 +305,7 @@ def _spinner(console: rich_console.Console, text: str):
 )
 @click.pass_context
 def deploy(ctx, path, metadata_only):
-    console = rich_console.Console()
+    console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
     agent_api = _ensure_agent_updated(ctx.obj.client, config)
 

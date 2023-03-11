@@ -13,7 +13,7 @@ from fixieai import FixieClient
 from fixieai.client.client import Session
 
 HISTORY_FILE = "history.txt"
-textconsole = rich_console.Console()
+textconsole = rich_console.Console(soft_wrap=True)
 PROMPT = "fixie 🦊❯ "
 
 
