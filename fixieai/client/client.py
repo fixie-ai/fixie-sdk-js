@@ -161,7 +161,7 @@ class FixieClient:
         sessions = result["allSessions"]
         return [session["handle"] for session in sessions]
 
-    def create_session(self, frontend_agent_id: Optional[str]) -> Session:
+    def create_session(self, frontend_agent_id: Optional[str] = None) -> Session:
         """Create a new Session."""
         return Session(self, frontend_agent_id=frontend_agent_id)
 
