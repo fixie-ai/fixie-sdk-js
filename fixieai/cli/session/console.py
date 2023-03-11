@@ -1,4 +1,5 @@
 import io
+import os.path
 import re
 from typing import Any, Dict, List, Optional
 
@@ -12,7 +13,7 @@ from rich import markup
 from fixieai import FixieClient
 from fixieai.client.client import Session
 
-HISTORY_FILE = "history.txt"
+HISTORY_FILE = "~/.config/fixie/history.log"
 textconsole = rich_console.Console(soft_wrap=True)
 PROMPT = "fixie 🦊❯ "
 
@@ -28,6 +29,8 @@ class Console:
     ):
         self._client = client
         self._session = session
+        history_file = os.path.expanduser(history_file)
+        os.makedirs(os.path.dirname(history_file), exist_ok=True)
         self._history_file = history_file
         self._response_index = 0
 
