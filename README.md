@@ -69,7 +69,7 @@ create a `Session` and send queries within the `Session`:
 ```
 import fixieai
 client = fixieai.FixieClient()
-session = client.create_session()
+session = client.create_session(None)
 response = session.query("What is 38 * 20302?")
 print(response)
 ```
