@@ -1,6 +1,7 @@
 import contextlib
 import io
 import os
+import pathlib
 import random
 import re
 import shlex
@@ -339,6 +340,8 @@ def deploy(ctx, path, metadata_only):
                 upload_path = os.path.join(
                     "agent", os.path.relpath(full_path, deploy_root)
                 )
+                # Convert path to a linux path because we unpack in linux
+                upload_path = pathlib.PurePath(upload_path).as_posix()
                 file_streams[upload_path] = open(full_path, "rb")
 
         file_streams["main.py"] = io.BytesIO(_DEPLOYMENT_BOOTSTRAP_SOURCE.encode())
