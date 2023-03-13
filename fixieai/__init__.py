@@ -1,3 +1,5 @@
+import importlib.metadata
+
 from fixieai.agents import AgentQuery
 from fixieai.agents import AgentResponse
 from fixieai.agents import CodeShotAgent
@@ -31,3 +33,5 @@ __all__ = [
     "get_embeds",
     "query",
 ]
+
+__version__ = importlib.metadata.version(__name__)
