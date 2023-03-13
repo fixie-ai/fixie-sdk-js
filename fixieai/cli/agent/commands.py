@@ -1,4 +1,5 @@
 import contextlib
+import functools
 import io
 import os
 import pathlib
@@ -72,20 +73,28 @@ def _update_agent_requirements(
 ) -> List[str]:
     """Returns an updated list of agent requirements to go in requirements.txt."""
 
+    # If the user specified a fixieai requirement, use that.
+    fixie_requirement = next(
+        filter(
+            functools.partial(re.match, FIXIE_REQUIREMENT_PATTERN), new_requirements
+        ),
+        CURRENT_FIXIE_REQUIREMENT,
+    )
+
     # Ensure that a compatible version of the Fixie SDK is present.
     resolved_requirements: List[str] = []
 
     for existing_requirement in existing_requirements:
-        # If there's already a different fixieai requirement, replace it.
         if (
             re.match(FIXIE_REQUIREMENT_PATTERN, existing_requirement)
-            and existing_requirement != CURRENT_FIXIE_REQUIREMENT
+            and existing_requirement != fixie_requirement
         ):
-            pass
-        else:
-            resolved_requirements.append(existing_requirement)
+            # Ignore any existing (but different) fixieai requirements.
+            continue
 
-    for new_requirement in [CURRENT_FIXIE_REQUIREMENT] + new_requirements:
+        resolved_requirements.append(existing_requirement)
+
+    for new_requirement in [fixie_requirement] + new_requirements:
         if new_requirement not in resolved_requirements:
             resolved_requirements.append(new_requirement)
 
