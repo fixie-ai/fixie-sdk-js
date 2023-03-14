@@ -1,4 +1,5 @@
 import contextlib
+import functools
 import io
 import os
 import pathlib
@@ -7,7 +8,7 @@ import re
 import shlex
 import urllib.request
 from contextlib import contextmanager
-from typing import BinaryIO, Dict
+from typing import BinaryIO, Dict, List
 
 import click
 import rich.console as rich_console
@@ -27,6 +28,10 @@ ENTRY_POINT_PATTERN = re.compile(rf"^{VAR_NAME_RE}(\.{VAR_NAME_RE})*:{VAR_NAME_R
 AGENT_TEMPLATE_URL = (
     "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
 )
+
+REQUIREMENTS_TXT = "requirements.txt"
+CURRENT_FIXIE_REQUIREMENT = f"fixieai ~= {fixieai.__version__}"
+FIXIE_REQUIREMENT_PATTERN = re.compile(r"^\s*fixieai([^\w]|$)")
 
 
 @click.group(help="Agent-related commands.")
@@ -63,6 +68,39 @@ def _validate_entry_point(ctx, param, value):
             return value
 
 
+def _update_agent_requirements(
+    existing_requirements: List[str], new_requirements: List[str]
+) -> List[str]:
+    """Returns an updated list of agent requirements to go in requirements.txt."""
+
+    # If the user specified a fixieai requirement, use that.
+    fixie_requirement = next(
+        filter(
+            functools.partial(re.match, FIXIE_REQUIREMENT_PATTERN), new_requirements
+        ),
+        CURRENT_FIXIE_REQUIREMENT,
+    )
+
+    # Ensure that a compatible version of the Fixie SDK is present.
+    resolved_requirements: List[str] = []
+
+    for existing_requirement in existing_requirements:
+        if (
+            re.match(FIXIE_REQUIREMENT_PATTERN, existing_requirement)
+            and existing_requirement != fixie_requirement
+        ):
+            # Ignore any existing (but different) fixieai requirements.
+            continue
+
+        resolved_requirements.append(existing_requirement)
+
+    for new_requirement in [fixie_requirement] + new_requirements:
+        if new_requirement not in resolved_requirements:
+            resolved_requirements.append(new_requirement)
+
+    return resolved_requirements
+
+
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
@@ -93,7 +131,13 @@ def _validate_entry_point(ctx, param, value):
     default=lambda: _current_config().public,
     type=click.BOOL,
 )
-def init_agent(handle, description, entry_point, more_info_url, public):
+@click.option(
+    "--requirement",
+    multiple=True,
+    type=str,
+    help="Additional requirements for requirements.txt. Can be specified multiple times.",
+)
+def init_agent(handle, description, entry_point, more_info_url, public, requirement):
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
@@ -115,6 +159,50 @@ def init_agent(handle, description, entry_point, more_info_url, public):
         )
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
+
+    try:
+        with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
+            existing_requirements = list(
+                r.strip() for r in requirements_txt.readlines()
+            )
+    except FileNotFoundError:
+        existing_requirements = []
+
+    resolved_requirements = _update_agent_requirements(
+        existing_requirements, list(requirement)
+    )
+    if not existing_requirements:
+        write_requirements = True
+    else:
+        new_requirements = [
+            r for r in resolved_requirements if r not in existing_requirements
+        ]
+        removed_requirements = [
+            r for r in existing_requirements if r not in resolved_requirements
+        ]
+
+        if new_requirements or removed_requirements:
+            click.secho(
+                f"{REQUIREMENTS_TXT} already exists.",
+                fg="yellow",
+            )
+            if new_requirements:
+                click.secho(
+                    f"The following requirements will be added: {new_requirements}",
+                    fg="yellow",
+                )
+            if removed_requirements:
+                click.secho(
+                    f"The following requirements will be removed: {removed_requirements}",
+                    fg="yellow",
+                )
+            write_requirements = click.confirm("Okay to proceed?", default=True)
+        else:
+            write_requirements = False
+
+    if write_requirements:
+        with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
+            requirements_txt.writelines(r + "\n" for r in resolved_requirements)
 
 
 def _current_config() -> agent_config.AgentConfig:
