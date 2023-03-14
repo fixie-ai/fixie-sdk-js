@@ -16,10 +16,10 @@ class AgentConfig(utils.DataClassYamlMixin):
     """Represents an agent.yaml config file."""
 
     handle: str = dataclasses.field(default_factory=_current_dirname)
-    name: str = ""
+    name: Optional[str] = None
     description: str = ""
-    entry_point: str = "main:agent"
     more_info_url: str = ""
+    entry_point: str = "main:agent"
     deployment_url: Optional[str] = None
     public: bool = False
 
