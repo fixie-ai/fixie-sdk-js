@@ -333,7 +333,7 @@ def serve(ctx, path, host, port, tunnel, reload):
             console.print(
                 f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
-            config.deployment_url = stack.enter_context(tunnel_.Tunnel(host, port))
+            config.deployment_url = stack.enter_context(tunnel_.Tunnel(port))
 
         agent_api = _ensure_agent_updated(ctx.obj.client, config)
         console.print(
@@ -345,7 +345,7 @@ def serve(ctx, path, host, port, tunnel, reload):
 
         if reload:
             # When using reload=True the only way to pass arguments is via environment variable.
-            os.environ["FIXIE_AGENT_PATH"] = path
+            os.environ["FIXIE_AGENT_PATH"] = "."
             os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
             uvicorn.run(
                 "fixieai.cli.agent.loader:uvicorn_app_factory",
