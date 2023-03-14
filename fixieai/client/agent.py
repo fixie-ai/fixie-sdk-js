@@ -227,7 +227,7 @@ class Agent:
 
     def create_agent(
         self,
-        name: str,
+        name: Optional[str],
         description: str,
         query_url: Optional[str] = None,
         func_url: Optional[str] = None,
@@ -239,7 +239,7 @@ class Agent:
             """
             mutation CreateAgent(
                 $handle: String!,
-                $name: String!,
+                $name: String,
                 $description: String!,
                 $queryUrl: String,
                 $funcUrl: String,
@@ -265,7 +265,8 @@ class Agent:
         )
 
         variable_values: Dict[str, Any] = {"handle": self._handle}
-        variable_values["name"] = name
+        if name is not None:
+            variable_values["name"] = name
         variable_values["description"] = description
         if query_url is not None:
             variable_values["queryUrl"] = query_url
