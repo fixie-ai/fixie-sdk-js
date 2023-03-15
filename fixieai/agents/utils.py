@@ -149,10 +149,15 @@ class FewshotLinePattern(enum.Enum):
             raise RuntimeError(
                 f"More than one pattern ({pattern_matches}) matched the line {line!r}."
             )
-        elif len(pattern_matches) == 1:
-            return pattern_matches[0]
-        else:
+        elif len(pattern_matches) == 0:
             return cls.NO_PATTERN
+
+        pattern = pattern_matches[0]
+        if pattern is cls.QUERY:
+            match = pattern.value.match(line)
+            if match.end() == len(line):
+                raise ValueError("A 'Q:' line cannot end without a query.")
+        return pattern
 
 
 def _validate_few_shot_prompt(prompt: str):
