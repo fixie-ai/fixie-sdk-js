@@ -10,8 +10,7 @@ class Tunnel:
     Shuts down the tunnel when the context manager exits.
     """
 
-    def __init__(self, host: str, port: int):
-        self._host = host
+    def __init__(self, port: int):
         self._port = port
 
     def __enter__(self):
@@ -19,7 +18,8 @@ class Tunnel:
             [
                 "ssh",
                 "-R",
-                f"80:localhost:{self._port}",
+                # N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
+                f"80:127.0.0.1:{self._port}",
                 "-o",
                 "StrictHostKeyChecking=accept-new",
                 "nokey@localhost.run",
