@@ -42,10 +42,6 @@ class AgentMetadata:
     corpora: Optional[List[corpora.DocumentCorpus]] = None
     conversational: bool = False
 
-    def __post_init__(self):
-        utils.strip_prompt_lines(self)
-        utils.validate_code_shot_agent(self)
-
 
 class CodeShotAgent:
     """A CodeShot agent.
@@ -116,6 +112,9 @@ class CodeShotAgent:
         if oauth_params is not None:
             # Register default Funcs.
             self.register_func(_oauth)
+
+        utils.strip_prompt_lines(self)
+        utils.validate_code_shot_agent(self)
 
     def serve(
         self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181
