@@ -324,7 +324,8 @@ def _ensure_agent_updated(
 @click.pass_context
 def serve(ctx, path, host, port, tunnel, reload):
     console = rich_console.Console(soft_wrap=True)
-    config = agent_config.load_config(path)
+    # Load the agent early to catch any errors.
+    config, agent_impl = loader.load_agent_from_path(".")
 
     with contextlib.ExitStack() as stack:
         if tunnel:
@@ -357,7 +358,6 @@ def serve(ctx, path, host, port, tunnel, reload):
                 reload_dirs=["."],
             )
         else:
-            _, agent_impl = loader.load_agent_from_path(".")
             agent_impl.serve(agent_api.agent_id, host, port)
 
 

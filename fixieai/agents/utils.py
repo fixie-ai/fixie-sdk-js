@@ -12,17 +12,17 @@ else:
     code_shot = mock.MagicMock()
 
 
-def strip_prompt_lines(agent_metadata: code_shot.AgentMetadata):
+def strip_prompt_lines(agent: code_shot.CodeShotAgent):
     """Strips all prompt lines."""
-    agent_metadata.base_prompt = _strip_all_lines(agent_metadata.base_prompt)
-    for i, fewshot in enumerate(agent_metadata.few_shots):
-        agent_metadata.few_shots[i] = _strip_all_lines(fewshot)
+    agent.base_prompt = _strip_all_lines(agent.base_prompt)
+    for i, fewshot in enumerate(agent.few_shots):
+        agent.few_shots[i] = _strip_all_lines(fewshot)
 
 
-def validate_code_shot_agent(agent_metadata: code_shot.AgentMetadata):
+def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
     """A client-side validation of few_shots and agent."""
-    _validate_base_prompt(agent_metadata.base_prompt)
-    for fewshot in agent_metadata.few_shots:
+    _validate_base_prompt(agent.base_prompt)
+    for fewshot in agent.few_shots:
         _validate_few_shot_prompt(fewshot)
 
 
@@ -149,10 +149,15 @@ class FewshotLinePattern(enum.Enum):
             raise RuntimeError(
                 f"More than one pattern ({pattern_matches}) matched the line {line!r}."
             )
-        elif len(pattern_matches) == 1:
-            return pattern_matches[0]
-        else:
+        elif len(pattern_matches) == 0:
             return cls.NO_PATTERN
+
+        pattern = pattern_matches[0]
+        if pattern is cls.QUERY:
+            match = pattern.value.match(line)
+            if match.end() == len(line):
+                raise ValueError("A 'Q:' line cannot end without a query.")
+        return pattern
 
 
 def _validate_few_shot_prompt(prompt: str):
