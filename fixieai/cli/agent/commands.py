@@ -6,20 +6,21 @@ import pathlib
 import random
 import re
 import shlex
+import subprocess
+import sys
 import urllib.request
+import venv
 from contextlib import contextmanager
-from typing import BinaryIO, Dict, List
+from typing import BinaryIO, Dict, List, Tuple
 
 import click
 import rich.console as rich_console
-import uvicorn
 import validators
 
 import fixieai.client
 from fixieai import constants
 from fixieai.cli.agent import agent_config
-from fixieai.cli.agent import loader
-from fixieai.cli.agent import tunnel as tunnel_
+from fixieai.cli.agent import tunnel
 
 # Regex pattern to match valid entry points: "module:object"
 VAR_NAME_RE = r"(?![0-9])\w+"
@@ -303,6 +304,62 @@ def _ensure_agent_updated(
     return agent
 
 
+def _configure_venv(
+    console: rich_console.Console, agent_dir: str
+) -> Tuple[str, Dict[str, str]]:
+    """Configures a virtual environment for the agent with its Python dependencies installed."""
+
+    venv_path = os.path.join(agent_dir, ".venv")
+    console.print(f"Configuring virtual environment in {venv_path}")
+    venv.create(venv_path, with_pip=True)
+    python_exe = os.path.join(venv_path, "bin", "python")
+    requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
+    if not os.path.exists(requirements_txt_path):
+        raise ValueError(
+            f"There is no {REQUIREMENTS_TXT} file at {requirements_txt_path}, please re-run [bold]fixie init[/bold]."
+        )
+    subprocess.run(
+        [
+            python_exe,
+            "-m",
+            "pip",
+            "install",
+            "-r",
+            requirements_txt_path,
+            "--disable-pip-version-check",
+        ]
+    ).check_returncode()
+    console.print(f"[green]Requirements installed successfully.[/green]")
+
+    env = os.environ.copy()
+
+    # Quasi-activate the venv by putting the bin directory at the front of the path
+    env["PATH"] = os.path.join(venv_path, "bin") + ":" + env.get("PATH", "")
+
+    return python_exe, env
+
+
+def _validate_agent_loads_or_exit(
+    console: rich_console.Console,
+    agent_dir: str,
+    agent_handle: str,
+    python_exe: str,
+    agent_env: Dict[str, str],
+):
+    """Validates that an agent can successfully load and exits the current process if it can't."""
+    loader_process = subprocess.run(
+        [python_exe, "-m", "fixieai.cli.agent.loader"],
+        env=agent_env,
+        cwd=agent_dir or None,
+    )
+    if loader_process.returncode:
+        console.print(
+            f'[red]Agent "{agent_handle}" could not be loaded. If your agent requires additional dependencies '
+            f"make sure they are specified in {os.path.join(agent_dir, REQUIREMENTS_TXT)}.[/red]"
+        )
+        sys.exit(loader_process.returncode)
+
+
 @agent.command(
     "serve", help="Serve the current agent locally via a publicly-accessible URL."
 )
@@ -311,6 +368,7 @@ def _ensure_agent_updated(
 @click.option("--port", type=int, default=8181)
 @click.option(
     "--tunnel/--no-tunnel",
+    "use_tunnel",
     is_flag=True,
     default=True,
     help="(default enabled) Create a tunnel using localhost.run.",
@@ -321,44 +379,64 @@ def _ensure_agent_updated(
     default=True,
     help="(default enabled) Reload automatically.",
 )
+@click.option(
+    "--venv/--no-venv",
+    "use_venv",
+    is_flag=True,
+    default=True,
+    help="(default enabled) Run from virtual environment",
+)
 @click.pass_context
-def serve(ctx, path, host, port, tunnel, reload):
+def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
     console = rich_console.Console(soft_wrap=True)
-    # Load the agent early to catch any errors.
-    config, agent_impl = loader.load_agent_from_path(".")
+    config = agent_config.load_config(path)
 
     with contextlib.ExitStack() as stack:
-        if tunnel:
+        agent_dir = os.path.dirname(path)
+
+        # Configure the virtual enviroment
+        if use_venv:
+            python_exe, agent_env = _configure_venv(console, agent_dir)
+        else:
+            python_exe, agent_env = sys.executable, os.environ.copy()
+
+        # Validate that the agent loads before setting up the server.
+        _validate_agent_loads_or_exit(
+            console, agent_dir, config.handle, python_exe, agent_env
+        )
+
+        if use_tunnel:
             # Start up a tunnel via localhost.run.
             console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
             console.print(
                 f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
-            config.deployment_url = stack.enter_context(tunnel_.Tunnel(port))
+            config.deployment_url = stack.enter_context(tunnel.Tunnel(port))
 
         agent_api = _ensure_agent_updated(ctx.obj.client, config)
         console.print(
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
 
-        # Change into the agent's directory to ensure that all agent paths resolve like they will during deployment.
-        os.chdir(os.path.dirname(path))
-
-        if reload:
-            # When using reload=True the only way to pass arguments is via environment variable.
-            os.environ["FIXIE_AGENT_PATH"] = "."
-            os.environ["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
-            uvicorn.run(
+        agent_env["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
+        subprocess.run(
+            [
+                python_exe,
+                "-m",
+                "uvicorn",
                 "fixieai.cli.agent.loader:uvicorn_app_factory",
-                host=host,
-                port=port,
-                factory=True,
-                reload=True,
-                app_dir=".",
-                reload_dirs=["."],
-            )
-        else:
-            agent_impl.serve(agent_api.agent_id, host, port)
+                "--host",
+                host,
+                "--port",
+                str(port),
+                "--factory",
+            ]
+            + ["--reload"]
+            if reload
+            else [],
+            env=agent_env,
+            cwd=agent_dir or None,
+        ).check_returncode()
 
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
@@ -392,10 +470,26 @@ def _spinner(console: rich_console.Console, text: str):
     is_flag=True,
     help="Only publish metadata and refresh, do not redeploy.",
 )
+@click.option(
+    "--validate/--no-validate",
+    "validate",
+    is_flag=True,
+    default=True,
+    help="(default enabled) Validate that the agent loads locally before deploying",
+)
 @click.pass_context
-def deploy(ctx, path, metadata_only):
+def deploy(ctx, path, metadata_only, validate):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+
+    agent_dir = os.path.dirname(path)
+    if validate:
+        # Validate that the agent loads in a virtual environment before deploying.
+        python_exe, agent_env = _configure_venv(console, agent_dir)
+        _validate_agent_loads_or_exit(
+            console, agent_dir, config.handle, python_exe, agent_env
+        )
+
     agent_api = _ensure_agent_updated(ctx.obj.client, config)
 
     if config.deployment_url is None and not metadata_only:

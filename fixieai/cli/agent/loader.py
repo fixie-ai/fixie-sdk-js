@@ -5,6 +5,7 @@ import sys
 from typing import Tuple
 
 from fixieai import agents
+from fixieai.agents import utils
 from fixieai.cli.agent import agent_config
 
 
@@ -42,14 +43,20 @@ def load_agent_from_path(
 
     with _ensure_serving_disabled():
         module = importlib.import_module(module_name)
-    return config, getattr(module, attr)
+    agent_impl = getattr(module, attr)
+    utils.validate_code_shot_agent(agent_impl)
+    return config, agent_impl
 
 
 def uvicorn_app_factory():
     """Returns an app that can be used to serve an agent with uvicorn.
 
-    The FIXIE_AGENT_PATH environment variable should be set if agent.yaml is not in the current directory.
     The FIXIE_REFRESH_AGENT_ID environment variable can be set to trigger a refresh on startup.
     """
-    _, impl = load_agent_from_path(os.getenv("FIXIE_AGENT_PATH", "."))
+    _, impl = load_agent_from_path(".")
     return impl.app(os.getenv("FIXIE_REFRESH_AGENT_ID"))
+
+
+if __name__ == "__main__":
+    # Load the agent to make sure it can successfully be loaded.
+    load_agent_from_path(".")
