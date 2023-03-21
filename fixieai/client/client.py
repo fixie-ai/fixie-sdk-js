@@ -194,11 +194,20 @@ class FixieClient:
             headers=self._request_headers,
         ).raise_for_status()
 
-    def deploy_agent(self, agent_handle: str, files: Dict[str, BinaryIO]):
-        """Deploys an agent implementation."""
+    def deploy_agent(
+        self,
+        handle: str,
+        gzip_tarfile: BinaryIO,
+    ):
+        """Deploys an agent implementation.
+
+        Args:
+            handle: The handle of the Agent to deploy. Must be owned by the current user.
+            gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+        """
         username = self.get_current_username()
         requests.post(
-            f"{constants.FIXIE_DEPLOYMENT_URL}/{username}/{agent_handle}",
+            f"{constants.FIXIE_DEPLOYMENT_URL}/{username}/{handle}",
             headers=self._request_headers,
-            files=files,
+            files={"agent.tar.gz": ("agent.tar.gz", gzip_tarfile, "application/gzip")},
         ).raise_for_status()

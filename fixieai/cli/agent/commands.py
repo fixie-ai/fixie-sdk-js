@@ -2,16 +2,17 @@ import contextlib
 import functools
 import io
 import os
-import pathlib
 import random
 import re
 import shlex
 import subprocess
 import sys
+import tarfile
+import tempfile
 import urllib.request
 import venv
 from contextlib import contextmanager
-from typing import BinaryIO, Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
 import rich.console as rich_console
@@ -463,6 +464,21 @@ def _spinner(console: rich_console.Console, text: str):
         raise
 
 
+def _tarinfo_filter(
+    console: rich_console.Console, root: str, tarinfo: tarfile.TarInfo
+) -> Optional[tarfile.TarInfo]:
+    """Filters out hidden files from being included in a tarball."""
+
+    if os.path.basename(tarinfo.name).startswith("."):
+        console.print(
+            f"Ignoring hidden {'directory' if tarinfo.isdir() else 'file'} {os.path.join(root, tarinfo.name)}",
+            style="grey53",
+        )
+        return None
+    else:
+        return tarinfo
+
+
 @agent.command("deploy", help="Deploy the current agent.")
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.option(
@@ -494,44 +510,27 @@ def deploy(ctx, path, metadata_only, validate):
 
     if config.deployment_url is None and not metadata_only:
         # Deploy the agent to fixie with some bootstrapping code.
-        file_streams: Dict[str, BinaryIO] = {}
-        deploy_root = os.path.dirname(path)
-        for root, dirs, files in os.walk(deploy_root, topdown=True):
-            # Exclude any hidden files by removing them from the dirs list.
-            # As per https://docs.python.org/3/library/os.html#os.walk
-            # removing them from the dirs list with topdown=True skips
-            # them from the walk.
-            for i, dir in reversed(list(enumerate(dirs))):
-                if dir.startswith("."):
-                    console.print(
-                        f"Ignoring hidden directory {os.path.join(root, dir)}",
-                        style="grey53",
-                    )
-                    # N.B. We're iterating in reverse to avoid needing to adjust i.
-                    del dirs[i]
-
-            for filename in files:
-                if filename.startswith("."):
-                    console.print(
-                        f"Ignoring hidden file {os.path.join(root, filename)}",
-                        style="grey53",
-                    )
-                    continue
-
-                full_path = os.path.join(root, filename)
-                upload_path = os.path.join(
-                    "agent", os.path.relpath(full_path, deploy_root)
+        with tempfile.TemporaryFile() as tarball_file:
+            with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
+                deploy_root = os.path.dirname(path)
+                tarball.add(
+                    deploy_root,
+                    arcname="agent",
+                    filter=functools.partial(_tarinfo_filter, console, deploy_root),
                 )
-                # Convert path to a linux path because we unpack in linux
-                upload_path = pathlib.PurePath(upload_path).as_posix()
-                file_streams[upload_path] = open(full_path, "rb")
 
-        file_streams["main.py"] = io.BytesIO(_DEPLOYMENT_BOOTSTRAP_SOURCE.encode())
-        with _spinner(console, "Deploying..."):
-            ctx.obj.client.deploy_agent(
-                config.handle,
-                file_streams,
-            )
+                # Add the bootstrapping code
+                boostrap_bytes = _DEPLOYMENT_BOOTSTRAP_SOURCE.encode()
+                tarinfo = tarfile.TarInfo(f"main.py")
+                tarinfo.size = len(boostrap_bytes)
+                tarball.addfile(tarinfo, io.BytesIO(boostrap_bytes))
+
+            tarball_file.seek(0)
+            with _spinner(console, "Deploying..."):
+                ctx.obj.client.deploy_agent(
+                    config.handle,
+                    tarball_file,
+                )
 
     # Trigger a refresh with the updated deployment
     with _spinner(console, "Refreshing..."):
