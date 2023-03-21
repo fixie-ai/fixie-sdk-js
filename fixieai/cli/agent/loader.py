@@ -58,5 +58,6 @@ def uvicorn_app_factory():
 
 
 if __name__ == "__main__":
-    # Load the agent to make sure it can successfully be loaded.
+    # Load the agent (typically within an agent-specific venv) to ensure the Python module can be loaded
+    # without errors. See `fixie agent serve` and `fixie agent deploy --validate`.
     load_agent_from_path(".")

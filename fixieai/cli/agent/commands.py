@@ -491,7 +491,7 @@ def _tarinfo_filter(
     "validate",
     is_flag=True,
     default=True,
-    help="(default enabled) Validate that the agent loads locally before deploying",
+    help="(default enabled) Validate that the agent loads in a local venv before deploying",
 )
 @click.pass_context
 def deploy(ctx, path, metadata_only, validate):
