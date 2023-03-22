@@ -1,4 +1,4 @@
-# Fixie Developer Portal
+# Fixie Developer Portal 🦊
 
 [Fixie](https://fixie.ai) is a platform for building applications using Large Language
 Models. With Fixie, you can write apps that communicate, in natural
@@ -11,6 +11,10 @@ applications to the Fixie platform, either as a client, or by
 building custom agents that plug into the platform.
 
 To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
+
+### 🤔 Need help? 
+
+The best way to contact us and get support is to join our [Discord server](https://discord.gg/MsKAeKF8kU).
 
 ---
 
