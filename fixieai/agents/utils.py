@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 import inspect
 import re
-from typing import TYPE_CHECKING, Callable, Optional, get_type_hints
+from typing import TYPE_CHECKING, Callable, Optional, Set, get_type_hints
 from unittest import mock
 
 if TYPE_CHECKING:
@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 else:
     api = mock.MagicMock()
     code_shot = mock.MagicMock()
+
+ODD_NUM_POUNDS = re.compile(r"(?<!#)(##)*#(?!#)")
+EMBED_REF = re.compile(ODD_NUM_POUNDS.pattern + r"(?P<embed_key>\w+)(?!\w)")
 
 
 def strip_prompt_lines(agent: code_shot.CodeShotAgent):
@@ -138,7 +141,7 @@ class FewshotLinePattern(enum.Enum):
 
     @classmethod
     def match(cls, line: str) -> Optional[re.Match[str]]:
-        """Returns the matched PromptPattern for a given line."""
+        """Returns a match from a FewshotLinePattern for a given line, or None if nothing matched."""
         if "\n" in line:
             raise ValueError(
                 "Cannot get the pattern for a multi-line text. Patterns must be "
@@ -198,7 +201,9 @@ def _validate_few_shot_prompt(
         prompt,
     )
     last_pattern = FewshotLinePattern.QUERY
-    for i, match in enumerate(pattern_matches):
+    known_embeds: Set[str] = set()
+
+    for i, (match, line) in enumerate(zip(pattern_matches, lines)):
         pattern = (
             FewshotLinePattern(match.re)
             if match is not None
@@ -214,7 +219,7 @@ def _validate_few_shot_prompt(
                 next_match is not None
                 and next_match.re is FewshotLinePattern.AGENT_SAYS.value
                 and match.group(1) == next_match.group(1),
-                "Each 'Ask Agent' line must be immediately  followed by an 'Agent says' line that references the same ",
+                "Each 'Ask Agent' line must be immediately followed by an 'Agent says' line that references the same ",
                 prompt,
             )
 
@@ -246,6 +251,19 @@ def _validate_few_shot_prompt(
 
         if pattern is not FewshotLinePattern.NO_PATTERN:
             last_pattern = pattern
+
+        # Check that any embeds are valid.
+        for embed_match in EMBED_REF.finditer(line):
+            key = embed_match["embed_key"]
+            if key not in known_embeds:
+                _assert(
+                    pattern
+                    not in (FewshotLinePattern.ASK_AGENT, FewshotLinePattern.ASK_FUNC),
+                    "New embeds may not be introduced in Ask Agent or Ask Func lines.",
+                    prompt,
+                )
+                known_embeds.add(key)
+
     _assert(
         last_pattern is FewshotLinePattern.RESPONSE,
         f"Fewshot must end with a 'A:' pattern, but it ends with {last_pattern}",

@@ -81,6 +81,16 @@ Agent[library] says: I shouldn't be invoked between questions.
 Q: Is it blue?
 A: Yes, it's blue!"""
     ),
+    # Ask Agent lines can't introduce new embeds
+    """Q: What's the weather?
+Ask Agent[weather]: What's the weather in #image1
+Agent[weather] says: cloudy.
+A: It's cloudy.""",
+    # Ask Func lines can't introduce new embeds
+    """Q: What's the weather?
+Ask Func[weather]: #image1
+Func[weather] says: cloudy.
+A: It's cloudy.""",
 ]
 
 
@@ -116,12 +126,12 @@ Agent[calc] says: 27
 A: It's 27.""",
     """Q: What is the life expectancy in the US?
 A: I think it's 80 years but I'm not sure.""",
-    """Q: Replace the background in [image1] with a beautiful sunset
-Ask Agent[mask2former]: Mask out the background in [image1]
-Agent[mask2former] says: I have masked out the selected region: [mask1]
-Ask Func[edit]: A beautiful sunset [image1] [mask1]
-Func[edit] says: Here you go: [image2]
-A: I replaced the background with a beautiful sunset: [image2]""",
+    """Q: Replace the background in #image1 with a beautiful sunset
+Ask Agent[mask2former]: Mask out the background in #image1
+Agent[mask2former] says: I have masked out the selected region: #mask1
+Ask Func[edit]: A beautiful sunset #image1 #mask1
+Func[edit] says: Here you go: #image2
+A: I replaced the background with a beautiful sunset: #image2""",
     ConversationalPrompt(
         """Q: Think of your favorite color
 A: Okay, I'm thinking of it.
@@ -130,6 +140,10 @@ A: No, it's not red.
 Q: Is it blue?
 A: Yes, it's blue!"""
     ),
+    """Q: Who is tweeting with the fixie hashtag?
+Ask Func[hashtag_search]: ##fixie
+Func[hashtag_search] says: @fixie
+A: @fixie is currently tweeting with the fixie hashtag""",
 ]
 
 
