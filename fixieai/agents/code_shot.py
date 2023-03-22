@@ -114,7 +114,6 @@ class CodeShotAgent:
             self.register_func(_oauth)
 
         utils.strip_prompt_lines(self)
-        utils.validate_code_shot_agent(self)
 
     def serve(
         self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181

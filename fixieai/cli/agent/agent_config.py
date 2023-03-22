@@ -29,12 +29,11 @@ def normalize_path(path: Optional[str] = None) -> str:
 
     Args:
         path: Optional path to either a directory or YAML file. If unspecified,
-            will return "{cwd}/agent.yaml".
+            will return "agent.yaml".
     """
-    if path is None:
-        path = os.getcwd()
-
-    if os.path.isdir(path):
+    if not path:
+        path = "agent.yaml"
+    elif os.path.isdir(path):
         path = os.path.join(path, "agent.yaml")
 
     return path
