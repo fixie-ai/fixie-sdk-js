@@ -384,8 +384,8 @@ def _validate_agent_loads_or_exit(
     "--venv/--no-venv",
     "use_venv",
     is_flag=True,
-    default=True,
-    help="(default enabled) Run from virtual environment",
+    default=False,
+    help="Run from virtual environment",
 )
 @click.pass_context
 def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
