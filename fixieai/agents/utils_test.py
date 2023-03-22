@@ -91,6 +91,9 @@ A: It's cloudy.""",
 Ask Func[weather]: #image1
 Func[weather] says: cloudy.
 A: It's cloudy.""",
+    # Response lines can't introduce new embeds
+    """Q: What's the weather?
+    A: Here's a picture of the weather #image1""",
 ]
 
 

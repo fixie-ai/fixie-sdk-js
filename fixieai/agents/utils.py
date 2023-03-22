@@ -257,9 +257,13 @@ def _validate_few_shot_prompt(
             key = embed_match["embed_key"]
             if key not in known_embeds:
                 _assert(
-                    pattern
-                    not in (FewshotLinePattern.ASK_AGENT, FewshotLinePattern.ASK_FUNC),
-                    "New embeds may not be introduced in Ask Agent or Ask Func lines.",
+                    last_pattern
+                    not in (
+                        FewshotLinePattern.ASK_AGENT,
+                        FewshotLinePattern.ASK_FUNC,
+                        FewshotLinePattern.RESPONSE,
+                    ),
+                    "New embeds may not be introduced in Ask Agent, Ask Func, or A: lines.",
                     prompt,
                 )
                 known_embeds.add(key)
