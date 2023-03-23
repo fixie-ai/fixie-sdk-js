@@ -310,10 +310,11 @@ def _configure_venv(
 ) -> Tuple[str, Dict[str, str]]:
     """Configures a virtual environment for the agent with its Python dependencies installed."""
 
-    venv_path = os.path.join(agent_dir, ".venv")
+    venv_path = os.path.join(agent_dir, ".fixie.venv")
     console.print(f"Configuring virtual environment in {venv_path}")
-    venv.create(venv_path, with_pip=True)
     python_exe = os.path.join(venv_path, "bin", "python")
+    if not os.path.exists(python_exe):
+        venv.create(venv_path, with_pip=True)
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
         raise ValueError(
