@@ -153,6 +153,14 @@ class CodeShotAgent:
         router.add_api_route("/{func_name}", self._serve_func, methods=["POST"])
         return router
 
+    def is_valid_func_name(self, func_name: str) -> bool:
+        """Indicates if the given func name is valid (either registered or built-in).
+
+        Args:
+            func_name: The func name to check
+        """
+        return func_name in self._funcs or func_name.startswith("fixie_")
+
     def register_func(
         self, func: Optional[Callable] = None, *, func_name: Optional[str] = None
     ) -> Callable:
