@@ -310,10 +310,11 @@ def _configure_venv(
 ) -> Tuple[str, Dict[str, str]]:
     """Configures a virtual environment for the agent with its Python dependencies installed."""
 
-    venv_path = os.path.join(agent_dir, ".venv")
+    venv_path = os.path.join(agent_dir, ".fixie.venv")
     console.print(f"Configuring virtual environment in {venv_path}")
-    venv.create(venv_path, with_pip=True)
     python_exe = os.path.join(venv_path, "bin", "python")
+    if not os.path.exists(python_exe):
+        venv.create(venv_path, with_pip=True)
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
         raise ValueError(
@@ -393,7 +394,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
     config = agent_config.load_config(path)
 
     with contextlib.ExitStack() as stack:
-        agent_dir = os.path.dirname(path)
+        agent_dir = os.path.dirname(path) or "."
 
         # Configure the virtual enviroment
         if use_venv:
@@ -498,7 +499,7 @@ def deploy(ctx, path, metadata_only, validate):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
 
-    agent_dir = os.path.dirname(path)
+    agent_dir = os.path.dirname(path) or "."
     if validate:
         # Validate that the agent loads in a virtual environment before deploying.
         python_exe, agent_env = _configure_venv(console, agent_dir)
@@ -512,11 +513,10 @@ def deploy(ctx, path, metadata_only, validate):
         # Deploy the agent to fixie with some bootstrapping code.
         with tempfile.TemporaryFile() as tarball_file:
             with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
-                deploy_root = os.path.dirname(path)
                 tarball.add(
-                    deploy_root,
+                    agent_dir,
                     arcname="agent",
-                    filter=functools.partial(_tarinfo_filter, console, deploy_root),
+                    filter=functools.partial(_tarinfo_filter, console, agent_dir),
                 )
 
                 # Add the bootstrapping code

@@ -32,7 +32,7 @@ def load_agent_from_path(
 
     path = agent_config.normalize_path(path)
     config = agent_config.load_config(path)
-    agent_dir = os.path.dirname(path)
+    agent_dir = os.path.dirname(path) or "."
 
     # Inject the agent directory into PYTHONPATH
     sys.path.insert(0, agent_dir)
