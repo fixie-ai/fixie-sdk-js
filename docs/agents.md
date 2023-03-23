@@ -11,8 +11,8 @@ See [Fixie Agent Python API](python-agent-api.md) for the full API reference.
 
 ## CodeShotAgent
 
-The base class for Agents in Fixie is [`CodeShotAgent`][fixieai.agents.code_shot. CodeShotAgent].
-This class takes care of communicating with the Fixie platform via the [Agent Protocol](agent-protocol.md), 
+The base class for Agents in Fixie is [`CodeShotAgent`][fixieai.agents.code_shot. codeshotagent].
+This class takes care of communicating with the Fixie platform via the [Agent Protocol](agent-protocol.md),
 and provides a simple API for registering functions that can be invoked by the few-shot examples
 used by the Agent.
 
@@ -43,19 +43,19 @@ The `BASE_PROMPT` and `FEW_SHOTS` strings are used to provide examples to the un
 Large Language Model, such as GPT-3, as well as to provide the Fixie Platform information
 on what kinds of queries this Agent can support.
 
-The `FEW_SHOTS` provided to an Agent must be a string consisting of one or more *stanzas*, where
-each stanza consists of a question, one or more rounds of internal actions taken by the Agent, 
+The `FEW_SHOTS` provided to an Agent must be a string consisting of one or more _stanzas_, where
+each stanza consists of a question, one or more rounds of internal actions taken by the Agent,
 and a final answer. Stanzas must be separated from each other by a blank line. The query line
 in the stanza must start with `Q:`, and the answer line must start with `A:`.
 
 Internal actions taken by the Agent can be of one of two forms:
 
-* `Ask Func[<func_name>]: <query_text>`: This indicates that the function `<func_name>` should
-be invoked when the output of the underlying LLM starts with this string. The string following
-`Ask Func[<func_name>]:` is passed to the function as the `query.text` parameter.
-* `Ask Agent[<agent_name>]: <query_text>`: This indicates that the Agent `<agent_name>` should
-be invoked when the output of the underlying LLM starts with this string. The string following
-`Ask Agent[<agent_name>]:` is passed to the Agent as the `query.text` parameter.
+- `Ask Func[<func_name>]: <query_text>`: This indicates that the function `<func_name>` should
+  be invoked when the output of the underlying LLM starts with this string. The string following
+  `Ask Func[<func_name>]:` is passed to the function as the `query.text` parameter.
+- `Ask Agent[<agent_name>]: <query_text>`: This indicates that the Agent `<agent_name>` should
+  be invoked when the output of the underlying LLM starts with this string. The string following
+  `Ask Agent[<agent_name>]:` is passed to the Agent as the `query.text` parameter.
 
 ## Agent Funcs
 
@@ -75,10 +75,10 @@ def my_func(query, user_storage=None, oauth_handler=None):
     ...
 ```
 
-The `query` parameter is either a `str` a [`Message`][fixieai.agents.api.Message] object.
+The `query` parameter is either a `str` a [`Message`][fixieai.agents.api.message] object.
 If the query parameter is a string, this parameter contains the text of the Agent query.
 If the query parameter is a `Message` object, this parameter contains the text of the Agent
-along with zero or more [`Embed`][fixieai.agents.api.Embed] objects, as described in the
+along with zero or more [`Embed`][fixieai.agents.api.embed] objects, as described in the
 [Embeds](#embeds) section below.
 
 The optional `user_storage` parameter provides the Func an interface to the Fixie
@@ -88,19 +88,9 @@ The optional `oauth_handler` parameter provides the Func an interface to perform
 OAuth authentication with external services, as described in the [OAuth](#agent-oauth-support) section
 below.
 
-The function must return either a `str` or a [`Message`][fixieai.agents.api.Message] object.
+The function must return either a `str` or a [`Message`][fixieai.agents.api.message] object.
 Returning a string is equivalent to returning a `Message` object with the string as its `text`
 field, and no `embeds`.
-
-## Built-in functions
-
-All Fixie agents have access to the following set of built-in functions that they can invoke.
-
-* `Ask Func[base_prompt]`: Returns the base prompt for the agent.
-* `Ask Func[local_datetime]`: Returns the current datetime in the user's local timezone.
-* `Ask Func[utc_datetime]`: Returns the current datetime in UTC timezone.
-* `Ask Func[query_embed]`: Runs the prompt in the query against the contents of the embed.
-* `Ask Func[query_corpus]`: Runs the prompt in the query against the contents of the agent-defined corpus.
 
 ## Embeds
 
@@ -108,7 +98,7 @@ All Fixie agents have access to the following set of built-in functions that the
 Fixie, similar to email attachments. Embeds can be used to store images, video, text, or
 any other binary data.
 
-Embeds are represented by the [`Embed`][fixieai.agents.api.Embed] class. Agents can access
+Embeds are represented by the [`Embed`][fixieai.agents.api.embed] class. Agents can access
 the Embeds associated with a Message as follows:
 
 ```python
@@ -132,10 +122,30 @@ def my_func(query: fixieai.Message) -> fixieai.Message:
   reply.embeds["my_embed"].text = "Hello, world!"
 ```
 
+Embeds can be queried by leveraging the built-in `fixie_query_embed` func. e.g., `Ask Func[fixie_query_embed]`. See [example](https://github.com/fixie-ai/fixie-examples/tree/main/agents/chatembed) of how this works.
+
+## External Knowledge Base Support
+
+Fixie Agents come with built-in support for indexing and querying external knowledge in the form of URLs. See the [support agent](https://github.com/fixie-ai/fixie-examples/tree/main/agents/support) for an example of how to use this.
+
+```python
+URLS = [
+    "https://docs.fixie.ai/*",
+]
+DOCS = [fixieai.DocumentCorpus(urls=URLS)]
+agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS, DOCS)
+```
+
+Appending `*` to the end of the URL will tell Fixie to automatically index all children of the root URL.
+
+After indexing, you can query the corpus using the build in `Ask Func[fixie_query_corpus]` function.
+
+Note: It can take up to 10 minutes to index content, depending on the number of URLs and content size. We're working on a mechanism to alert you to indexing progress. Stay tuned!
+
 ## User Storage
 
 Fixie Agents can store and retrieve arbitrary data associated with a user, using the
-[`UserStorage`][fixieai.agents.UserStorage] class. This class provides a simple
+[`UserStorage`][fixieai.agents.userstorage] class. This class provides a simple
 interface to a persistent key/value storage service, with a separate key/value
 store for each Fixie user. This can be used to maintain state about a particular
 user that persists across Agent invocations.
@@ -165,8 +175,8 @@ to grant limited access to their accounts on one service, to another
 service, without having to share their password.
 
 Fixie provides a simple interface for Agents to perform OAuth
-authentication, using the [`OAuthParams`][fixieai.agents.OAuthParams] class.
-Using this class, an Agent function can use the [`OAuthHandler`][fixieai.agents.OAuthHandler]
+authentication, using the [`OAuthParams`][fixieai.agents.oauthparams] class.
+Using this class, an Agent function can use the [`OAuthHandler`][fixieai.agents.oauthhandler]
 class -- which is passed to the function as the `oauth_handler` parameter -- to obtain an access
 token for the user.
 
@@ -194,3 +204,44 @@ def my_func(query, oauth_handler: fixieai.OAuthHandler):
   client = gcalendar_client.GcalendarClient(user_token)
   # ...
 ```
+
+## Agent Default Model and Model Params
+
+By default, agents use the `text-davinci-003` model from OpenAI with a default temperature of `0` and a `maximum_tokens` size of 1,000. We've found this to be the right default for many use cases, but it's easy to change by passing in `llm_settings` when initializing your `CodeShotAgent`.
+
+Here's an example:
+
+```python
+agent = fixieai.CodeShotAgent(
+    BASE_PROMPT,
+    [],
+    conversational=True,
+    llm_settings=fixieai.LlmSettings(temperature=1.0, model="gpt-4", maximum_tokens=500),
+)
+```
+
+Here are the following models that we support:
+
+| Model Name              | Identifier String               |
+| ----------------------- | ------------------------------- |
+| GPT-3                   | `text-davinci-003` (default)    |
+| GPT-4                   | `gpt-4`                         |
+| Cohere XLarge           | `cohere/xlarge`                 |
+| Cohere Large            | `cohere/large`                  |
+| AI21 J2 Large           | `ai21/j2-large`                 |
+| AI21 J2 Grande          | `ai21/j2-grande`                |
+| AI21 J2 Jumbo           | `ai21/j2-jumbo`                 |
+| Aleph Luminous Base     | `aleph-alpha/luminous-base`     |
+| Aleph Luminous Extended | `aleph-alpha/luminous-extended` |
+| Aleph Luminous Supreme  | `aleph-alpha/luminous-supreme`  |
+| GooseAI GPTJ 6B         | `gooseai/gpt-j-6b`              |
+
+## Built-in functions
+
+All Fixie agents have access to the following set of built-in functions that they can invoke.
+
+- `Ask Func[fixie_base_prompt]`: Returns the base prompt for the agent.
+- `Ask Func[fixie_local_datetime]`: Returns the current datetime in the user's local timezone.
+- `Ask Func[fixie_utc_datetime]`: Returns the current datetime in UTC timezone.
+- `Ask Func[fixie_query_embed]`: Runs the prompt in the query against the contents of the embed.
+- `Ask Func[fixie_query_corpus]`: Runs the prompt in the query against the contents of the agent-defined corpus.
