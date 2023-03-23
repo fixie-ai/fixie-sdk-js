@@ -132,10 +132,10 @@ def _validate_base_prompt(base_prompt: str):
 
 class FewshotLinePattern(enum.Enum):
     QUERY = re.compile(r"^Q:")
-    AGENT_SAYS = re.compile(r"^Agent\[(\w+)] says:")
-    FUNC_SAYS = re.compile(r"^Func\[(\w+)] says:")
-    ASK_AGENT = re.compile(r"^Ask Agent\[(\w+)]:")
-    ASK_FUNC = re.compile(r"^Ask Func\[(\w+)]:")
+    AGENT_SAYS = re.compile(r"^Agent\[(?P<agent_id>\w+)] says:")
+    FUNC_SAYS = re.compile(r"^Func\[(?P<func_name>\w+)] says:")
+    ASK_AGENT = re.compile(r"^Ask Agent\[(?P<agent_id>\w+)]:")
+    ASK_FUNC = re.compile(r"^Ask Func\[(?P<func_name>\w+)]:")
     RESPONSE = re.compile(r"^A:")
     NO_PATTERN: None = None
 
@@ -161,7 +161,7 @@ class FewshotLinePattern(enum.Enum):
             return None
 
         match = matches[0]
-        if match.re is cls.QUERY:
+        if match.re is cls.QUERY.value:
             if match.end() == len(line):
                 raise ValueError("A 'Q:' line cannot end without a query.")
 
@@ -218,7 +218,7 @@ def _validate_few_shot_prompt(
             _assert(
                 next_match is not None
                 and next_match.re is FewshotLinePattern.AGENT_SAYS.value
-                and match.group(1) == next_match.group(1),
+                and match.group("agent_id") == next_match.group("agent_id"),
                 "Each 'Ask Agent' line must be immediately followed by an 'Agent says' line that references the same ",
                 prompt,
             )
@@ -231,12 +231,12 @@ def _validate_few_shot_prompt(
             _assert(
                 next_match is not None
                 and next_match.re is FewshotLinePattern.FUNC_SAYS.value
-                and match.group(1) == next_match.group(1),
+                and match.group("func_name") == next_match.group("func_name"),
                 "Each 'Ask Func' line must be immediately followed by an 'Func says' line that references the same func.",
                 prompt,
             )
             _assert(
-                is_valid_func_name(match.group(1)),
+                is_valid_func_name(match.group("func_name")),
                 "Each 'Ask Func' line must reference a valid func name.",
                 prompt,
             )
@@ -244,7 +244,7 @@ def _validate_few_shot_prompt(
         if pattern is FewshotLinePattern.FUNC_SAYS:
             assert match is not None
             _assert(
-                is_valid_func_name(match.group(1)),
+                is_valid_func_name(match.group("func_name")),
                 "Each 'Func says' line must reference a valid func name.",
                 prompt,
             )
@@ -254,7 +254,7 @@ def _validate_few_shot_prompt(
 
         # Check that any embeds are valid.
         for embed_match in EMBED_REF.finditer(line):
-            key = embed_match["embed_key"]
+            key = embed_match.group("embed_key")
             if key not in known_embeds:
                 _assert(
                     last_pattern

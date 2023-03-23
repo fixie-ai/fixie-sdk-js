@@ -93,7 +93,10 @@ Func[weather] says: cloudy.
 A: It's cloudy.""",
     # Response lines can't introduce new embeds
     """Q: What's the weather?
-    A: Here's a picture of the weather #image1""",
+A: Here's a picture of the weather #image1""",
+    # Query lines must have a query
+    """Q:
+A: That's not a question!""",
 ]
 
 
