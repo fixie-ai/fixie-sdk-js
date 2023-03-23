@@ -312,8 +312,7 @@ def _configure_venv(
 
     venv_path = os.path.join(agent_dir, ".venv")
     console.print(f"Configuring virtual environment in {venv_path}")
-    if not os.path.exists(venv_path):
-        venv.create(venv_path, with_pip=True)
+    venv.create(venv_path, with_pip=True)
     python_exe = os.path.join(venv_path, "bin", "python")
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
