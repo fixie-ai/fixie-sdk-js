@@ -31,6 +31,13 @@ _AGENT_ID_JWT_CLAIM = "aid"
 
 
 @pydantic_dataclasses.dataclass
+class ModelSettings:
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+    maximum_tokens: Optional[int] = None
+
+
+@pydantic_dataclasses.dataclass
 class AgentMetadata:
     """Metadata for a Fixie CodeShot Agent.
 
@@ -41,6 +48,7 @@ class AgentMetadata:
     few_shots: List[str]
     corpora: Optional[List[corpora.DocumentCorpus]] = None
     conversational: bool = False
+    response_model: Optional[ModelSettings] = None
 
 
 class CodeShotAgent:
@@ -97,6 +105,9 @@ class CodeShotAgent:
         corpora: Optional[List[corpora.DocumentCorpus]] = None,
         conversational: bool = False,
         oauth_params: Optional[oauth.OAuthParams] = None,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        maximum_tokens: Optional[int] = None,
     ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
@@ -106,6 +117,9 @@ class CodeShotAgent:
         self.corpora = corpora
         self.conversational = conversational
         self.oauth_params = oauth_params
+        self.model = model
+        self.temperature = temperature
+        self.maximum_tokens = maximum_tokens
         self._funcs: Dict[str, Callable] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
 
@@ -192,7 +206,11 @@ class CodeShotAgent:
     def _handshake(self) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
         metadata = AgentMetadata(
-            self.base_prompt, self.few_shots, self.corpora, self.conversational
+            self.base_prompt,
+            self.few_shots,
+            self.corpora,
+            self.conversational,
+            ModelSettings(self.model, self.temperature, self.maximum_tokens),
         )
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
         return fastapi.Response(yaml_content, media_type="application/yaml")

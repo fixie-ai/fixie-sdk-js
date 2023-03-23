@@ -52,6 +52,9 @@ def dummy_agent():
             token_uri="dummy",
             scopes=["dummy"],
         ),
+        model="test-model",
+        temperature=0.42,
+        maximum_tokens=42,
     )
 
     @agent.register_func
@@ -82,6 +85,11 @@ def test_simple_agent_handshake(dummy_agent):
         "few_shots": dummy_agent.few_shots,
         "corpora": [dataclasses.asdict(c) for c in dummy_agent.corpora],
         "conversational": dummy_agent.conversational,
+        "response_model": {
+            "model": dummy_agent.model,
+            "temperature": dummy_agent.temperature,
+            "maximum_tokens": dummy_agent.maximum_tokens,
+        },
     }
 
 
