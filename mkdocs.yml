@@ -20,22 +20,22 @@ site_url: https://fixie.ai/
 #       name: Switch to light mode
 
 theme:
-    name: cinder
-    logo: assets/fixie-logo.png
-    favicon: assets/fixie-logo.png
-    palette:
-      - scheme: 'default'
-        media: '(prefers-color-scheme: light)'
-        toggle:
-          icon: 'material/lightbulb'
-          name: "Switch to dark mode"
-      - scheme: 'slate'
-        media: '(prefers-color-scheme: dark)'
-        primary: black
-        accent: lime
-        toggle:
-          icon: 'material/lightbulb-outline'
-          name: 'Switch to light mode'
+  name: readthedocs
+  logo: assets/fixie-logo-docs.png
+  favicon: assets/docs-logo.png
+  palette:
+    - scheme: "default"
+      media: "(prefers-color-scheme: light)"
+      toggle:
+        icon: "material/lightbulb"
+        name: "Switch to dark mode"
+    - scheme: "slate"
+      media: "(prefers-color-scheme: dark)"
+      primary: black
+      accent: lime
+      toggle:
+        icon: "material/lightbulb-outline"
+        name: "Switch to light mode"
 #    features:
 #      - content.code.annotate
 #      - navigation.tabs
@@ -47,18 +47,17 @@ repo_url: https://github.com/fixie-ai/fixie-sdk
 edit_uri: ""
 
 nav:
-    - Introduction: 'index.md'
-    - Architecture: 'architecture.md'
-    - Agents:
-      - Agent QuickStart: 'agent-quickstart.md'
-      - Fixie Agent API: 'agents.md'
-      - Agent Protocol: 'agent-protocol.md'
-    - Python SDK:
-        - Python Client API: 'python-client-api.md'
-        - Python Agent API: 'python-agent-api.md'
-    - CLI: 'cli.md'
-    - GraphQL: 'https://app.fixie.ai/static/docs/index.html'
-
+  - Introduction: "index.md"
+  - Architecture: "architecture.md"
+  - Agents:
+      - Agent QuickStart: "agent-quickstart.md"
+      - Fixie Agent API: "agents.md"
+      - Agent Protocol: "agent-protocol.md"
+  - Python SDK:
+      - Python Client API: "python-client-api.md"
+      - Python Agent API: "python-agent-api.md"
+  - CLI: "cli.md"
+  - GraphQL: "https://app.fixie.ai/static/docs/index.html"
 
 markdown_extensions:
   - admonition
@@ -67,7 +66,7 @@ markdown_extensions:
   - mkdocs-click
 
 extra_css:
-    - css/custom.css
+  - css/custom.css
 
 plugins:
   - search
