@@ -3,6 +3,7 @@ from fixieai.agents.api import AgentResponse
 from fixieai.agents.api import Embed
 from fixieai.agents.api import Message
 from fixieai.agents.code_shot import CodeShotAgent
+from fixieai.agents.code_shot import LlmSettings
 from fixieai.agents.corpora import DocumentCorpus
 from fixieai.agents.corpora import DocumentLoader
 from fixieai.agents.oauth import OAuthHandler
@@ -16,6 +17,7 @@ __all__ = [
     "DocumentCorpus",
     "DocumentLoader",
     "Embed",
+    "LlmSettings",
     "Message",
     "OAuthHandler",
     "OAuthParams",
