@@ -32,7 +32,7 @@ def normalize_path(path: Optional[str] = None) -> str:
             will return "agent.yaml".
     """
     if not path:
-        path = "./agent.yaml"
+        path = "agent.yaml"
     elif os.path.isdir(path):
         path = os.path.join(path, "agent.yaml")
 
