@@ -38,3 +38,11 @@ div.doc-contents:not(.first) {
   padding-left: 25px;
   border-left: .05rem solid var(--md-typeset-table-color);
 }
+
+body {
+  font-family: Helvetica Neue,Arial,sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, legend {
+  font-family: Helvetica Neue,Arial,sans-serif;
+}
