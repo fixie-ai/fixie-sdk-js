@@ -12,7 +12,7 @@ default: format check test build-docs
 
 # Install dependencies for local development.
 install:
-    pip install poetry
+    pip install poetry==1.2.1
     poetry install --sync
     poetry run mypy --install-types --non-interactive .
 

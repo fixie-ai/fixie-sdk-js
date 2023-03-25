@@ -1,9 +1,13 @@
 import contextlib
+import functools
 import importlib
 import os
 import sys
+import threading
+import time
 from typing import Tuple
 
+import fixieai
 from fixieai import agents
 from fixieai.agents import utils
 from fixieai.cli.agent import agent_config
@@ -48,13 +52,33 @@ def load_agent_from_path(
     return config, agent_impl
 
 
+def _refresh_agent_async(agent_handle: str):
+    """Asynchronously pings Fixie to refresh the given agent_id."""
+
+    def _refresh_agent_sync():
+        # Pause a second to give the agent a moment to start up.
+        time.sleep(1)
+        fixieai.FixieClient().refresh_agent(agent_handle)
+
+    thread = threading.Thread(target=_refresh_agent_sync, daemon=True)
+    thread.start()
+
+
 def uvicorn_app_factory():
     """Returns an app that can be used to serve an agent with uvicorn.
 
-    The FIXIE_REFRESH_AGENT_ID environment variable can be set to trigger a refresh on startup.
+    If the FIXIE_REFRESH_ON_STARTUP environment variable is set to "true" an agent refresh
+    will be triggered each time the agent starts up.
     """
-    _, impl = load_agent_from_path(".")
-    return impl.app(os.getenv("FIXIE_REFRESH_AGENT_ID"))
+    config, impl = load_agent_from_path(".")
+    fastapi_app = impl.app()
+
+    if os.getenv("FIXIE_REFRESH_ON_STARTUP") == "true":
+        fastapi_app.add_event_handler(
+            "startup", functools.partial(_refresh_agent_async, config.handle)
+        )
+
+    return fastapi_app
 
 
 if __name__ == "__main__":

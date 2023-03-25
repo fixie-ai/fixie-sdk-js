@@ -35,6 +35,10 @@ REQUIREMENTS_TXT = "requirements.txt"
 CURRENT_FIXIE_REQUIREMENT = f"fixieai ~= {fixieai.__version__}"
 FIXIE_REQUIREMENT_PATTERN = re.compile(r"^\s*fixieai([^\w]|$)")
 
+# Environment variables for agents
+FIXIE_ALLOWED_AGENT_ID = "FIXIE_ALLOWED_AGENT_ID"
+FIXIE_REFRESH_ON_STARTUP = "FIXIE_REFRESH_ON_STARTUP"
+
 
 @click.group(help="Agent-related commands.")
 def agent():
@@ -281,9 +285,10 @@ def _validate_agent_path(ctx, param, value):
 
 def _ensure_agent_updated(
     client: fixieai.client.FixieClient,
+    agent_id: str,
     config: agent_config.AgentConfig,
 ):
-    agent = client.get_agent(f"{client.get_current_username()}/{config.handle}")
+    agent = client.get_agent(agent_id)
     if not agent.valid:
         agent.create_agent(
             name=config.name,
@@ -392,6 +397,8 @@ def _validate_agent_loads_or_exit(
 def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
 
     with contextlib.ExitStack() as stack:
         agent_dir = os.path.dirname(path) or "."
@@ -401,6 +408,8 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             python_exe, agent_env = _configure_venv(console, agent_dir)
         else:
             python_exe, agent_env = sys.executable, os.environ.copy()
+
+        agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
 
         # Validate that the agent loads before setting up the server.
         _validate_agent_loads_or_exit(
@@ -415,12 +424,13 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             )
             config.deployment_url = stack.enter_context(tunnel.Tunnel(port))
 
-        agent_api = _ensure_agent_updated(ctx.obj.client, config)
+        agent_api = _ensure_agent_updated(client, agent_id, config)
         console.print(
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
 
-        agent_env["FIXIE_REFRESH_AGENT_ID"] = agent_api.agent_id
+        # Trigger an agent refresh each time it reloads.
+        agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         subprocess.run(
             [
                 python_exe,
@@ -443,10 +453,15 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
 import os
-from fixieai.cli.agent import loader
+
+import dotenv
 
 if __name__ == "__main__":
+    dotenv.load_dotenv()
     os.chdir("agent")
+
+    # N.B. Load the .dotenv file before loading the Fixie SDK
+    from fixieai.cli.agent import loader
     config, agent = loader.load_agent_from_path(".")
     agent.serve(port=int(os.getenv("PORT", "8080")))
 """
@@ -480,6 +495,13 @@ def _tarinfo_filter(
         return tarinfo
 
 
+def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
+    file_bytes = text.encode("utf-8")
+    tarinfo = tarfile.TarInfo(path)
+    tarinfo.size = len(file_bytes)
+    tarball.addfile(tarinfo, io.BytesIO(file_bytes))
+
+
 @agent.command("deploy", help="Deploy the current agent.")
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.option(
@@ -498,16 +520,19 @@ def _tarinfo_filter(
 def deploy(ctx, path, metadata_only, validate):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
 
     agent_dir = os.path.dirname(path) or "."
     if validate:
         # Validate that the agent loads in a virtual environment before deploying.
         python_exe, agent_env = _configure_venv(console, agent_dir)
+        agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
         _validate_agent_loads_or_exit(
             console, agent_dir, config.handle, python_exe, agent_env
         )
 
-    agent_api = _ensure_agent_updated(ctx.obj.client, config)
+    agent_api = _ensure_agent_updated(client, agent_id, config)
 
     if config.deployment_url is None and not metadata_only:
         # Deploy the agent to fixie with some bootstrapping code.
@@ -519,11 +544,20 @@ def deploy(ctx, path, metadata_only, validate):
                     filter=functools.partial(_tarinfo_filter, console, agent_dir),
                 )
 
-                # Add the bootstrapping code
-                boostrap_bytes = _DEPLOYMENT_BOOTSTRAP_SOURCE.encode()
-                tarinfo = tarfile.TarInfo(f"main.py")
-                tarinfo.size = len(boostrap_bytes)
-                tarball.addfile(tarinfo, io.BytesIO(boostrap_bytes))
+                # Add the bootstrapping code and environment variables
+                _add_text_file_to_tarfile(
+                    "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
+                )
+                _add_text_file_to_tarfile(
+                    ".env",
+                    "".join(
+                        f"{key}={value}\n"
+                        for key, value in {
+                            FIXIE_ALLOWED_AGENT_ID: agent_id,
+                        }.items()
+                    ),
+                    tarball,
+                )
 
             tarball_file.seek(0)
             with _spinner(console, "Deploying..."):
@@ -534,7 +568,7 @@ def deploy(ctx, path, metadata_only, validate):
 
     # Trigger a refresh with the updated deployment
     with _spinner(console, "Refreshing..."):
-        ctx.obj.client.refresh_agent(config.handle)
+        client.refresh_agent(config.handle)
 
     agent_api.update_agent()
     if agent_api.queries:

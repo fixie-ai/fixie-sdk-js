@@ -55,6 +55,7 @@ def dummy_agent():
         llm_settings=agents.LlmSettings(
             model="test-model", temperature=0.42, maximum_tokens=42
         ),
+        allowed_agent_id="fake agent id",
     )
 
     @agent.register_func
@@ -72,11 +73,14 @@ def dummy_agent():
     return agent
 
 
-def test_simple_agent_handshake(dummy_agent):
+def test_simple_agent_handshake(dummy_agent, mocker):
     fast_api = fastapi.FastAPI()
     fast_api.include_router(dummy_agent.api_router())
     client = testclient.TestClient(fast_api)
-    response = client.get("/")
+
+    # Use a small chunk size to exercise chunking logic
+    mocker.patch.object(code_shot, "_RESPONSE_CHUNK_SIZE", 10)
+    response = client.get("/", headers={"Authorization": "Bearer fixie-test-token"})
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/yaml"
     yaml_content = yaml.load(response.content, Loader=yaml.Loader)
@@ -107,7 +111,7 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     json = response.json()
     assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
     mock_token_verifier.assert_called_once_with(
-        "fixie-test-token", dummy_agent._jwks_client
+        "fixie-test-token", dummy_agent._jwks_client, dummy_agent._allowed_agent_id
     )
 
     # Test Func[simple2]

@@ -4,14 +4,16 @@ import dataclasses
 import functools
 import inspect
 import json
+import logging
+import os
 import re
-import threading
-import time
+import warnings
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import fastapi
+import fastapi.security
 import jwt
-import requests
+import starlette.responses
 import uvicorn
 import yaml
 from pydantic import dataclasses as pydantic_dataclasses
@@ -28,6 +30,10 @@ ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
 # The JWT claim containing the agent ID
 _AGENT_ID_JWT_CLAIM = "aid"
+
+_RESPONSE_CHUNK_SIZE = 1024
+
+logger = logging.getLogger(__file__)
 
 
 @pydantic_dataclasses.dataclass
@@ -121,6 +127,7 @@ class CodeShotAgent:
         conversational: bool = False,
         oauth_params: Optional[oauth.OAuthParams] = None,
         llm_settings: Optional[LlmSettings] = None,
+        allowed_agent_id: Optional[str] = None,
     ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
@@ -133,6 +140,12 @@ class CodeShotAgent:
         self.llm_settings = llm_settings
         self._funcs: Dict[str, Callable] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
+        self._allowed_agent_id = allowed_agent_id or os.getenv("FIXIE_ALLOWED_AGENT_ID")
+        if self._allowed_agent_id is None:
+            warnings.warn(
+                "No allowed agent ID was specified, so your agent will accept requests intended for any agent. "
+                "Ensure that the FIXIE_ALLOWED_AGENT_ID variable is set to correct this."
+            )
 
         if oauth_params is not None:
             # Register default Funcs.
@@ -140,35 +153,19 @@ class CodeShotAgent:
 
         utils.strip_prompt_lines(self)
 
-    def serve(
-        self, agent_id: Optional[str] = None, host: str = "0.0.0.0", port: int = 8181
-    ):
+    def serve(self, host: str = "0.0.0.0", port: int = 8181):
         """Starts serving the current agent at `{host}:{port}` via uvicorn.
 
-        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
-
         Args:
-            agent_id: The qualified agent id (`username/handle`)
             host: The address to start listening at.
             port: The port number to start listening at.
         """
-        uvicorn.run(self.app(agent_id), host=host, port=port)
+        uvicorn.run(self.app(), host=host, port=port)
 
-    def app(self, agent_id: Optional[str] = None) -> fastapi.FastAPI:
-        """Returns a fastapi.FastAPI application that serves the agent.
-
-        If agent_id is specified, this pings Fixie upon startup to fetch the latest prompt and fewshots.
-
-        Args:
-            agent_id: The qualified agent id (`username/handle`)
-        """
+    def app(self) -> fastapi.FastAPI:
+        """Returns a fastapi.FastAPI application that serves the agent."""
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        agent_id = agent_id
-        if agent_id:
-            fast_api.add_event_handler(
-                "startup", functools.partial(_ping_fixie_async, agent_id)
-            )
         return fast_api
 
     def api_router(self) -> fastapi.APIRouter:
@@ -222,8 +219,19 @@ class CodeShotAgent:
         self._funcs[name] = func
         return func
 
-    def _handshake(self) -> fastapi.Response:
+    def _handshake(
+        self,
+        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
+            fastapi.security.HTTPBearer()
+        ),
+    ) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
+        token_claims = _VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client, self._allowed_agent_id
+        )
+        if token_claims is None:
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+
         metadata = AgentMetadata(
             self.base_prompt,
             self.few_shots,
@@ -232,7 +240,16 @@ class CodeShotAgent:
             self.llm_settings,
         )
         yaml_content = yaml.dump(dataclasses.asdict(metadata))
-        return fastapi.Response(yaml_content, media_type="application/yaml")
+
+        # Use a streaming response because prompts/fewshots can be very large.
+        chunks = (
+            yaml_content[start : start + _RESPONSE_CHUNK_SIZE]
+            for start in range(0, len(yaml_content), _RESPONSE_CHUNK_SIZE)
+        )
+        return starlette.responses.StreamingResponse(
+            chunks,
+            media_type="application/yaml",
+        )
 
     def _serve_func(
         self,
@@ -246,7 +263,7 @@ class CodeShotAgent:
         the appropriate function.
         """
         token_claims = _VerifiedTokenClaims.from_token(
-            credentials.credentials, self._jwks_client
+            credentials.credentials, self._jwks_client, self._allowed_agent_id
         )
         if token_claims is None:
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
@@ -307,7 +324,9 @@ class _VerifiedTokenClaims:
 
     @staticmethod
     def from_token(
-        token: str, jwks_client: jwt.PyJWKClient
+        token: str,
+        jwks_client: jwt.PyJWKClient,
+        allowed_agent_id: Optional[str],
     ) -> Optional[_VerifiedTokenClaims]:
         try:
             public_key = jwks_client.get_signing_key_from_jwt(token)
@@ -320,13 +339,20 @@ class _VerifiedTokenClaims:
         except jwt.DecodeError:
             return None
 
-        if _AGENT_ID_JWT_CLAIM not in claims or not isinstance(
-            claims[_AGENT_ID_JWT_CLAIM], str
-        ):
+        token_agent_id = claims.get(_AGENT_ID_JWT_CLAIM)
+        if not isinstance(token_agent_id, str):
             # Agent id claim is required
+            logger.warning("Rejecting valid JWT without any agent ID claim")
             return None
 
-        return _VerifiedTokenClaims(agent_id=claims[_AGENT_ID_JWT_CLAIM])
+        if allowed_agent_id is not None and token_agent_id != allowed_agent_id:
+            # The agent ID in the token did not match the allowed value.
+            logger.warning(
+                f"Rejecting valid JWT because agent ID in token ({token_agent_id!r}) did not match {allowed_agent_id!r}"
+            )
+            return None
+
+        return _VerifiedTokenClaims(agent_id=token_agent_id)
 
 
 def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
@@ -361,16 +387,3 @@ def _split_few_shots(few_shots: str) -> List[str]:
         "Q:" + few_shot for few_shot in few_shot_splits[1:]
     ]
     return few_shot_splits
-
-
-def _ping_fixie_async(agent_id: str):
-    """Asynchronously pings Fixie to refresh the given agent_id."""
-    thread = threading.Thread(target=_ping_fixie_sync, args=(agent_id,))
-    thread.start()
-
-
-def _ping_fixie_sync(agent_id: str):
-    # Pause a second to give the agent a moment to start up.
-    time.sleep(1)
-    response = requests.post(f"{constants.FIXIE_REFRESH_URL}/{agent_id}")
-    response.raise_for_status()
