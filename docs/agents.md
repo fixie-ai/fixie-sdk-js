@@ -222,19 +222,15 @@ agent = fixieai.CodeShotAgent(
 
 Here are the following models that we support:
 
-| Model Name              | Identifier String               |
-| ----------------------- | ------------------------------- |
-| GPT-3                   | `text-davinci-003` (default)    |
-| GPT-4                   | `gpt-4`                         |
-| Cohere XLarge           | `cohere/xlarge`                 |
-| Cohere Large            | `cohere/large`                  |
-| AI21 J2 Large           | `ai21/j2-large`                 |
-| AI21 J2 Grande          | `ai21/j2-grande`                |
-| AI21 J2 Jumbo           | `ai21/j2-jumbo`                 |
-| Aleph Luminous Base     | `aleph-alpha/luminous-base`     |
-| Aleph Luminous Extended | `aleph-alpha/luminous-extended` |
-| Aleph Luminous Supreme  | `aleph-alpha/luminous-supreme`  |
-| GooseAI GPTJ 6B         | `gooseai/gpt-j-6b`              |
+| Model Name          | Identifier String                   |
+| ------------------- | ----------------------------------- |
+| GPT-3               | `openai/text-davinci-003` (default) |
+| GPT-3.5 (ChatGPT)   | `openai/gpt-3.5-turbo`              |
+| GPT-4               | `openai/gpt-4`                      |
+| AI21 J2 Grande      | `ai21/j2-grande`                    |
+| AI21 J2 Jumbo       | `ai21/j2-jumbo`                     |
+| GooseAI GPTJ 6B     | `gooseai/gpt-j-6b`                  |
+| GooseAI GPT NEO 20B | `gooseai/gpt-neo-20b`               |
 
 ## Built-in functions
 
