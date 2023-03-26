@@ -21,6 +21,10 @@ class Tunnel:
                 # N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
                 f"80:127.0.0.1:{self._port}",
                 "-o",
+                # Need to send keepalives to prevent the connection from getting chopped
+                # (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
+                "ServerAliveInterval=59",
+                "-o",
                 "StrictHostKeyChecking=accept-new",
                 "nokey@localhost.run",
                 "--",
