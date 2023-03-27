@@ -128,7 +128,6 @@ class CodeShotAgent:
         conversational: bool = False,
         oauth_params: Optional[oauth.OAuthParams] = None,
         llm_settings: Optional[LlmSettings] = None,
-        allowed_agent_id: Optional[str] = None,
     ):
         if isinstance(few_shots, str):
             few_shots = _split_few_shots(few_shots)
@@ -141,7 +140,7 @@ class CodeShotAgent:
         self.llm_settings = llm_settings
         self._funcs: Dict[str, Callable] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
-        self._allowed_agent_id = allowed_agent_id or os.getenv("FIXIE_ALLOWED_AGENT_ID")
+        self._allowed_agent_id = os.getenv("FIXIE_ALLOWED_AGENT_ID")
         if self._allowed_agent_id is None:
             warnings.warn(
                 "No allowed agent ID was specified, so your agent will accept requests intended for any agent. "
@@ -327,7 +326,7 @@ class _VerifiedTokenClaims:
     def from_token(
         token: str,
         jwks_client: jwt.PyJWKClient,
-        allowed_agent_id: Optional[str],
+        expected_agent_id: Optional[str],
     ) -> Optional[_VerifiedTokenClaims]:
         try:
             public_key = jwks_client.get_signing_key_from_jwt(token)
@@ -346,10 +345,10 @@ class _VerifiedTokenClaims:
             logger.warning("Rejecting valid JWT without any agent ID claim")
             return None
 
-        if allowed_agent_id is not None and token_agent_id != allowed_agent_id:
+        if expected_agent_id is not None and token_agent_id != expected_agent_id:
             # The agent ID in the token did not match the allowed value.
             logger.warning(
-                f"Rejecting valid JWT because agent ID in token ({token_agent_id!r}) did not match {allowed_agent_id!r}"
+                f"Rejecting valid JWT because agent ID in token ({token_agent_id!r}) did not match {expected_agent_id!r}"
             )
             return None
 

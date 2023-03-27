@@ -1,4 +1,5 @@
 import dataclasses
+import os
 
 import fastapi
 import pytest
@@ -39,7 +40,8 @@ def mock_token_verifier(mocker):
 
 
 @pytest.fixture
-def dummy_agent():
+def dummy_agent(mocker):
+    mocker.patch.dict(os.environ, {"FIXIE_ALLOWED_AGENT_ID": "fake agent id"})
     agent = agents.CodeShotAgent(
         BASE_PROMPT,
         FEW_SHOTS,
@@ -55,7 +57,6 @@ def dummy_agent():
         llm_settings=agents.LlmSettings(
             model="test-model", temperature=0.42, maximum_tokens=42
         ),
-        allowed_agent_id="fake agent id",
     )
 
     @agent.register_func
