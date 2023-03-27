@@ -216,7 +216,7 @@ agent = fixieai.CodeShotAgent(
     BASE_PROMPT,
     [],
     conversational=True,
-    llm_settings=fixieai.LlmSettings(temperature=1.0, model="gpt-4", maximum_tokens=500),
+    llm_settings=fixieai.LlmSettings(temperature=1.0, model="openai/gpt-4", maximum_tokens=500),
 )
 ```
 
