@@ -554,6 +554,7 @@ def deploy(ctx, path, metadata_only, validate):
                         f"{key}={value}\n"
                         for key, value in {
                             FIXIE_ALLOWED_AGENT_ID: agent_id,
+                            "FIXIE_API_URL": constants.FIXIE_API_URL,
                         }.items()
                     ),
                     tarball,
