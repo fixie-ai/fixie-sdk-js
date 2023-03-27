@@ -44,7 +44,8 @@ class LlmSettings:
 
     Args:
         model Optional[str]: The name of the LLM to use.
-            See https://docs.fixie.ai/agents/backend-llms for supported values.
+            See https://docs.fixie.ai/agents/#agent-default-model-and-model-params for supported
+            values.
         temperature Optional[float]: The sampling temperature to use, between 0 and 2.
             Higher values like 0.8 will make the output more random, while lower values like
             0.2 will make it more focused and deterministic. The precise behavior is
