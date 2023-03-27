@@ -550,8 +550,8 @@ def deploy(ctx, path, metadata_only, validate):
                 )
                 _add_text_file_to_tarfile(
                     ".env",
-                    "".join(
-                        f"{key}={value}\n"
+                    "\n".join(
+                        f"{key}={value}"
                         for key, value in {
                             FIXIE_ALLOWED_AGENT_ID: agent_id,
                             "FIXIE_API_URL": constants.FIXIE_API_URL,
