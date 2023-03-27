@@ -1,6 +1,7 @@
 site_name: Fixie Developer Portal
 site_description: API and SDK documentation for Fixie
 site_url: https://fixie.ai/
+copyright: Copyright (c) 2023 Fixie.ai, Inc.
 
 # theme:
 #   palette:
@@ -49,15 +50,21 @@ edit_uri: ""
 nav:
   - Introduction: "index.md"
   - Architecture: "architecture.md"
-  - Agents:
+  - Building Fixie Agents:
       - Agent QuickStart: "agent-quickstart.md"
       - Fixie Agent API: "agents.md"
       - Agent Protocol: "agent-protocol.md"
   - Python SDK:
       - Python Client API: "python-client-api.md"
       - Python Agent API: "python-agent-api.md"
-  - CLI: "cli.md"
-  - GraphQL: "https://app.fixie.ai/static/docs/index.html"
+  - Command line interface:
+      - CLI: "cli.md"
+  - GraphQL API:
+      - GraphQL: "https://app.fixie.ai/static/docs/index.html"
+  - Other links:
+      - GitHub: "https://github.com/fixie-ai/fixie-sdk"
+      - Discord: "https://discord.gg/MsKAeKF8kU"
+      - Twitter: "https://twitter.com/fixieai"
 
 markdown_extensions:
   - admonition

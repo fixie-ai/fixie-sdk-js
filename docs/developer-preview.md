@@ -1,4 +1,4 @@
-## Welcome to Fixie Developer Preview
+## Welcome to the Fixie Developer Preview
 
 Welcome to Fixie! We're happy you're here. We wanted to give you a brief overview of how things work and where to get help if you need stuck.
 

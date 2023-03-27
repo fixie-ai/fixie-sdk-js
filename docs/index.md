@@ -12,9 +12,15 @@ building custom agents that plug into the platform.
 
 To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
 
-### 🤔 Need help? 
+> 🔥 **Fixie Developer Preview**
+> 
+> Fixie is currently available as a Developer Preview. During this time, Fixie is free to use,
+> however, there is a limit on the number of queries per user per day. Please check out
+> [Fixie Develper Preview](developer-preview.md) for more information.
 
-The best way to contact us and get support is to join our [Discord server](https://discord.gg/MsKAeKF8kU).
+> 🤔 **Need help?**
+> 
+> The best way to contact us and get support is to join our [Discord server](https://discord.gg/MsKAeKF8kU).
 
 ---
 
