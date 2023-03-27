@@ -28,7 +28,7 @@ yaml.add_representer(
 class DataClassYamlMixin(dataclasses_json.DataClassJsonMixin):
     @classmethod
     def from_yaml(cls: Type[A], config: Union[str, TextIO]) -> A:
-        return cls.from_dict(yaml.safe_load(config))
+        return cls.from_dict(yaml.safe_load(config) or {})
 
     def to_yaml(self) -> str:
         as_dict: MutableMapping[str, Any] = self.to_dict()

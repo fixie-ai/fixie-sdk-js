@@ -1,4 +1,5 @@
 import click
+from gql.transport import exceptions as gql_exceptions
 
 from fixieai.cli.auth import oauth_flow
 from fixieai.cli.auth import user_config
@@ -12,14 +13,14 @@ def validate_not_authed(ctx, param, force):
         # --force is set
         return
     try:
-        config = user_config.load_config()
-        if config.fixie_api_key is not None:
-            username = _get_username(config.fixie_api_key)
+        api_key = user_config.load_config().api_key
+        if api_key is not None:
+            username = _get_username(api_key)
             click.echo("Already authenticated as ", nl=False)
             click.secho(username, fg="green", nl=False, bold=True)
             click.echo(". Set --force to force re-authentication.")
             ctx.exit()
-    except FileNotFoundError:
+    except (FileNotFoundError, gql_exceptions.TransportQueryError):
         pass
 
 
@@ -38,7 +39,7 @@ def auth():
     except FileNotFoundError:
         config = user_config.UserConfig()
 
-    config.fixie_api_key = fixie_api_token
+    config.api_key = fixie_api_token
     user_config.save_config(config)
 
     username = _get_username(fixie_api_token)
