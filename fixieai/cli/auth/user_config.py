@@ -1,15 +1,55 @@
 import dataclasses
 import os
-from typing import Optional
+from typing import List, Optional
 
+import dataclasses_json
+
+from fixieai import constants
 from fixieai.cli import utils
+
+
+@dataclasses.dataclass
+class EnvironmentSpecificAuthToken(utils.DataClassYamlMixin):
+    """Represents an auth token bound to a specific environment."""
+
+    url: str
+    """The URL of the environment."""
+
+    auth_token: str
+    """The auth token for the environment."""
 
 
 @dataclasses.dataclass
 class UserConfig(utils.DataClassYamlMixin):
     """Represents user config at ~/.config/fixie/config.yaml"""
 
-    fixie_api_key: Optional[str] = None
+    default_auth_token: Optional[str] = dataclasses.field(
+        default=None, metadata=dataclasses_json.config(field_name="fixie_api_key")
+    )
+    """The default auth token, will be used if no URL-specific auth token matches."""
+
+    environment_auth_tokens: List[EnvironmentSpecificAuthToken] = dataclasses.field(
+        default_factory=lambda: [],
+    )
+    """Environment-specific auth tokens."""
+
+    @property
+    def auth_token(self) -> Optional[str]:
+        for environment_key in self.environment_auth_tokens:
+            if environment_key.url == constants.FIXIE_API_URL:
+                return environment_key.auth_token
+
+        # Otherwise return the default auth token
+        return self.default_auth_token
+
+    @auth_token.setter
+    def auth_token(self, value: str):
+        if self.auth_token != value:
+            # Append it to the environment-specific tokens and make it the default
+            self.environment_auth_tokens.append(
+                EnvironmentSpecificAuthToken(constants.FIXIE_API_URL, value)
+            )
+            self.default_auth_token = value
 
 
 def load_config(path: Optional[str] = None) -> UserConfig:
