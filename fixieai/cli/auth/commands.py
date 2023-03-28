@@ -13,7 +13,7 @@ def validate_not_authed(ctx, param, force):
         # --force is set
         return
     try:
-        api_key = user_config.load_config().api_key
+        api_key = user_config.load_config().auth_token
         if api_key is not None:
             username = _get_username(api_key)
             click.echo("Already authenticated as ", nl=False)
@@ -39,7 +39,7 @@ def auth():
     except FileNotFoundError:
         config = user_config.UserConfig()
 
-    config.api_key = fixie_api_token
+    config.auth_token = fixie_api_token
     user_config.save_config(config)
 
     username = _get_username(fixie_api_token)

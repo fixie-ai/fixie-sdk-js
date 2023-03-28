@@ -29,7 +29,7 @@ FIXIE_AGENT_API_AUDIENCES = ["https://app.fixie.ai/api", "https://app.dev.fixie.
 
 
 def fixie_api_key() -> str:
-    """Returns authenticated user's fixie api key.
+    """Returns authenticated user's fixie auth token.
 
     User may authenticate via `fixie auth`, or by setting FIXIE_API_KEY environment
     variable to override any previous authentication.
@@ -42,9 +42,9 @@ def fixie_api_key() -> str:
     try:
         from fixieai.cli.auth import user_config
 
-        api_key = user_config.load_config().api_key
-        assert isinstance(api_key, str)
-        return api_key
+        auth_token = user_config.load_config().auth_token
+        assert isinstance(auth_token, str)
+        return auth_token
     except (FileNotFoundError, KeyError, AssertionError):
         raise PermissionError(
             "User is not authenticated. Run 'fixie auth' to authenticate, or set the "

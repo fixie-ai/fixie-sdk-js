@@ -35,6 +35,10 @@ class DataClassYamlMixin(dataclasses_json.DataClassJsonMixin):
 
         # Exclude any keys whose values and default values are None.
         for field in dataclasses.fields(self):
+            if field.name not in as_dict:
+                # Not all fields serialize to their Python names, leave them as-is.
+                continue
+
             value = as_dict[field.name]
             if value is None and field.default is None:
                 del as_dict[field.name]
