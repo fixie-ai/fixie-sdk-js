@@ -46,3 +46,14 @@ body {
 h1, h2, h3, h4, h5, h6, legend {
   font-family: Helvetica Neue,Arial,sans-serif;
 }
+
+/* Indentation. */
+div.doc-contents:not(.first) {
+  padding-left: 25px;
+  border-left: .05rem solid rgba(20, 20, 20, 0.2);
+}
+
+/* Fix heading spacing in mkdocstrings-python. */
+.doc-heading {
+  padding-top: 40px;
+}
