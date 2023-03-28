@@ -2,20 +2,20 @@
 
 ## ::: fixieai.client.client
     options:
-      show_source: false
+      show_source: true
 
 ## ::: fixieai.client.session
     options:
-      show_source: false
+      show_source: true
 
 ## ::: fixieai.client.agent
     options:
-      show_source: false
+      show_source: true
 
 ## ::: fixieai.cli.cli
     options:
-      show_source: false
+      show_source: true
 
 ## ::: fixieai.cli.session.console
     options:
-      show_source: false
+      show_source: true 
