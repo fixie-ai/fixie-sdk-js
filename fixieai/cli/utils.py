@@ -28,13 +28,17 @@ yaml.add_representer(
 class DataClassYamlMixin(dataclasses_json.DataClassJsonMixin):
     @classmethod
     def from_yaml(cls: Type[A], config: Union[str, TextIO]) -> A:
-        return cls.from_dict(yaml.safe_load(config))
+        return cls.from_dict(yaml.safe_load(config) or {})
 
     def to_yaml(self) -> str:
         as_dict: MutableMapping[str, Any] = self.to_dict()
 
         # Exclude any keys whose values and default values are None.
         for field in dataclasses.fields(self):
+            if field.name not in as_dict:
+                # Not all fields serialize to their Python names, leave them as-is.
+                continue
+
             value = as_dict[field.name]
             if value is None and field.default is None:
                 del as_dict[field.name]

@@ -3,8 +3,6 @@ and your Fixie API key."""
 
 import os
 
-import yaml
-
 # Base Fixie platform URL.
 FIXIE_API_URL = os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
 # Path to fixie config file.
@@ -31,7 +29,7 @@ FIXIE_AGENT_API_AUDIENCES = ["https://app.fixie.ai/api", "https://app.dev.fixie.
 
 
 def fixie_api_key() -> str:
-    """Returns authenticated user's fixie api key.
+    """Returns authenticated user's fixie auth token.
 
     User may authenticate via `fixie auth`, or by setting FIXIE_API_KEY environment
     variable to override any previous authentication.
@@ -42,10 +40,11 @@ def fixie_api_key() -> str:
     if "FIXIE_API_KEY" in os.environ:
         return os.environ["FIXIE_API_KEY"]
     try:
-        with open(FIXIE_CONFIG_PATH) as fp:
-            api_key = yaml.safe_load(fp)["fixie_api_key"]
-            assert isinstance(api_key, str)
-            return api_key
+        from fixieai.cli.auth import user_config
+
+        auth_token = user_config.load_config().auth_token
+        assert isinstance(auth_token, str)
+        return auth_token
     except (FileNotFoundError, KeyError, AssertionError):
         raise PermissionError(
             "User is not authenticated. Run 'fixie auth' to authenticate, or set the "
