@@ -13,9 +13,9 @@ def validate_not_authed(ctx, param, force):
         # --force is set
         return
     try:
-        api_key = user_config.load_config().auth_token
-        if api_key is not None:
-            username = _get_username(api_key)
+        auth_token = user_config.load_config().auth_token
+        if auth_token is not None:
+            username = _get_username(auth_token)
             click.echo("Already authenticated as ", nl=False)
             click.secho(username, fg="green", nl=False, bold=True)
             click.echo(". Set --force to force re-authentication.")
@@ -33,21 +33,21 @@ def validate_not_authed(ctx, param, force):
     expose_value=False,
 )
 def auth():
-    fixie_api_token = oauth_flow.oauth_flow()
+    fixie_auth_token = oauth_flow.oauth_flow()
     try:
         config = user_config.load_config()
     except FileNotFoundError:
         config = user_config.UserConfig()
 
-    config.auth_token = fixie_api_token
+    config.auth_token = fixie_auth_token
     user_config.save_config(config)
 
-    username = _get_username(fixie_api_token)
+    username = _get_username(fixie_auth_token)
     click.secho("Success! You're authenticated as ", fg="green", bold=True, nl=False)
     click.secho(username, fg="magenta", nl=False, bold=True)
     click.secho(".")
 
 
-def _get_username(api_key: str) -> str:
-    """Gets the username for an api_key."""
-    return client.FixieClient(api_key).get_current_username()
+def _get_username(auth_token: str) -> str:
+    """Gets the username for an auth token."""
+    return client.FixieClient(auth_token).get_current_username()
