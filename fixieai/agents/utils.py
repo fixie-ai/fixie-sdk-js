@@ -6,6 +6,8 @@ import re
 from typing import TYPE_CHECKING, Callable, Optional, Set, get_type_hints
 from unittest import mock
 
+from fixieai.agents import agent_base
+
 if TYPE_CHECKING:
     from fixieai.agents import api
     from fixieai.agents import code_shot
@@ -33,7 +35,7 @@ def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
         )
 
 
-def validate_registered_pyfunc(func: Callable, agent: code_shot.CodeShotAgent):
+def validate_registered_pyfunc(func: Callable, agent: agent_base.AgentBase):
     """Validates `func`'s signature to be a valid CodeShot Func.
 
     Args:
