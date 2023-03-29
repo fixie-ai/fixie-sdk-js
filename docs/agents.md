@@ -185,11 +185,13 @@ token for the user.
 ```python
 import fixieai
 
-oauth_params = fixieai.OAuthParams()
-oauth_params.client_id = "XXXXX.apps.googleusercontent.com",
-oauth_params.auth_uri = "https://accounts.google.com/o/oauth2/auth"
-oauth_params.token_uri = "https://oauth2.googleapis.com/token"
-oauth_params.client_secret = "XXXXXXXXX"
+oauth_params = fixieai.OAuthParams(
+    client_id="XXXXX.apps.googleusercontent.com",
+    auth_uri="https://accounts.google.com/o/oauth2/auth",
+    token_uri="https://oauth2.googleapis.com/token",
+    client_secret="XXXXXXXXX",
+    scopes=["https://www.googleapis.com/auth/calendar.events"]
+)
 
 agent = fixieai.CodeShotAgent(BASE_PROMPT, FEW_SHOTS, oauth_params=oauth_params)
 
