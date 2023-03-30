@@ -7,6 +7,8 @@ import threading
 import time
 from typing import Tuple
 
+import dotenv
+
 import fixieai
 from fixieai import agents
 from fixieai.cli.agent import agent_config
@@ -36,6 +38,10 @@ def load_agent_from_path(
     path = agent_config.normalize_path(path)
     config = agent_config.load_config(path)
     agent_dir = os.path.dirname(path) or "."
+
+    dotenv_path = os.path.join(agent_dir, ".env")
+    if os.path.exists(dotenv_path):
+        dotenv.load_dotenv(dotenv_path)
 
     # Inject the agent directory into PYTHONPATH
     sys.path.insert(0, agent_dir)
