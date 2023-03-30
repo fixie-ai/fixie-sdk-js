@@ -409,8 +409,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
         else:
             python_exe, agent_env = sys.executable, os.environ.copy()
 
-        agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
-
         # Validate that the agent loads before setting up the server.
         _validate_agent_loads_or_exit(
             console, agent_dir, config.handle, python_exe, agent_env
