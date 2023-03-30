@@ -18,7 +18,7 @@ install:
 
 # Format code.
 format:
-    poetry run autoflake . --remove-all-unused-imports --quiet --in-place -r --exclude third_party
+    poetry run autoflake . --remove-all-unused-imports --quiet --in-place -r --exclude third_party  --exclude fixie-examples
     poetry run isort . --force-single-line-imports
     poetry run black .
 
@@ -26,7 +26,7 @@ format:
 check:
     poetry run black . --check
     poetry run isort . --check --force-single-line-imports
-    poetry run autoflake . --check --quiet --remove-all-unused-imports -r --exclude third_party
+    poetry run autoflake . --check --quiet --remove-all-unused-imports -r --exclude third_party --exclude fixie-examples
     poetry run mypy .
 
 # Run all tests.
