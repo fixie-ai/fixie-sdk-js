@@ -481,13 +481,19 @@ def _spinner(console: rich_console.Console, text: str):
 
 
 def _tarinfo_filter(
-    console: rich_console.Console, root: str, tarinfo: tarfile.TarInfo
+    console: rich_console.Console, root: str, tar_prefix: str, tarinfo: tarfile.TarInfo
 ) -> Optional[tarfile.TarInfo]:
     """Filters out hidden files from being included in a tarball."""
 
-    if os.path.basename(tarinfo.name).startswith("."):
+    basename = os.path.basename(tarinfo.name)
+    if basename.startswith(".") and basename != ".env":
+        original_path = tarinfo.name
+        if original_path.startswith(tar_prefix):
+            original_path = original_path[len(tar_prefix) :]
+
+        original_path = os.path.join(root, original_path)
         console.print(
-            f"Ignoring hidden {'directory' if tarinfo.isdir() else 'file'} {os.path.join(root, tarinfo.name)}",
+            f"Ignoring hidden {'directory' if tarinfo.isdir() else 'file'} {original_path}",
             style="grey53",
         )
         return None
@@ -541,7 +547,9 @@ def deploy(ctx, path, metadata_only, validate):
                 tarball.add(
                     agent_dir,
                     arcname="agent",
-                    filter=functools.partial(_tarinfo_filter, console, agent_dir),
+                    filter=functools.partial(
+                        _tarinfo_filter, console, agent_dir, "agent/"
+                    ),
                 )
 
                 # Add the bootstrapping code and environment variables

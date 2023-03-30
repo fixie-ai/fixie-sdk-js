@@ -10,6 +10,7 @@ from fixieai.agents import LlmSettings
 from fixieai.agents import Message
 from fixieai.agents import OAuthHandler
 from fixieai.agents import OAuthParams
+from fixieai.agents import StandaloneAgent
 from fixieai.agents import UserStorage
 from fixieai.client import FixieClient
 from fixieai.client import get_agents
@@ -23,6 +24,7 @@ __all__ = [
     "Embed",
     "Message",
     "CodeShotAgent",
+    "StandaloneAgent",
     "DocumentCorpus",
     "DocumentLoader",
     "LlmSettings",
