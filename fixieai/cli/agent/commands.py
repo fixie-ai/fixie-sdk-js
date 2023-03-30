@@ -431,7 +431,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
 
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
-
         subprocess.run(
             [
                 python_exe,
