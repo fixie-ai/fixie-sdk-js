@@ -11,29 +11,28 @@ import dotenv
 
 import fixieai
 from fixieai import agents
-from fixieai.agents import utils
 from fixieai.cli.agent import agent_config
 
 
 @contextlib.contextmanager
 def _ensure_serving_disabled():
-    original_serve = agents.CodeShotAgent.serve
+    original_serve = agents.AgentBase.serve
 
     def _fail(*_, **__):
         raise RuntimeError(
             "agent.serve() must not be called while your agent is being imported."
         )
 
-    agents.CodeShotAgent.serve = _fail  # type: ignore[assignment]
+    agents.AgentBase.serve = _fail  # type: ignore[assignment]
     try:
         yield
     finally:
-        agents.CodeShotAgent.serve = original_serve  # type: ignore[assignment]
+        agents.AgentBase.serve = original_serve  # type: ignore[assignment]
 
 
 def load_agent_from_path(
     path: str,
-) -> Tuple[agent_config.AgentConfig, agents.CodeShotAgent]:
+) -> Tuple[agent_config.AgentConfig, agents.AgentBase]:
     """Loads an Agent and its config from a path."""
 
     path = agent_config.normalize_path(path)
@@ -54,7 +53,10 @@ def load_agent_from_path(
     with _ensure_serving_disabled():
         module = importlib.import_module(module_name)
     agent_impl = getattr(module, attr)
-    utils.validate_code_shot_agent(agent_impl)
+    assert isinstance(
+        agent_impl, agents.AgentBase
+    ), "Entrypoint must refer to an agent instance"
+    agent_impl.validate()
     return config, agent_impl
 
 

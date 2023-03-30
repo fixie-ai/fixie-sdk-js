@@ -12,6 +12,10 @@
     options:
       show_source: true
 
+## ::: fixieai.agents.standalone
+    options:
+      show_source: true
+
 ## ::: fixieai.agents.user_storage
     options:
       show_source: true
