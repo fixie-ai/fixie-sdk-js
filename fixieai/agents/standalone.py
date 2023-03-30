@@ -54,7 +54,9 @@ class StandaloneAgent(agent_base.AgentBase):
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        token_claims = self.validate_token(credentials)
+        token_claims = self.validate_token_and_update_query_access_token(
+            query, credentials
+        )
 
         kwargs = self.get_func_kwargs(
             query,
