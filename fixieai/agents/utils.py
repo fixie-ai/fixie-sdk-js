@@ -30,9 +30,10 @@ def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
     """A client-side validation of few_shots and agent."""
     _validate_base_prompt(agent.base_prompt)
     for fewshot in agent.few_shots:
-        _validate_few_shot_prompt(
-            fewshot, agent.conversational, agent.is_valid_func_name
-        )
+        if fewshot is not "":
+            _validate_few_shot_prompt(
+                fewshot, agent.conversational, agent.is_valid_func_name
+            )
 
 
 def validate_registered_pyfunc(func: Callable, agent: agent_base.AgentBase):
