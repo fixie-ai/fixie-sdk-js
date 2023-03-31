@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import urllib.request
 import venv
 from contextlib import contextmanager
@@ -422,9 +423,25 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             console.print(
                 f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
-            config.deployment_url = stack.enter_context(tunnel.Tunnel(port))
+            deployment_urls_iter = iter(stack.enter_context(tunnel.Tunnel(port)))
+            config.deployment_url = next(deployment_urls_iter)
 
-        agent_api = _ensure_agent_updated(client, agent_id, config)
+            agent_api = _ensure_agent_updated(client, agent_id, config)
+
+            def _watch_tunnel():
+                while True:
+                    url = next(deployment_urls_iter, None)
+                    if url is None:
+                        break
+                    agent_api.update_agent(func_url=url)
+                    console.print(
+                        f"[yellow]Tunnel URL was updated, now serving via {url}[/yellow]"
+                    )
+
+            threading.Thread(target=_watch_tunnel, daemon=True).start()
+        else:
+            agent_api = _ensure_agent_updated(client, agent_id, config)
+
         console.print(
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
