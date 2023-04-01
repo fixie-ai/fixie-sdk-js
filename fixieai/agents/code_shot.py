@@ -92,11 +92,8 @@ class CodeShotAgent(agent_base.AgentBase):
 
 def _split_few_shots(few_shots: str) -> List[str]:
     """Split a long string of all few-shots into a list of few-shot strings."""
-    # First, strip all lines to remove bad spaces.
-    few_shots = "\n".join(line.strip() for line in few_shots.splitlines())
-    # Then, split by "\n\nQ:".
-    few_shot_splits = few_shots.split("\n\nQ:")
-    few_shot_splits = [few_shot_splits[0]] + [
-        "Q:" + few_shot for few_shot in few_shot_splits[1:]
-    ]
-    return few_shot_splits
+    lines = few_shots.splitlines()
+
+    def not_empty(s):
+        return s != ""
+    return list(filter(not_empty, lines))
