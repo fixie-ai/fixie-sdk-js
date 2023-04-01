@@ -5,7 +5,7 @@ import subprocess
 class Tunnel:
     """Start an Internet-accessible tunnel to the Agent running at the given host:port.
 
-    Returns the public URL on which the Agent can be contacted.
+    Returns a generator that yields public URLs on which the Agent can be contacted.
 
     Shuts down the tunnel when the context manager exits.
     """
@@ -35,17 +35,21 @@ class Tunnel:
             stderr=subprocess.DEVNULL,
             encoding="utf-8",
         )
-        assert self._proc.stdout is not None
-        while True:
-            line = self._proc.stdout.readline()
-            if not line:
-                break
-            try:
-                parsed = json.loads(line)
-                if "address" in parsed:
-                    return f"https://{parsed['address']}"
-            except:
-                pass
+
+        def _gen():
+            while True:
+                assert self._proc.stdout is not None
+                line = self._proc.stdout.readline()
+                if not line:
+                    break
+                try:
+                    parsed = json.loads(line)
+                    if "address" in parsed:
+                        yield f"https://{parsed['address']}"
+                except:
+                    pass
+
+        return _gen()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._proc.terminate()
