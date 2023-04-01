@@ -24,6 +24,11 @@ def validate_not_authed(ctx, param, force):
         pass
 
 
+def _get_username(auth_token: str) -> str:
+    """Gets the username for an auth token."""
+    return client.FixieClient(auth_token).get_current_username()
+
+
 @click.command("auth", help="Authorizes `fixie` to access Fixie platform.")
 @click.option(
     "--force",
@@ -48,6 +53,13 @@ def auth():
     click.secho(".")
 
 
-def _get_username(auth_token: str) -> str:
-    """Gets the username for an auth token."""
-    return client.FixieClient(auth_token).get_current_username()
+@click.command("user", help="Displays information on the authenticated user.")
+@click.pass_context
+def user(ctx):
+    current_user = ctx.obj.client.get_current_user()
+    click.secho("You are authenticated to ", nl=False)
+    click.secho(ctx.obj.client.url, fg="yellow", nl=False)
+    click.secho(" as:")
+    for key, value in current_user.items():
+        click.secho(key, fg="green", nl=False)
+        click.echo(f": {value}")
