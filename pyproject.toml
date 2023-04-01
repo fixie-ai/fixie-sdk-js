@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixieai"
-version = "0.2.12"
+version = "0.2.13"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
