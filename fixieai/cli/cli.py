@@ -51,6 +51,7 @@ fixie.add_command(agent_commands.serve, "serve")
 fixie.add_command(agent_commands.publish, "publish")
 fixie.add_command(agent_commands.unpublish, "unpublish")
 fixie.add_command(session_commands.new_session, "console")
+fixie.add_command(session_commands.query, "query")
 
 
 if __name__ == "__main__":

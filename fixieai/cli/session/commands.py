@@ -69,3 +69,39 @@ def open_session(ctx, web, session_id: str):
 
     c = console.Console(client, session=session)
     c.run()
+
+
+@session.command("query", help="Runs a single query and exit.")
+@click.argument("message", required=True)
+@web_option
+@click.option("--keep", is_flag=True, help="Do not delete the session after use.")
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose output.")
+@click.option(
+    "-a",
+    "--agent",
+    required=False,
+    callback=validate_agent_exists,
+    help="A specific agent to talk to. If unset, `fixie` is used.",
+)
+@click.pass_context
+def query(ctx, agent, web, keep, verbose, message):
+    client = ctx.obj.client
+    session = client.create_session(agent)
+    if verbose:
+        click.secho(f"Session ID: ", nl=False)
+        click.secho(f"{session.session_id}", fg="green")
+        click.secho(f"Session URL: ", nl=False)
+        click.secho(f"{session.session_url}", fg="green")
+
+    if web:
+        click.launch(session.session_url)
+        return
+
+    response = session.query(message)
+
+    print(response)
+    if not keep:
+        if verbose:
+            click.echo(f"Deleting session ", nl=False)
+            click.secho(f"{session.session_id}", fg="green")
+        session.delete_session()
