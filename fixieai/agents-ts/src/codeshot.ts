@@ -11,29 +11,29 @@ interface Message {
 }
 
 class AgentResponse {
-  constructor(readonly message: Message,) {}
+  constructor(readonly message: Message) {}
 }
 
-type AgentFunc = (args: string,) => string;
+type AgentFunc = (args: string) => string;
 
 export class CodeShotAgent {
   basePrompt: string;
   fewShots: string[];
   funcs = new Map<string, AgentFunc>();
 
-  constructor(prompt: string, shots: string[],) {
+  constructor(prompt: string, shots: string[]) {
     this.basePrompt = prompt;
     this.fewShots = shots;
   }
 
-  registerFunction(func: AgentFunc,) {
-    this.funcs.set(func.name, func,);
+  registerFunction(func: AgentFunc) {
+    this.funcs.set(func.name, func);
   }
 
-  runFunction(funcName: string, args: string,): string | null {
-    const func = this.funcs.get(funcName,);
+  runFunction(funcName: string, args: string): string | null {
+    const func = this.funcs.get(funcName);
     if (func) {
-      return func(args,).toString();
+      return func(args).toString();
     }
     return null;
   }
@@ -51,15 +51,15 @@ export class CodeShotAgent {
     port = 8181,
   ) {
     const app = express();
-    app.use(bodyParser.json(),);
-    app.get('/', (req, res,) => res.send(this._handshake(),),);
-    app.post('/:funcName', (req, res,) => {
+    app.use(bodyParser.json());
+    app.get('/', (req, res) => res.send(this._handshake()));
+    app.post('/:funcName', (req, res) => {
       const funcName = req.params.funcName;
       const body = req.body;
-      const result = this.runFunction(funcName, body.message.text,);
-      res.send({ message: { text: result, }, } as AgentResponse,);
-    },);
-    await new Promise<void>((resolve,) => app.listen(port, () => resolve(),));
-    console.log(`Codeshot agent listening on port ${port}.`,);
+      const result = this.runFunction(funcName, body.message.text);
+      res.send({ message: { text: result } } as AgentResponse);
+    });
+    await new Promise<void>((resolve) => app.listen(port, () => resolve()));
+    console.log(`Codeshot agent listening on port ${port}.`);
   }
 }
