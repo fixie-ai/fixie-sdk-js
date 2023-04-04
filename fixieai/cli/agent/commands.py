@@ -112,10 +112,12 @@ class AgentTemplator(ABC):
     def get_agent_template_url(self) -> str:
         pass
 
+    @abstractmethod
     def get_main_file_extension(self) -> str:
         pass
 
-    def write_helper_files(self) -> None:
+    @abstractmethod
+    def write_helper_files(self, params: Dict[str, str]) -> None:
         pass
 
 
@@ -173,6 +175,7 @@ class PythonTemplator(AgentTemplator):
 
     def write_helper_files(self, params: Dict[str, str]) -> None:
         requirement = params.get("requirement")
+        assert requirement is not None, "write_helper_files params must include a 'requirement' entry."
         try:
             with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
                 existing_requirements = list(
@@ -252,6 +255,7 @@ class PythonTemplator(AgentTemplator):
     "--language",
     type=click.Choice(["python", "py", "typescript", "TS"], case_sensitive=False),
     default="python",
+    prompt=True,
     help="Build your agent in Python or TypeScript.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
@@ -265,6 +269,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     current_config.more_info_url = more_info_url
     agent_config.save_config(current_config)
 
+    templator: AgentTemplator
     if language.lower() in ["python", "py"]:
         templator = PythonTemplator()
     elif language.lower() in ["typescript", "ts"]:

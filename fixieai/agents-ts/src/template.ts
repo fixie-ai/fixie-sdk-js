@@ -9,6 +9,7 @@
  *     https://github.com/fixie-ai/fixie-examples
  */
 
+// @ts-expect-error
 import { CodeShotAgent, Message } from 'fixieai';
 
 const BASE_PROMPT = 'General info about what this agent does and the tone it should use.';
