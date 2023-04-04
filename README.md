@@ -76,3 +76,10 @@ session = client.create_session(None)
 response = session.query("What is 38 * 20302?")
 print(response)
 ```
+
+## Contributing
+If you make changes to the Python CLI, use this command to see them locally:
+
+```
+poetry run fixie [...additional args]
+```

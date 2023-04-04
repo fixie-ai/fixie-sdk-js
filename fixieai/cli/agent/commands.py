@@ -118,7 +118,7 @@ class AgentTemplator(ABC):
 class TypeScriptTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
         # Before merging to main, update this to match the Python version.
-        return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/feature-ts/agents-ts/src/template.ts"
+        return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/agents-ts/src/template.ts"
 
     def get_main_file_extension(self) -> str:
         return '.ts'
@@ -176,7 +176,7 @@ class PythonTemplator(AgentTemplator):
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
     
 
-@agent.command("init", help="Creates an agent.yaml file.")
+@agent.command("init", help="Creates an agent.yaml fadsfile.")
 @click.option(
     "--handle",
     prompt=True,
