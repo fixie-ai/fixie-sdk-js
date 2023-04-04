@@ -114,9 +114,7 @@ def config_already_exists():
     except FileNotFoundError:
         return False
 
-
 default_config = agent_config.AgentConfig()
-
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
