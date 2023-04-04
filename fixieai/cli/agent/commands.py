@@ -13,8 +13,6 @@ import tempfile
 import threading
 import urllib.request
 import venv
-from abc import ABC
-from abc import abstractmethod
 from contextlib import contextmanager
 from typing import Dict, List, Optional, Tuple
 
@@ -109,136 +107,6 @@ def _update_agent_requirements(
     return resolved_requirements
 
 
-class AgentTemplator(ABC):
-    @abstractmethod
-    def get_agent_template_url(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_main_file_extension(self) -> str:
-        pass
-
-    @abstractmethod
-    def write_helper_files(self, main_path: str) -> None:
-        pass
-
-    @abstractmethod
-    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
-        pass
-
-
-class TypeScriptTemplator(AgentTemplator):
-    def __init__(self, handle: str, description: str) -> None:
-        self.handle = handle
-        self.description = description
-        super().__init__()
-
-    def get_agent_template_url(self) -> str:
-        # Before merging to main, update this to match the Python version.
-        return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
-
-    def get_main_file_extension(self) -> str:
-        return ".ts"
-
-    def _write_json_file_if_not_exists(self, filename: str, data: Dict) -> None:
-        if os.path.exists(filename):
-            click.secho(
-                f"Not writing {filename} because it already exists.",
-                fg="yellow",
-            )
-            return
-
-        with open(filename, "wt") as f:
-            json.dump(data, f, indent=2)
-
-    def write_helper_files(self, main_path: str) -> None:
-        package_json = {
-            "name": self.handle,
-            "version": "1.0.0",
-            "description": self.description,
-            "main": main_path,
-            "scripts": {"test": 'echo "Error: no test specified" && exit 1'},
-            "license": "ISC",
-            "devDependencies": {
-                "@tsconfig/node18": "^1.0.1",
-            },
-            "dependencies": {"fixieai": "^1.0.0"},
-        }
-
-        tsconfig = {
-            # Keeping this up to date may become annoying, but we can deal with that later.
-            "extends": "@tsconfig/node18/tsconfig.json",
-            "compilerOptions": {"noEmit": True},
-        }
-
-        self._write_json_file_if_not_exists("package.json", package_json)
-        self._write_json_file_if_not_exists("tsconfig.json", tsconfig)
-
-    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
-        agent_config.language = "typescript"
-        agent_config.entry_point = "index.ts"
-
-
-class PythonTemplator(AgentTemplator):
-    def __init__(self, requirement: str) -> None:
-        self.requirement = requirement
-        super().__init__()
-
-    def get_agent_template_url(self) -> str:
-        return "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
-
-    def get_main_file_extension(self) -> str:
-        return ".py"
-
-    def write_helper_files(self, _main_path: str) -> None:
-        try:
-            with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
-                existing_requirements = list(
-                    r.strip() for r in requirements_txt.readlines()
-                )
-        except FileNotFoundError:
-            existing_requirements = []
-
-        resolved_requirements = _update_agent_requirements(
-            existing_requirements, list(self.requirement)
-        )
-        if not existing_requirements:
-            write_requirements = True
-        else:
-            new_requirements = [
-                r for r in resolved_requirements if r not in existing_requirements
-            ]
-            removed_requirements = [
-                r for r in existing_requirements if r not in resolved_requirements
-            ]
-
-            if new_requirements or removed_requirements:
-                click.secho(
-                    f"{REQUIREMENTS_TXT} already exists.",
-                    fg="yellow",
-                )
-                if new_requirements:
-                    click.secho(
-                        f"The following requirements will be added: {new_requirements}",
-                        fg="yellow",
-                    )
-                if removed_requirements:
-                    click.secho(
-                        f"The following requirements will be removed: {removed_requirements}",
-                        fg="yellow",
-                    )
-                write_requirements = click.confirm("Okay to proceed?", default=True)
-            else:
-                write_requirements = False
-
-        if write_requirements:
-            with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
-                requirements_txt.writelines(r + "\n" for r in resolved_requirements)
-
-    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
-        pass
-
-
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
@@ -282,35 +150,36 @@ class PythonTemplator(AgentTemplator):
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
-    templator: AgentTemplator
-    if language.lower() in ["python", "py"]:
-        templator = PythonTemplator(requirement)
-    elif language.lower() in ["typescript", "ts"]:
-        templator = TypeScriptTemplator(handle, description)
+    is_typescript = language.lower() in ["typescript", "ts"]
 
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
-        current_config = agent_config.AgentConfig(language=language)
+        current_config = agent_config.AgentConfig()
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
     current_config.language = language
     current_config.more_info_url = more_info_url
 
-    # Having this hook here is maybe a little gross.
-    templator.modify_new_agent_config(current_config)
+    entry_module, _ = entry_point.split(":")
+    main_file_extension = ".py"
+    agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
+
+    if is_typescript:
+        main_file_extension = ".ts"
+        # Before merging to main, update this to match the Python version.
+        agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
+
+        if current_config.entry_point == agent_config.AgentConfig().entry_point:
+            current_config.entry_point = "index.ts"
+
+    expected_main_path = entry_module.replace(".", "/") + main_file_extension
 
     agent_config.save_config(current_config)
 
-    entry_module, _ = entry_point.split(":")
-    expected_main_path = (
-        entry_module.replace(".", "/") + templator.get_main_file_extension()
-    )
     if not os.path.exists(expected_main_path):
-        urllib.request.urlretrieve(
-            templator.get_agent_template_url(), expected_main_path
-        )
+        urllib.request.urlretrieve(agent_template_url, expected_main_path)
         click.secho(
             f"Initialized agent.yaml and made a template agent file at {expected_main_path}",
             fg="green",
@@ -318,7 +187,84 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    templator.write_helper_files(expected_main_path)
+    if is_typescript:
+
+        def write_json_file_if_not_exists(filename: str, data: Dict) -> None:
+            if os.path.exists(filename):
+                click.secho(
+                    f"Not writing {filename} because it already exists.",
+                    fg="yellow",
+                )
+                return
+
+            with open(filename, "wt") as f:
+                json.dump(data, f, indent=2)
+
+        package_json = {
+            "name": handle,
+            "version": "1.0.0",
+            "description": description,
+            "main": expected_main_path,
+            "scripts": {"test": 'echo "Error: no test specified" && exit 1'},
+            "license": "ISC",
+            "devDependencies": {
+                "@tsconfig/node18": "^1.0.1",
+            },
+            "dependencies": {"fixieai": "^1.0.0"},
+        }
+
+        tsconfig = {
+            # Keeping this up to date may become annoying, but we can deal with that later.
+            "extends": "@tsconfig/node18/tsconfig.json",
+            "compilerOptions": {"noEmit": True},
+        }
+
+        write_json_file_if_not_exists("package.json", package_json)
+        write_json_file_if_not_exists("tsconfig.json", tsconfig)
+    else:
+        try:
+            with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
+                existing_requirements = list(
+                    r.strip() for r in requirements_txt.readlines()
+                )
+        except FileNotFoundError:
+            existing_requirements = []
+
+        resolved_requirements = _update_agent_requirements(
+            existing_requirements, list(requirement)
+        )
+        if not existing_requirements:
+            write_requirements = True
+        else:
+            new_requirements = [
+                r for r in resolved_requirements if r not in existing_requirements
+            ]
+            removed_requirements = [
+                r for r in existing_requirements if r not in resolved_requirements
+            ]
+
+            if new_requirements or removed_requirements:
+                click.secho(
+                    f"{REQUIREMENTS_TXT} already exists.",
+                    fg="yellow",
+                )
+                if new_requirements:
+                    click.secho(
+                        f"The following requirements will be added: {new_requirements}",
+                        fg="yellow",
+                    )
+                if removed_requirements:
+                    click.secho(
+                        f"The following requirements will be removed: {removed_requirements}",
+                        fg="yellow",
+                    )
+                write_requirements = click.confirm("Okay to proceed?", default=True)
+            else:
+                write_requirements = False
+
+        if write_requirements:
+            with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
+                requirements_txt.writelines(r + "\n" for r in resolved_requirements)
 
 
 def _current_config() -> agent_config.AgentConfig:
