@@ -106,6 +106,7 @@ def _update_agent_requirements(
 
     return resolved_requirements
 
+
 def config_already_exists():
     try:
         agent_config.load_config()
@@ -113,7 +114,9 @@ def config_already_exists():
     except FileNotFoundError:
         return False
 
+
 default_config = agent_config.AgentConfig()
+
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
@@ -280,6 +283,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         if write_requirements:
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
+
 
 @agent.command("list", help="List agents.")
 @click.option("--verbose", is_flag=True, help="Enable verbose output.")
