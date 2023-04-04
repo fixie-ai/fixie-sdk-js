@@ -169,20 +169,33 @@ class FixieClient:
         """Return an existing Session object."""
         return Session(self, session_id)
 
-    def get_current_username(self) -> str:
+    def get_current_user(self) -> Dict[str, Any]:
         """Returns the username of the current user."""
         query = gql(
             """
             query getUsername {
                 user {
                     username
+                    firstName
+                    lastName
+                    email
+                    organization {
+                        name
+                    }
+                    dailyQueryLimit
+                    dailyUsedQueries
+                    avatar
                 }
             }
         """
         )
         result = self._gqlclient.execute(query)
         assert "user" in result and isinstance(result["user"], dict)
-        user = result["user"]
+        return result["user"]
+
+    def get_current_username(self) -> str:
+        """Returns the username of the current user."""
+        user = self.get_current_user()
         assert "username" in user and isinstance(user["username"], str)
         return user["username"]
 
