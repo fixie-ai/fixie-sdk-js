@@ -1,0 +1,34 @@
+name: Node.js Tests
+
+on:
+  push:
+    branches: [ main, feature-ts ]
+  pull_request:
+    branches: [ main, feature-ts ]
+  schedule:
+  - cron: "0 0 * * 0"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 19.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+        
+      - name: test
+        working-directory: fixieai/agents-ts
+        run: |
+          # It's not obvious to me that this is actually working. When I make package.json inconsistent with 
+          # package-lock.json and run locally, I would expect this to error, but it doesn't.
+          npm ci
+          npm run build --if-present
+          npm test

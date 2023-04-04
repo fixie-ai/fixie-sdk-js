@@ -15,12 +15,14 @@ install:
     pip install poetry==1.2.1
     poetry install --sync
     poetry run mypy --install-types --non-interactive .
+    cd fixieai/agents-ts && npm ci
 
 # Format code.
 format:
     poetry run autoflake . --remove-all-unused-imports --quiet --in-place -r --exclude third_party  --exclude fixie-examples
     poetry run isort . --force-single-line-imports
     poetry run black .
+    cd fixieai/agents-ts && npm run format
 
 # Run code formatting and type checks.
 check:
@@ -28,6 +30,7 @@ check:
     poetry run isort . --check --force-single-line-imports
     poetry run autoflake . --check --quiet --remove-all-unused-imports -r --exclude third_party --exclude fixie-examples
     poetry run mypy .
+    cd fixieai/agents-ts && npm run format:check
 
 # Run all tests.
 test PATH=".":

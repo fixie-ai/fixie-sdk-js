@@ -1,0 +1,48 @@
+{
+  "name": "@fixie/sdk",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The Fixie SDK (https://fixie.ai/)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist",
+    "/src"
+  ],
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "dprint fmt",
+    "format:check": "dprint check",
+    "postinstall": "npm run build",
+    "build": "tsc -p .",
+    "start:dev": "npx nodemon",
+    "test": "npm run format:check && npm run lint"
+  },
+  "keywords": [
+    "fixieai",
+    "fixie"
+  ],
+  "author": "Fixie Inc.",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node18": "^1.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "dprint": "^0.35.3",
+    "eslint": "^8.37.0",
+    "eslint-config-nth": "^2.0.1",
+    "nodemon": "^2.0.21",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.3"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.17",
+    "express": "^4.18.2"
+  },
+  "volta": {
+    "node": "18.15.0",
+    "npm": "9.6.3"
+  }
+}
