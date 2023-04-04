@@ -126,6 +126,11 @@ class AgentTemplator(ABC):
 
 
 class TypeScriptTemplator(AgentTemplator):
+    def __init__(self, handle: str, description: str) -> None:
+        self.handle = handle
+        self.description = description
+        super().__init__()
+
     def get_agent_template_url(self) -> str:
         # Before merging to main, update this to match the Python version.
         return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
@@ -144,14 +149,11 @@ class TypeScriptTemplator(AgentTemplator):
         with open(filename, "wt") as f:
             json.dump(data, f, indent=2)
 
-    def write_helper_files(self, params: Dict[str, str]) -> None:
-        handle = params.get("handle")
-        description = params.get("description")
-        main_path = params.get("main_path")
+    def write_helper_files(self, main_path: str) -> None:
         package_json = {
-            "name": handle,
+            "name": self.handle,
             "version": "1.0.0",
-            "description": description,
+            "description": self.description,
             "main": main_path,
             "scripts": {"test": 'echo "Error: no test specified" && exit 1'},
             "license": "ISC",
@@ -176,17 +178,17 @@ class TypeScriptTemplator(AgentTemplator):
 
 
 class PythonTemplator(AgentTemplator):
+    def __init__(self, requirement: str) -> None:
+        self.requirement = requirement
+        super().__init__()
+
     def get_agent_template_url(self) -> str:
         return "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
 
     def get_main_file_extension(self) -> str:
         return ".py"
 
-    def write_helper_files(self, params: Dict[str, str]) -> None:
-        requirement = params.get("requirement")
-        assert (
-            requirement is not None
-        ), "write_helper_files params must include a 'requirement' entry."
+    def write_helper_files(self, _main_path: str) -> None:
         try:
             with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
                 existing_requirements = list(
@@ -196,7 +198,7 @@ class PythonTemplator(AgentTemplator):
             existing_requirements = []
 
         resolved_requirements = _update_agent_requirements(
-            existing_requirements, list(requirement)
+            existing_requirements, list(self.requirement)
         )
         if not existing_requirements:
             write_requirements = True
@@ -277,9 +279,9 @@ class PythonTemplator(AgentTemplator):
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
     templator: AgentTemplator
     if language.lower() in ["python", "py"]:
-        templator = PythonTemplator()
+        templator = PythonTemplator(requirement)
     elif language.lower() in ["typescript", "ts"]:
-        templator = TypeScriptTemplator()
+        templator = TypeScriptTemplator(handle, description)
 
     try:
         current_config = agent_config.load_config()
@@ -311,14 +313,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    templator.write_helper_files(
-        {
-            "requirement": requirement,
-            "handle": handle,
-            "description": description,
-            "main_path": expected_main_path,
-        }
-    )
+    templator.write_helper_files(expected_main_path)
 
 
 def _current_config() -> agent_config.AgentConfig:
