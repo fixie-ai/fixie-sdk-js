@@ -130,7 +130,7 @@ class PythonTemplator(AgentTemplator):
     def get_main_file_extension(self) -> str:
         return '.py'
 
-    def write_helper_files(self) -> None:
+    def write_helper_files(self, requirement: str) -> None:
         try:
             with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
                 existing_requirements = list(
@@ -210,6 +210,7 @@ class PythonTemplator(AgentTemplator):
     "--language",
     # Set the possible options to be "python" or "TS"
     type=click.Choice(["python", "TS"], case_sensitive=False),
+    default="python",
     help="Build your agent in Python or TypeScript.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
@@ -236,7 +237,8 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    templator.write_helper_files()    
+    # The `requirement` arg is only used by the Python subclass. Not ideal, but :shrug:.
+    templator.write_helper_files(requirement)    
 
 def _current_config() -> agent_config.AgentConfig:
     """Loads current agent config, or a default if not initialized."""
