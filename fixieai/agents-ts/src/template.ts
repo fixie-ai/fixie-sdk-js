@@ -29,7 +29,6 @@ const agent = new CodeShotAgent(BASE_PROMPT, FEW_SHOTS);
 agent.registerFunc((query: Message): string => {
   if (query.text === 'input') {
     return 'output';
-  } else {
-    throw new Error('Invalid input');
   }
+  throw new Error('Invalid input');
 });
