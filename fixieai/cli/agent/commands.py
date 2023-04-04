@@ -1,6 +1,7 @@
 import contextlib
 import functools
 import io
+import json
 import os
 import random
 import re
@@ -12,10 +13,10 @@ import tempfile
 import threading
 import urllib.request
 import venv
+from abc import ABC
+from abc import abstractmethod
 from contextlib import contextmanager
 from typing import Dict, List, Optional, Tuple
-from abc import ABC, abstractmethod 
-import json
 
 import click
 import rich.console as rich_console
@@ -105,6 +106,7 @@ def _update_agent_requirements(
 
     return resolved_requirements
 
+
 class AgentTemplator(ABC):
     @abstractmethod
     def get_agent_template_url(self) -> str:
@@ -116,13 +118,14 @@ class AgentTemplator(ABC):
     def write_helper_files(self) -> None:
         pass
 
+
 class TypeScriptTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
         # Before merging to main, update this to match the Python version.
         return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
 
     def get_main_file_extension(self) -> str:
-        return '.ts'
+        return ".ts"
 
     def _write_json_file_if_not_exists(self, filename: str, data: Dict) -> None:
         if os.path.exists(filename):
@@ -143,35 +146,30 @@ class TypeScriptTemplator(AgentTemplator):
             "version": "1.0.0",
             "description": description,
             "main": "index.ts",
-            "scripts": {
-                "test": "echo \"Error: no test specified\" && exit 1"
-            },
+            "scripts": {"test": 'echo "Error: no test specified" && exit 1'},
             "license": "ISC",
             "devDependencies": {
                 "@tsconfig/node18": "^1.0.1",
             },
-            "dependencies": {
-                "fixieai": "^1.0.0"
-            }
+            "dependencies": {"fixieai": "^1.0.0"},
         }
 
         tsconfig = {
             # Keeping this up to date may become annoying, but we can deal with that later.
             "extends": "@tsconfig/node18/tsconfig.json",
-            "compilerOptions": {
-                "noEmit": True
-            }
+            "compilerOptions": {"noEmit": True},
         }
 
         self._write_json_file_if_not_exists("package.json", package_json)
         self._write_json_file_if_not_exists("tsconfig.json", tsconfig)
+
 
 class PythonTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
         return "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
 
     def get_main_file_extension(self) -> str:
-        return '.py'
+        return ".py"
 
     def write_helper_files(self, params: Dict[str, str]) -> None:
         requirement = params.get("requirement")
@@ -218,7 +216,7 @@ class PythonTemplator(AgentTemplator):
         if write_requirements:
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
-    
+
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
@@ -271,11 +269,15 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         templator = PythonTemplator()
     elif language.lower() in ["typescript", "ts"]:
         templator = TypeScriptTemplator()
-    
+
     entry_module, _ = entry_point.split(":")
-    expected_main_path = entry_module.replace(".", "/") + templator.get_main_file_extension()
+    expected_main_path = (
+        entry_module.replace(".", "/") + templator.get_main_file_extension()
+    )
     if not os.path.exists(expected_main_path):
-        urllib.request.urlretrieve(templator.get_agent_template_url(), expected_main_path)
+        urllib.request.urlretrieve(
+            templator.get_agent_template_url(), expected_main_path
+        )
         click.secho(
             f"Initialized agent.yaml and made a template agent file at {expected_main_path}",
             fg="green",
@@ -283,7 +285,10 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    templator.write_helper_files({'requirement': requirement, 'handle': handle, 'description': description})    
+    templator.write_helper_files(
+        {"requirement": requirement, "handle": handle, "description": description}
+    )
+
 
 def _current_config() -> agent_config.AgentConfig:
     """Loads current agent config, or a default if not initialized."""
