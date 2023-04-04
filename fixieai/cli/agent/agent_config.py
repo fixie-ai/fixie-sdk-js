@@ -1,8 +1,7 @@
 import dataclasses
 import os
 import re
-from typing import Optional, Union
-from enum import Enum
+from typing import Optional
 
 from fixieai.cli import utils
 
@@ -24,6 +23,7 @@ class AgentConfig(utils.DataClassYamlMixin):
     entry_point: str = "main:agent"
     deployment_url: Optional[str] = None
     public: Optional[bool] = None
+
 
 def normalize_path(path: Optional[str] = None) -> str:
     """Normalizes paths to an AgentConfig.

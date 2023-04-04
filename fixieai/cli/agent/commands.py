@@ -124,6 +124,7 @@ class AgentTemplator(ABC):
     def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
         pass
 
+
 class TypeScriptTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
         # Before merging to main, update this to match the Python version.
@@ -170,8 +171,9 @@ class TypeScriptTemplator(AgentTemplator):
         self._write_json_file_if_not_exists("tsconfig.json", tsconfig)
 
     def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
-        agent_config.language = 'typescript'
-        agent_config.entry_point = 'index.ts'
+        agent_config.language = "typescript"
+        agent_config.entry_point = "index.ts"
+
 
 class PythonTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
@@ -231,7 +233,8 @@ class PythonTemplator(AgentTemplator):
 
     def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
         pass
-    
+
+
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
@@ -289,7 +292,6 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     templator.modify_new_agent_config(current_config)
     agent_config.save_config(current_config)
 
-
     entry_module, _ = entry_point.split(":")
     expected_main_path = (
         entry_module.replace(".", "/") + templator.get_main_file_extension()
@@ -306,7 +308,12 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         click.secho(f"Initialized agent.yaml.", fg="green")
 
     templator.write_helper_files(
-        {"requirement": requirement, "handle": handle, "description": description, 'main_path': expected_main_path}
+        {
+            "requirement": requirement,
+            "handle": handle,
+            "description": description,
+            "main_path": expected_main_path,
+        }
     )
 
 
