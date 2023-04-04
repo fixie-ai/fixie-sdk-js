@@ -69,7 +69,7 @@ print(response)
 For more control, you can also create a `FixieClient` object and use it to
 create a `Session` and send queries within the `Session`:
 
-```
+```py
 import fixieai
 client = fixieai.FixieClient()
 session = client.create_session(None)

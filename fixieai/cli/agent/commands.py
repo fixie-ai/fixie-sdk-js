@@ -14,6 +14,7 @@ import urllib.request
 import venv
 from contextlib import contextmanager
 from typing import Dict, List, Optional, Tuple
+from abc import ABC, abstractmethod 
 
 import click
 import rich.console as rich_console
@@ -27,10 +28,6 @@ from fixieai.cli.agent import tunnel
 # Regex pattern to match valid entry points: "module:object"
 VAR_NAME_RE = r"(?![0-9])\w+"
 ENTRY_POINT_PATTERN = re.compile(rf"^{VAR_NAME_RE}(\.{VAR_NAME_RE})*:{VAR_NAME_RE}$")
-# The agent template main.py file
-AGENT_TEMPLATE_URL = (
-    "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
-)
 
 REQUIREMENTS_TXT = "requirements.txt"
 CURRENT_FIXIE_REQUIREMENT = f"fixieai ~= {fixieai.__version__}"
@@ -107,6 +104,77 @@ def _update_agent_requirements(
 
     return resolved_requirements
 
+class AgentTemplator(ABC):
+    @abstractmethod
+    def get_agent_template_url(self) -> str:
+        pass
+
+    def get_main_file_extension(self) -> str:
+        pass
+
+    def write_helper_files(self) -> None:
+        pass
+
+class TypeScriptTemplator(AgentTemplator):
+    def get_agent_template_url(self) -> str:
+        # Before merging to main, update `feature-ts` to `main`.
+        return "https://raw.githubusercontent.com/fixie-ai/fixie-examples/feature-ts/agents/template.ts"
+
+    def get_main_file_extension(self) -> str:
+        return '.ts'
+
+class PythonTemplator(AgentTemplator):
+    def get_agent_template_url(self) -> str:
+        return "https://raw.githubusercontent.com/fixie-ai/fixie-examples/main/agents/template.py"
+
+    def get_main_file_extension(self) -> str:
+        return '.py'
+
+    def write_helper_files(self) -> None:
+        try:
+            with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
+                existing_requirements = list(
+                    r.strip() for r in requirements_txt.readlines()
+                )
+        except FileNotFoundError:
+            existing_requirements = []
+
+        resolved_requirements = _update_agent_requirements(
+            existing_requirements, list(requirement)
+        )
+        if not existing_requirements:
+            write_requirements = True
+        else:
+            new_requirements = [
+                r for r in resolved_requirements if r not in existing_requirements
+            ]
+            removed_requirements = [
+                r for r in existing_requirements if r not in resolved_requirements
+            ]
+
+            if new_requirements or removed_requirements:
+                click.secho(
+                    f"{REQUIREMENTS_TXT} already exists.",
+                    fg="yellow",
+                )
+                if new_requirements:
+                    click.secho(
+                        f"The following requirements will be added: {new_requirements}",
+                        fg="yellow",
+                    )
+                if removed_requirements:
+                    click.secho(
+                        f"The following requirements will be removed: {removed_requirements}",
+                        fg="yellow",
+                    )
+                write_requirements = click.confirm("Okay to proceed?", default=True)
+            else:
+                write_requirements = False
+
+        if write_requirements:
+            with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
+                requirements_txt.writelines(r + "\n" for r in resolved_requirements)
+    
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
@@ -138,7 +206,13 @@ def _update_agent_requirements(
     type=str,
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
-def init_agent(handle, description, entry_point, more_info_url, requirement):
+@click.option(
+    "--language",
+    # Set the possible options to be "python" or "TS"
+    type=click.Choice(["python", "TS"], case_sensitive=False),
+    help="Build your agent in Python or TypeScript.",
+)
+def init_agent(handle, description, entry_point, more_info_url, requirement, language):
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
@@ -149,10 +223,12 @@ def init_agent(handle, description, entry_point, more_info_url, requirement):
     current_config.more_info_url = more_info_url
     agent_config.save_config(current_config)
 
+    templator = PythonTemplator() if language == "python" else TypeScriptTemplator()
+
     entry_module, _ = entry_point.split(":")
-    expected_main_path = entry_module.replace(".", "/") + ".py"
+    expected_main_path = entry_module.replace(".", "/") + templator.get_main_file_extension()
     if not os.path.exists(expected_main_path):
-        urllib.request.urlretrieve(AGENT_TEMPLATE_URL, expected_main_path)
+        urllib.request.urlretrieve(templator.get_agent_template_url(), expected_main_path)
         click.secho(
             f"Initialized agent.yaml and made a template agent file at {expected_main_path}",
             fg="green",
@@ -160,50 +236,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement):
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    try:
-        with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
-            existing_requirements = list(
-                r.strip() for r in requirements_txt.readlines()
-            )
-    except FileNotFoundError:
-        existing_requirements = []
-
-    resolved_requirements = _update_agent_requirements(
-        existing_requirements, list(requirement)
-    )
-    if not existing_requirements:
-        write_requirements = True
-    else:
-        new_requirements = [
-            r for r in resolved_requirements if r not in existing_requirements
-        ]
-        removed_requirements = [
-            r for r in existing_requirements if r not in resolved_requirements
-        ]
-
-        if new_requirements or removed_requirements:
-            click.secho(
-                f"{REQUIREMENTS_TXT} already exists.",
-                fg="yellow",
-            )
-            if new_requirements:
-                click.secho(
-                    f"The following requirements will be added: {new_requirements}",
-                    fg="yellow",
-                )
-            if removed_requirements:
-                click.secho(
-                    f"The following requirements will be removed: {removed_requirements}",
-                    fg="yellow",
-                )
-            write_requirements = click.confirm("Okay to proceed?", default=True)
-        else:
-            write_requirements = False
-
-    if write_requirements:
-        with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
-            requirements_txt.writelines(r + "\n" for r in resolved_requirements)
-
+    templator.write_helper_files()    
 
 def _current_config() -> agent_config.AgentConfig:
     """Loads current agent config, or a default if not initialized."""
