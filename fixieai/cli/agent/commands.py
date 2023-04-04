@@ -15,6 +15,7 @@ import venv
 from contextlib import contextmanager
 from typing import Dict, List, Optional, Tuple
 from abc import ABC, abstractmethod 
+import json
 
 import click
 import rich.console as rich_console
@@ -123,8 +124,47 @@ class TypeScriptTemplator(AgentTemplator):
     def get_main_file_extension(self) -> str:
         return '.ts'
 
-    def write_helper_files(self, _requirements) -> None:
-        pass
+    def _write_json_file_if_not_exists(self, filename: str, data: Dict) -> None:
+        if os.path.exists(filename):
+            click.secho(
+                f"Not writing {filename} because it already exists.",
+                fg="yellow",
+            )
+            return
+
+        with open(filename, "wt") as f:
+            json.dump(data, f, indent=2)
+
+    def write_helper_files(self, params: Dict[str, str]) -> None:
+        handle = params.get("handle")
+        description = params.get("description")
+        package_json = {
+            "name": handle,
+            "version": "1.0.0",
+            "description": description,
+            "main": "index.ts",
+            "scripts": {
+                "test": "echo \"Error: no test specified\" && exit 1"
+            },
+            "license": "ISC",
+            "devDependencies": {
+                "@tsconfig/node18": "^1.0.1",
+            },
+            "dependencies": {
+                "fixieai": "^1.0.0"
+            }
+        }
+
+        tsconfig = {
+            # Keeping this up to date may become annoying, but we can deal with that later.
+            "extends": "@tsconfig/node18/tsconfig.json",
+            "compilerOptions": {
+                "noEmit": True
+            }
+        }
+
+        self._write_json_file_if_not_exists("package.json", package_json)
+        self._write_json_file_if_not_exists("tsconfig.json", tsconfig)
 
 class PythonTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
@@ -133,7 +173,8 @@ class PythonTemplator(AgentTemplator):
     def get_main_file_extension(self) -> str:
         return '.py'
 
-    def write_helper_files(self, requirement: str) -> None:
+    def write_helper_files(self, params: Dict[str, str]) -> None:
+        requirement = params.get("requirement")
         try:
             with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
                 existing_requirements = list(
@@ -240,8 +281,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     else:
         click.secho(f"Initialized agent.yaml.", fg="green")
 
-    # The `requirement` arg is only used by the Python subclass. Not ideal, but :shrug:.
-    templator.write_helper_files(requirement)    
+    templator.write_helper_files({'requirement': requirement, 'handle': handle, 'description': description})    
 
 def _current_config() -> agent_config.AgentConfig:
     """Loads current agent config, or a default if not initialized."""

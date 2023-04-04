@@ -24,7 +24,7 @@
     "fixie"
   ],
   "author": "Fixie Inc.",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@tsconfig/node18": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
