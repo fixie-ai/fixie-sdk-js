@@ -118,10 +118,13 @@ class AgentTemplator(ABC):
 class TypeScriptTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
         # Before merging to main, update this to match the Python version.
-        return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/agents-ts/src/template.ts"
+        return "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
 
     def get_main_file_extension(self) -> str:
         return '.ts'
+
+    def write_helper_files(self, _requirements) -> None:
+        pass
 
 class PythonTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
