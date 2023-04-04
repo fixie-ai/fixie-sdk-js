@@ -26,6 +26,8 @@ jobs:
 
       # Run all following commands from the fixieai/ts subdir
       - run: cd fixieai/ts
+
+      - run: ls -la
       
       # It's not obvious to me that this is actually working. When I make package.json inconsistent with 
       # package-lock.json and run locally, I would expect this to error, but it doesn't.
