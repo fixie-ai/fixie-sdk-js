@@ -175,7 +175,9 @@ class PythonTemplator(AgentTemplator):
 
     def write_helper_files(self, params: Dict[str, str]) -> None:
         requirement = params.get("requirement")
-        assert requirement is not None, "write_helper_files params must include a 'requirement' entry."
+        assert (
+            requirement is not None
+        ), "write_helper_files params must include a 'requirement' entry."
         try:
             with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
                 existing_requirements = list(
