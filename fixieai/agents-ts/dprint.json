@@ -6,7 +6,6 @@
     "quoteProps": "asNeeded",
     "useBraces": "always",
     "singleBodyPosition": "nextLine",
-    "trailingCommas": "always",
     "arrowFunction.useParentheses": "force",
     "jsx.multiLineParens": "never"
   },

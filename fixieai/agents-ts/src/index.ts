@@ -1,3 +1,3 @@
-import { CodeShotAgent, } from './codeshot';
+import { CodeShotAgent } from './codeshot';
 
-export { CodeShotAgent, };
+export { CodeShotAgent };

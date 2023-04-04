@@ -8,7 +8,7 @@ module.exports = {
   parserOptions: {
     project: 'tsconfig.json',
   },
-  plugins: ['@typescript-eslint',],
+  plugins: ['@typescript-eslint'],
   root: true,
 
   env: {
@@ -24,12 +24,12 @@ module.exports = {
       'warn',
       {
         ignoreReadonlyClassProperties: true,
-        ignore: [0, 1, 2,],
+        ignore: [0, 1, 2],
         ignoreTypeIndexes: true,
       },
     ],
 
-    'no-use-before-define': ['error', { functions: false, variables: true, },],
+    'no-use-before-define': ['error', { functions: false, variables: true }],
 
     'no-trailing-spaces': 'warn',
 
@@ -43,7 +43,7 @@ module.exports = {
     'arrow-parens': 'off',
 
     // Add additional strictness beyond the recommended set
-    '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties', },],
+    '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
     '@typescript-eslint/prefer-readonly': 'warn',
     '@typescript-eslint/strict-boolean-expressions': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
