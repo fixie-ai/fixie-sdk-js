@@ -107,17 +107,25 @@ def _update_agent_requirements(
     return resolved_requirements
 
 
+def config_already_exists():
+    try:
+        agent_config.load_config()
+        return True
+    except FileNotFoundError:
+        return False
+
+
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
     prompt=True,
-    default=lambda: _current_config().handle,
+    default=agent_config.AgentConfig().handle,
     callback=_validate_slug,
 )
 @click.option(
     "--description",
     prompt=True,
-    default=lambda: _current_config().description,
+    default=agent_config.AgentConfig().description,
 )
 @click.option(
     "--language",
@@ -134,13 +142,13 @@ def _update_agent_requirements(
     "--entry-point",
     prompt=False,
     help="Entry point (module:object) (This is only used for Python agents.)",
-    default=lambda: _current_config().entry_point,
+    default="main:agent",
     callback=_validate_entry_point,
 )
 @click.option(
     "--more-info-url",
     prompt=True,
-    default=lambda: _current_config().more_info_url,
+    default=agent_config.AgentConfig().more_info_url,
     callback=_validate_url,
 )
 @click.option(
@@ -150,6 +158,13 @@ def _update_agent_requirements(
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
+    if config_already_exists():
+        click.secho(
+            f"An agent.yaml file already exists in this directory. If you want to create a new agent, please run this command in a different directory, or remove agent.yaml.",
+            fg="yellow",
+        )
+        sys.exit(1)
+
     is_typescript = language.lower() in ["typescript", "ts"]
 
     try:
@@ -169,7 +184,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     if is_typescript:
         main_file_extension = ".ts"
         # Before merging to main, update this to match the Python version.
-        agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/nth/template-ts-agent/fixieai/agents-ts/src/template.ts"
+        agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/feature-ts/fixieai/agents-ts/src/template.ts"
 
         if current_config.entry_point == agent_config.AgentConfig().entry_point:
             current_config.entry_point = "index.ts"
@@ -265,14 +280,6 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         if write_requirements:
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
-
-
-def _current_config() -> agent_config.AgentConfig:
-    """Loads current agent config, or a default if not initialized."""
-    try:
-        return agent_config.load_config()
-    except FileNotFoundError:
-        return agent_config.AgentConfig()
 
 
 @agent.command("list", help="List agents.")
