@@ -143,11 +143,12 @@ class TypeScriptTemplator(AgentTemplator):
     def write_helper_files(self, params: Dict[str, str]) -> None:
         handle = params.get("handle")
         description = params.get("description")
+        main_path = params.get("main_path")
         package_json = {
             "name": handle,
             "version": "1.0.0",
             "description": description,
-            "main": "index.ts",
+            "main": main_path,
             "scripts": {"test": 'echo "Error: no test specified" && exit 1'},
             "license": "ISC",
             "devDependencies": {
@@ -222,6 +223,15 @@ class PythonTemplator(AgentTemplator):
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
 
+class ConditionalOption(click.Option):
+    def __init__(self, *args, **kwargs):
+        self.condition = kwargs.pop('condition', False)
+        super().__init__(*args, **kwargs)
+
+    def prompt_for_value(self, ctx):
+        if self.condition(ctx):
+            return super().prompt_for_value(ctx)
+        return None
 
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
@@ -236,9 +246,17 @@ class PythonTemplator(AgentTemplator):
     default=lambda: _current_config().description,
 )
 @click.option(
+    "--language",
+    type=click.Choice(["python", "py", "typescript", "TS"], case_sensitive=False),
+    default="python",
+    prompt=True,
+    help="Build your agent in Python or TypeScript.",
+)
+@ConditionalOption(
     "--entry-point",
     prompt="Entry point (module:object)",
     default=lambda: _current_config().entry_point,
+    condition=lambda ctx: ctx.params['language'].lower() in ['py', 'python'],
     callback=_validate_entry_point,
 )
 @click.option(
@@ -252,13 +270,6 @@ class PythonTemplator(AgentTemplator):
     multiple=True,
     type=str,
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
-)
-@click.option(
-    "--language",
-    type=click.Choice(["python", "py", "typescript", "TS"], case_sensitive=False),
-    default="python",
-    prompt=True,
-    help="Build your agent in Python or TypeScript.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
     try:
@@ -293,7 +304,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         click.secho(f"Initialized agent.yaml.", fg="green")
 
     templator.write_helper_files(
-        {"requirement": requirement, "handle": handle, "description": description}
+        {"requirement": requirement, "handle": handle, "description": description, 'main_path': expected_main_path}
     )
 
 
