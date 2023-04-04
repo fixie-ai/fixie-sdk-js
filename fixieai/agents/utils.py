@@ -22,6 +22,7 @@ EMBED_REF = re.compile(ODD_NUM_POUNDS.pattern + r"(?P<embed_key>\w+)(?!\w)")
 def strip_prompt_lines(agent: code_shot.CodeShotAgent):
     """Strips all prompt lines."""
     agent.base_prompt = _strip_all_lines(agent.base_prompt)
+
     for i, fewshot in enumerate(agent.few_shots):
         agent.few_shots[i] = _strip_all_lines(fewshot)
 
@@ -29,15 +30,14 @@ def strip_prompt_lines(agent: code_shot.CodeShotAgent):
 def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
     """A client-side validation of few_shots and agent."""
     _validate_base_prompt(agent.base_prompt)
-
-    _validate_few_shot_lines(
-        agent.few_shots, agent.conversational, agent.is_valid_func_name
-    )
+    for fewshot in agent.few_shots:
+        _validate_few_shot_prompt(
+            fewshot, agent.conversational, agent.is_valid_func_name
+        )
 
 
 def validate_registered_pyfunc(func: Callable, agent: agent_base.AgentBase):
     """Validates `func`'s signature to be a valid CodeShot Func.
-
     Args:
         func: The function to be validated.
         agent: The CodeShotAgent that this func is going to be registered for.
@@ -171,10 +171,11 @@ class FewshotLinePattern(enum.Enum):
         return match
 
 
-def _validate_few_shot_lines(
-    lines: List[str], conversational: bool, is_valid_func_name: Callable[[str], bool]
+def _validate_few_shot_prompt(
+    prompt: str, conversational: bool, is_valid_func_name: Callable[[str], bool]
 ):
     """Validates 'prompt' as a correctly formatted few shot prompt."""
+    lines = prompt.splitlines(False)
 
     # Check that no line starts or ends in a whitespace.
     whitespaces = (" ", "\t", "\r")
@@ -185,9 +186,12 @@ def _validate_few_shot_lines(
     ]
     _assert(
         not bad_lines,
-        f"Some lines in the fewshot start or end in whitespaces",
-        ''.join(bad_lines),
+        f"Some lines in the fewshot start or end in whitespaces: {bad_lines!r}.",
+        prompt,
     )
+
+    # Check that it doesn't end with newline
+    _assert(not prompt.endswith("\n"), "Fewshot ends with newline.", prompt)
 
     # Check that fewshot starts with a Q:, ends in an A:, and a Func says and Agent
     # says follows every Ask Func and Ask Agent.
@@ -196,54 +200,47 @@ def _validate_few_shot_lines(
         pattern_matches[0] is not None
         and pattern_matches[0].re is FewshotLinePattern.QUERY.value,
         "Fewshot must start with a 'Q:'",
-        lines[0],
+        prompt,
     )
     last_pattern = FewshotLinePattern.QUERY
-    last_pattern_line = ''
     known_embeds: Set[str] = set()
 
     for i, (match, line) in enumerate(zip(pattern_matches, lines)):
-
         pattern = (
             FewshotLinePattern(match.re)
             if match is not None
             else FewshotLinePattern.NO_PATTERN
         )
 
-        # Check that it doesn't end with newline
-        _assert(not line.endswith("\n"), "Fewshot ends with newline.", lines)
-
         if pattern is FewshotLinePattern.ASK_AGENT:
             assert match is not None
             next_match = (
-                pattern_matches[i + 1] if i +
-                1 < len(pattern_matches) else None
+                pattern_matches[i + 1] if i + 1 < len(pattern_matches) else None
             )
             _assert(
                 next_match is not None
                 and next_match.re is FewshotLinePattern.AGENT_SAYS.value
                 and match.group("agent_id") == next_match.group("agent_id"),
                 "Each 'Ask Agent' line must be immediately followed by an 'Agent says' line that references the same ",
-                line,
+                prompt,
             )
 
         if pattern is FewshotLinePattern.ASK_FUNC:
             assert match is not None
             next_match = (
-                pattern_matches[i + 1] if i +
-                1 < len(pattern_matches) else None
+                pattern_matches[i + 1] if i + 1 < len(pattern_matches) else None
             )
             _assert(
                 next_match is not None
                 and next_match.re is FewshotLinePattern.FUNC_SAYS.value
                 and match.group("func_name") == next_match.group("func_name"),
                 "Each 'Ask Func' line must be immediately followed by an 'Func says' line that references the same func.",
-                line,
+                prompt,
             )
             _assert(
                 is_valid_func_name(match.group("func_name")),
                 "Each 'Ask Func' line must reference a valid func name.",
-                line,
+                prompt,
             )
 
         if pattern is FewshotLinePattern.FUNC_SAYS:
@@ -251,12 +248,11 @@ def _validate_few_shot_lines(
             _assert(
                 is_valid_func_name(match.group("func_name")),
                 "Each 'Func says' line must reference a valid func name.",
-                line,
+                prompt,
             )
 
         if pattern is not FewshotLinePattern.NO_PATTERN:
             last_pattern = pattern
-            last_pattern_line = line
 
         # Check that any embeds are valid.
         for embed_match in EMBED_REF.finditer(line):
@@ -270,14 +266,14 @@ def _validate_few_shot_lines(
                         FewshotLinePattern.RESPONSE,
                     ),
                     "New embeds may not be introduced in Ask Agent, Ask Func, or A: lines.",
-                    linee,
+                    prompt,
                 )
                 known_embeds.add(key)
 
     _assert(
         last_pattern is FewshotLinePattern.RESPONSE,
         f"Fewshot must end with a 'A:' pattern, but it ends with {last_pattern}",
-        last_pattern_line,
+        prompt,
     )
 
     # Check that there's Q: and A: lines are interleaved.
@@ -292,11 +288,18 @@ def _validate_few_shot_lines(
     ]
     qa_str = "".join(all_qa_lines)
 
-    _assert(
-        re.match("^(Qx*A)+$", qa_str) is not None,
-        "Each fewshot must have interleaved Q: and A",
-        qa_str,
-    )
+    if conversational:
+        _assert(
+            re.match("^(Qx*A)+$", qa_str) is not None,
+            "Each fewshot must have interleaved Q: and A: patterns when conversational=True",
+            prompt,
+        )
+    else:
+        _assert(
+            re.match("^Qx*A$", qa_str) is not None,
+            "Each fewshot must have exactly one Q: and A: pattern when conversational=False",
+            prompt,
+        )
 
 
 def _assert(condition: bool, msg: str, prompt: str):
