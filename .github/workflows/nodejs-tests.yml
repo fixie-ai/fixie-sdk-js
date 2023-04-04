@@ -23,15 +23,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
-      # Run all following commands from the fixieai/ts subdir
-      - run: cd fixieai/ts
-
-      - run: ls -la
-      
-      # It's not obvious to me that this is actually working. When I make package.json inconsistent with 
-      # package-lock.json and run locally, I would expect this to error, but it doesn't.
-      - run: npm ci
-
-      - run: npm run build --if-present
-      - run: npm test
+        
+      - name: test
+        working-directory: fixieai/agents-ts
+        run: |
+          # It's not obvious to me that this is actually working. When I make package.json inconsistent with 
+          # package-lock.json and run locally, I would expect this to error, but it doesn't.
+          npm ci
+          npm run build --if-present
+          npm test
