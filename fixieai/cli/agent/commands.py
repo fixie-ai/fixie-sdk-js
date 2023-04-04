@@ -223,16 +223,6 @@ class PythonTemplator(AgentTemplator):
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
 
-class ConditionalOption(click.Option):
-    def __init__(self, *args, **kwargs):
-        self.condition = kwargs.pop('condition', False)
-        super().__init__(*args, **kwargs)
-
-    def prompt_for_value(self, ctx):
-        if self.condition(ctx):
-            return super().prompt_for_value(ctx)
-        return None
-
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
@@ -252,11 +242,11 @@ class ConditionalOption(click.Option):
     prompt=True,
     help="Build your agent in Python or TypeScript.",
 )
-@ConditionalOption(
+@click.option(
     "--entry-point",
-    prompt="Entry point (module:object)",
+    prompt=False,
+    help="Entry point (module:object) (This is only used for Python agents.)",
     default=lambda: _current_config().entry_point,
-    condition=lambda ctx: ctx.params['language'].lower() in ['py', 'python'],
     callback=_validate_entry_point,
 )
 @click.option(
@@ -275,7 +265,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
-        current_config = agent_config.AgentConfig()
+        current_config = agent_config.AgentConfig(language=language)
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
