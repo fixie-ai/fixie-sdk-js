@@ -220,7 +220,7 @@ class PythonTemplator(AgentTemplator):
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
     
 
-@agent.command("init", help="Creates an agent.yaml fadsfile.")
+@agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
     prompt=True,
@@ -252,8 +252,7 @@ class PythonTemplator(AgentTemplator):
 )
 @click.option(
     "--language",
-    # Set the possible options to be "python" or "TS"
-    type=click.Choice(["python", "TS"], case_sensitive=False),
+    type=click.Choice(["python", "py", "typescript", "TS"], case_sensitive=False),
     default="python",
     help="Build your agent in Python or TypeScript.",
 )
@@ -268,8 +267,11 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     current_config.more_info_url = more_info_url
     agent_config.save_config(current_config)
 
-    templator = PythonTemplator() if language == "python" else TypeScriptTemplator()
-
+    if language.lower() in ["python", "py"]:
+        templator = PythonTemplator()
+    elif language.lower() in ["typescript", "ts"]:
+        templator = TypeScriptTemplator()
+    
     entry_module, _ = entry_point.split(":")
     expected_main_path = entry_module.replace(".", "/") + templator.get_main_file_extension()
     if not os.path.exists(expected_main_path):
