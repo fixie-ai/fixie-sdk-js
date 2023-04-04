@@ -5,9 +5,9 @@ name: Run tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature-ts ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, feature-ts ]
 
 jobs:
   test:

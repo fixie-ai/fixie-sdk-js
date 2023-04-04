@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature-ts ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, feature-ts ]
   schedule:
   - cron: "0 0 * * 0"
 
@@ -23,6 +23,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+
+      # Run all following commands from the fixieai/ts subdir
+      - run: cd fixieai/ts
       
       # It's not obvious to me that this is actually working. When I make package.json inconsistent with 
       # package-lock.json and run locally, I would expect this to error, but it doesn't.
