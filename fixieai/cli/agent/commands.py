@@ -115,20 +115,17 @@ def config_already_exists():
         return False
 
 
-default_config = agent_config.AgentConfig()
-
-
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
     prompt=True,
-    default=default_config.handle,
+    default=agent_config.AgentConfig().handle,
     callback=_validate_slug,
 )
 @click.option(
     "--description",
     prompt=True,
-    default=default_config.description,
+    default=agent_config.AgentConfig().description,
 )
 @click.option(
     "--language",
@@ -151,7 +148,7 @@ default_config = agent_config.AgentConfig()
 @click.option(
     "--more-info-url",
     prompt=True,
-    default=default_config.more_info_url,
+    default=agent_config.AgentConfig().more_info_url,
     callback=_validate_url,
 )
 @click.option(
