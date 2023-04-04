@@ -12,36 +12,18 @@ def _current_dirname() -> str:
     return _slugify(os.path.basename(os.getcwd()))
 
 
-class Language(Enum):
-    python = "python"
-    typescript = "typescript"
-
-    @classmethod
-    def from_string(cls, string: str) -> 'Language':
-        if string in ['py', 'python']:
-            return cls.python
-        elif string in ['ts', 'typescript']:
-            return cls.typescript
-        else:
-            raise ValueError(f"Invalid language: {string}")    
-
 @dataclasses.dataclass
 class AgentConfig(utils.DataClassYamlMixin):
     """Represents an agent.yaml config file."""
 
-    language: Language = Language.python
-    entry_point: str = ""
     handle: str = dataclasses.field(default_factory=_current_dirname)
     name: Optional[str] = None
     description: str = ""
     more_info_url: str = ""
+    language: str = "python"
+    entry_point: str = "main:agent"
     deployment_url: Optional[str] = None
     public: Optional[bool] = None
-
-    def __init__(self, language) -> None:
-        super().__init__()
-        self.language = Language.from_string(language)
-        self.entry_point = "main:agent" if self.language == Language.python else "index.ts"        
 
 def normalize_path(path: Optional[str] = None) -> str:
     """Normalizes paths to an AgentConfig.

@@ -120,6 +120,9 @@ class AgentTemplator(ABC):
     def write_helper_files(self, params: Dict[str, str]) -> None:
         pass
 
+    @abstractmethod
+    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
+        pass
 
 class TypeScriptTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
@@ -166,6 +169,9 @@ class TypeScriptTemplator(AgentTemplator):
         self._write_json_file_if_not_exists("package.json", package_json)
         self._write_json_file_if_not_exists("tsconfig.json", tsconfig)
 
+    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
+        agent_config.language = 'typescript'
+        agent_config.entry_point = 'index.ts'
 
 class PythonTemplator(AgentTemplator):
     def get_agent_template_url(self) -> str:
@@ -223,6 +229,9 @@ class PythonTemplator(AgentTemplator):
             with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
                 requirements_txt.writelines(r + "\n" for r in resolved_requirements)
 
+    def modify_new_agent_config(self, agent_config: agent_config.AgentConfig) -> None:
+        pass
+    
 @agent.command("init", help="Creates an agent.yaml file.")
 @click.option(
     "--handle",
@@ -262,6 +271,12 @@ class PythonTemplator(AgentTemplator):
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
 def init_agent(handle, description, entry_point, more_info_url, requirement, language):
+    templator: AgentTemplator
+    if language.lower() in ["python", "py"]:
+        templator = PythonTemplator()
+    elif language.lower() in ["typescript", "ts"]:
+        templator = TypeScriptTemplator()
+
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
@@ -269,14 +284,11 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
+    current_config.language = language
     current_config.more_info_url = more_info_url
+    templator.modify_new_agent_config(current_config)
     agent_config.save_config(current_config)
 
-    templator: AgentTemplator
-    if language.lower() in ["python", "py"]:
-        templator = PythonTemplator()
-    elif language.lower() in ["typescript", "ts"]:
-        templator = TypeScriptTemplator()
 
     entry_module, _ = entry_point.split(":")
     expected_main_path = (
