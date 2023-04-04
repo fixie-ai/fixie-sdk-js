@@ -69,10 +69,17 @@ print(response)
 For more control, you can also create a `FixieClient` object and use it to
 create a `Session` and send queries within the `Session`:
 
-```
+```py
 import fixieai
 client = fixieai.FixieClient()
 session = client.create_session(None)
 response = session.query("What is 38 * 20302?")
 print(response)
+```
+
+## Contributing
+If you make changes to the Python CLI, use this command to see them locally:
+
+```
+poetry run fixie [...additional args]
 ```

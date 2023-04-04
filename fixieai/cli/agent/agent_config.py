@@ -19,6 +19,7 @@ class AgentConfig(utils.DataClassYamlMixin):
     name: Optional[str] = None
     description: str = ""
     more_info_url: str = ""
+    language: str = "python"
     entry_point: str = "main:agent"
     deployment_url: Optional[str] = None
     public: Optional[bool] = None
