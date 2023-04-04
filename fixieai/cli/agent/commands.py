@@ -68,7 +68,9 @@ def _validate_url(ctx, param, value):
 def _validate_entry_point(ctx, param, value):
     while True:
         if value and not ENTRY_POINT_PATTERN.match(value):
-            click.echo(f"{param.name} must be in module:obj format (e.g. 'main:agent')")
+            click.echo(
+                f"{param.name} must be in module:obj format (e.g. 'main:agent'), but was: {value}"
+            )
             value = click.prompt(param.prompt, default=param.default())
         else:
             return value
@@ -117,7 +119,7 @@ class AgentTemplator(ABC):
         pass
 
     @abstractmethod
-    def write_helper_files(self, params: Dict[str, str]) -> None:
+    def write_helper_files(self, main_path: str) -> None:
         pass
 
     @abstractmethod
@@ -257,6 +259,9 @@ class PythonTemplator(AgentTemplator):
     help="Build your agent in Python or TypeScript.",
 )
 # It would be nice if we could prevent `--entry-point` from being passed when language is TS, but I wasn't able to make that work after ~30 minutes.
+#
+# Additionally, if you first generate a TS project, then run `init --language py`,
+# this will product a somewhat awkward (but I think ultimately understandable) message.
 @click.option(
     "--entry-point",
     prompt=False,
