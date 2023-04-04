@@ -290,10 +290,10 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     current_config.entry_point = entry_point
     current_config.language = language
     current_config.more_info_url = more_info_url
-    
+
     # Having this hook here is maybe a little gross.
     templator.modify_new_agent_config(current_config)
-    
+
     agent_config.save_config(current_config)
 
     entry_module, _ = entry_point.split(":")
