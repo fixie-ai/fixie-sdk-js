@@ -103,6 +103,7 @@ export default async function serve(
   agentConfig: AgentConfig,
   port: number,
   silentStartup: boolean,
+  silentRequestHandling: boolean = false,
 ) {
   const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
   if (!fs.existsSync(entryPointPath)) {
@@ -116,7 +117,7 @@ export default async function serve(
 
   const app = express();
 
-  const logger = bunyan.createLogger({ name: 'fixie-serve' });
+  const logger = bunyan.createLogger({ name: 'fixie-serve', streams: silentRequestHandling ? [] : [{ stream: process.stdout }] });
   app.use(bunyanMiddleware(logger));
 
   app.use(bodyParser.json());
@@ -154,8 +155,12 @@ export default async function serve(
       res.status(500).send(errorForLogging);
     }
   });
-  await new Promise<void>((resolve) => app.listen(port, () => resolve()));
+  const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+    const server = app.listen(port, () => resolve(server))
+  });
   if (!silentStartup) {
     console.log(`Agent listening on port ${port}.`);
   }
+
+  return server.close.bind(server);
 }
