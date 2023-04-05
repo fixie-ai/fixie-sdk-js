@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 
-import yaml from 'js-yaml';
 import fs from 'fs';
+import yaml from 'js-yaml';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import serve, {AgentConfig} from './serve';
+import serve, { AgentConfig } from './serve';
 
 const { argv } = yargs(hideBin(process.argv))
   .scriptName('cli-tool')
@@ -19,7 +19,7 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'string',
       required: true,
       default: 'config.yaml',
-      coerce: (path: string): {parsed: AgentConfig, path: string} => {
+      coerce: (path: string): { parsed: AgentConfig; path: string; } => {
         let fileContents;
         try {
           fileContents = fs.readFileSync(path, 'utf8');
@@ -31,7 +31,7 @@ const { argv } = yargs(hideBin(process.argv))
         }
         try {
           const parsed = yaml.load(fileContents) as AgentConfig;
-          return {parsed, path}
+          return { parsed, path };
         } catch (e: any) {
           throw new Error(`The provided path (${path}) is not a valid YAML file. The error was:\n${e.toString()}`);
         }
@@ -46,6 +46,6 @@ const { argv } = yargs(hideBin(process.argv))
  * based but TS doesn't.
  */
 type ExcludePromiseType<T> = Exclude<T, Promise<any>>;
-const staticArgv = argv as ExcludePromiseType<typeof argv>; 
+const staticArgv = argv as ExcludePromiseType<typeof argv>;
 
 serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port);
