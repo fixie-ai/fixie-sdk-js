@@ -454,7 +454,7 @@ def _validate_agent_loads_or_exit(
     "use_venv",
     is_flag=True,
     default=False,
-    help="Run from virtual environment",
+    help="Run from virtual environment [Only used for Python agents]",
 )
 @click.pass_context
 def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
@@ -483,7 +483,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             # Start up a tunnel via localhost.run.
             console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
             console.print(
-                f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
+                f"[yellow]This replaces any existing deployment. Run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
             deployment_urls_iter = iter(stack.enter_context(tunnel.Tunnel(port)))
             config.deployment_url = next(deployment_urls_iter)
@@ -497,7 +497,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
                         break
                     agent_api.update_agent(func_url=url)
                     console.print(
-                        f"[yellow]Tunnel URL was updated, now serving via {url}[/yellow]"
+                        f"[yellow]Tunnel URL was updated. Now serving via {url}[/yellow]"
                     )
 
             threading.Thread(target=_watch_tunnel, daemon=True).start()
@@ -526,7 +526,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             env=agent_env,
             cwd=agent_dir or None,
         ).check_returncode()
-
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
 import os
