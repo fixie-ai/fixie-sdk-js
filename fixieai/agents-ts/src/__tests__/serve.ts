@@ -3,6 +3,7 @@ import got from 'got';
 import yaml from 'js-yaml';
 import nock from 'nock';
 import path from 'path';
+import type { PromiseType } from 'utility-types';
 import serve, { AgentConfig } from '../serve';
 
 const agentConfigPath = path.resolve(__dirname, '..', 'fixtures', 'agent.yaml');
@@ -31,20 +32,22 @@ it('throws an error if the entry point does not exist', async () => {
   );
 });
 
-it('Request body is not in the expected format', async () => {
-  const port = 3000;
-  const silentStartup = true;
+const port = 3000;
+describe('server starts', () => {
+  let close: PromiseType<ReturnType<typeof serve>>;
 
-  const close = await serve({
-    agentConfigPath,
-    agentConfig,
-    port,
-    silentStartup,
-    refreshMetadataAPIUrl,
-    silentRequestHandling: true,
+  beforeEach(async () => {
+    close = await serve({
+      agentConfigPath,
+      agentConfig,
+      port,
+      silentStartup: true,
+      silentRequestHandling: true,
+      refreshMetadataAPIUrl,
+    });
   });
 
-  try {
+  it('Request body is not in the expected format', async () => {
     const response = await got.post(`http://localhost:${port}/roll`, {
       json: { message: { not_text: 'invalid' } },
       throwHttpErrors: false,
@@ -54,25 +57,9 @@ it('Request body is not in the expected format', async () => {
     expect(response.body).toBe(
       'Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: {"message":{"not_text":"invalid"}}',
     );
-  } finally {
-    close();
-  }
-});
-
-it('Function being called does not exist', async () => {
-  const port = 3000;
-  const silentStartup = true;
-
-  const close = await serve({
-    agentConfigPath,
-    agentConfig,
-    port,
-    silentStartup,
-    refreshMetadataAPIUrl,
-    silentRequestHandling: true,
   });
 
-  try {
+  it('Function being called does not exist', async () => {
     const response = await got.post(`http://localhost:${port}/function-does-not-exist`, {
       json: { message: { text: 'input' } },
       throwHttpErrors: false,
@@ -82,25 +69,9 @@ it('Function being called does not exist', async () => {
     expect(response.body).toBe(
       'Function not found: function-does-not-exist. Functions available: roll, willThrowError',
     );
-  } finally {
-    close();
-  }
-});
-
-it('Function being called throws an error', async () => {
-  const port = 3000;
-  const silentStartup = true;
-
-  const close = await serve({
-    agentConfigPath,
-    agentConfig,
-    port,
-    silentStartup,
-    refreshMetadataAPIUrl,
-    silentRequestHandling: true,
   });
 
-  try {
+  it('Function being called throws an error', async () => {
     const response = await got.post(`http://localhost:${port}/willThrowError`, {
       json: { message: { text: 'input' } },
       throwHttpErrors: false,
@@ -108,24 +79,9 @@ it('Function being called throws an error', async () => {
 
     expect(response.statusCode).toBe(500);
     expect(response.body).toMatch(/Error: This is an error/);
-  } finally {
-    close();
-  }
-});
-
-it('Agent metadata', async () => {
-  const port = 3000;
-  const silentStartup = true;
-
-  const close = await serve({
-    agentConfigPath,
-    agentConfig,
-    port,
-    silentStartup,
-    refreshMetadataAPIUrl,
-    silentRequestHandling: true,
   });
-  try {
+
+  it('Agent metadata', async () => {
     const response = await got(`http://localhost:${port}`);
 
     expect(response.statusCode).toBe(200);
@@ -148,7 +104,21 @@ A: You rolled 5, 3, and 8, for a total of 16.
 `,
       ],
     }));
-  } finally {
+  });
+
+  it('calls a function', async () => {
+    const response = await got.post(`http://localhost:${port}/roll`, {
+      responseType: 'json',
+      json: { message: { text: '20 1' } },
+    });
+    expect(response.statusCode).toBe(200);
+    const diceResult = Number((response.body as any).message.text);
+    expect(diceResult).not.toBeNaN();
+    expect(diceResult).toBeGreaterThanOrEqual(1);
+    expect(diceResult).toBeLessThanOrEqual(20);
+  });
+
+  afterEach(() => {
     close();
-  }
+  });
 });
