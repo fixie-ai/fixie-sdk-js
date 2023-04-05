@@ -313,7 +313,8 @@ def _configure_venv(
     console.print(f"Configuring virtual environment in {venv_path}")
     python_exe = os.path.join(venv_path, "bin", "python")
     if not os.path.exists(python_exe):
-        venv.create(venv_path, with_pip=True)
+        # Match `python -m venv` behavior with symlinks on non-Windows to work around https://bugs.python.org/issue38705
+        venv.create(venv_path, with_pip=True, symlinks=os.name != "nt")
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
         raise ValueError(
