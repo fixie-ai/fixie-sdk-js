@@ -18,6 +18,8 @@
     "build": "tsc -p . && chmod a+x dist/serve-bin.js",
     "start:dev": "npx nodemon",
     "bin:dev": "npx ts-node src/serve-bin.ts",
+    "unit": "npx jest",
+    "unit:watch": "npm run unit -- --watch",
     "test": "npm run format:check && npm run lint"
   },
   "keywords": [

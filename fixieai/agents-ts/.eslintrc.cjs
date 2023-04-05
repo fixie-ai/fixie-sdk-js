@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   extends: [
     'eslint:recommended',
@@ -6,7 +8,7 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: 'tsconfig.json',
+    project: path.join(__dirname__, 'tsconfig.json'),
   },
   plugins: ['@typescript-eslint'],
   root: true,

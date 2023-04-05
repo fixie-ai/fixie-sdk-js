@@ -1,0 +1,5 @@
+handle: test-agent-init
+description: ''
+more_info_url: ''
+language: typescript
+entry_point: ../template.ts
