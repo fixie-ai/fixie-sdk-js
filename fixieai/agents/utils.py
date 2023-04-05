@@ -35,7 +35,9 @@ def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
         )
 
 
-def validate_registered_pyfunc(func: Callable, agent: agent_base.AgentBase):
+def validate_registered_pyfunc(
+    func: Callable, agent: agent_base.AgentBase, is_generator: bool = False
+):
     """Validates `func`'s signature to be a valid CodeShot Func.
 
     Args:
@@ -87,11 +89,13 @@ def validate_registered_pyfunc(func: Callable, agent: agent_base.AgentBase):
                 f"Expected argument {arg_name!r} to be of type {arg_type!r}, but it's "
                 f"typed as {type_hints[arg_name]!r}."
             )
-    if "return" in type_hints and type_hints["return"] not in (
-        api.AgentResponse,
-        api.Message,
-        str,
-    ):
+
+    valid_return_types = (
+        (api.AgentResponseGenerator,)
+        if is_generator
+        else (api.AgentResponse, api.Message, str)
+    )
+    if "return" in type_hints and type_hints["return"] not in valid_return_types:
         raise TypeError(
             f"Expected registered function to return an AgentResponse, a Message, "
             f"or str but it returns {type_hints['return']}."

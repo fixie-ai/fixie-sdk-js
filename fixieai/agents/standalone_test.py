@@ -6,6 +6,7 @@ import yaml
 from fastapi import testclient
 
 from fixieai.agents import agent_base
+from fixieai.agents import api
 from fixieai.agents import standalone
 
 
@@ -18,11 +19,15 @@ def mock_token_verifier(mocker):
     )
 
 
+def mock_handle_message(query) -> api.AgentResponseGenerator:
+    yield api.AgentResponse.from_value(query.text.upper())
+
+
 @pytest.fixture
 def standalone_agent(mocker):
     mocker.patch.dict(os.environ, {"FIXIE_ALLOWED_AGENT_ID": "fake agent id"})
     return standalone.StandaloneAgent(
-        handle_message=lambda query: query.text.upper(), sample_queries=["sample query"]
+        handle_message=mock_handle_message, sample_queries=["sample query"]
     )
 
 
