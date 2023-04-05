@@ -199,11 +199,15 @@ class FixieClient:
         assert "username" in user and isinstance(user["username"], str)
         return user["username"]
 
+    def get_refresh_agent_url(self, agent_handle: str) -> str:
+        """Returns the URL for refreshing an agent."""
+        username = self.get_current_username()
+        return f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}"
+
     def refresh_agent(self, agent_handle: str):
         """Indicates that an agent's prompts should be refreshed."""
-        username = self.get_current_username()
         requests.post(
-            f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}",
+            self.get_refresh_agent_url(agent_handle),
             headers=self._request_headers,
         ).raise_for_status()
 

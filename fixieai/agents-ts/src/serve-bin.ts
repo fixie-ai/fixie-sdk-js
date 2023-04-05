@@ -19,6 +19,11 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
+    refreshMetadataAPIUrl: {
+      describe: 'Fixie API URL to call to refresh the metadata',
+      type: 'string',
+      required: true
+    },
     agent: {
       describe: 'Path to the agent.yaml',
       type: 'string',
@@ -44,7 +49,8 @@ const { argv } = yargs(hideBin(process.argv))
     },
   })
   .strict()
-  .help();
+  .help()
+  .epilog('This is an internal tool used by the Fixie SDK. Developers building on Fixie are not intended to use this tool; they should use the `fixie` CLI tool instead.');
 
 /**
  * This is a little dance to make TS happy. We know that argv is not a Promise, based on how we wrote the yargs code,
@@ -53,4 +59,4 @@ const { argv } = yargs(hideBin(process.argv))
 type ExcludePromiseType<T> = Exclude<T, Promise<any>>;
 const staticArgv = argv as ExcludePromiseType<typeof argv>;
 
-serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port, staticArgv.silentStartup);
+serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port, staticArgv.silentStartup, staticArgv.refreshMetadataAPIUrl);

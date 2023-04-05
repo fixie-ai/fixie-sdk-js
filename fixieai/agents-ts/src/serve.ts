@@ -6,6 +6,7 @@ import fs from 'fs';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
+import got from 'got';
 
 tsNode.register();
 
@@ -103,6 +104,7 @@ export default async function serve(
   agentConfig: AgentConfig,
   port: number,
   silentStartup: boolean,
+  refreshMetadataAPIUrl: string,
   silentRequestHandling: boolean = false,
 ) {
   const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
@@ -142,7 +144,7 @@ export default async function serve(
     }
 
     try {
-      const result = agentRunner.runFunction(funcName, body.message.text);
+      const result = agentRunner.runFunction(funcName, body.message);
       const response: AgentResponse = { message: { text: result } };
       res.send(response);
     } catch (e: any) {
@@ -158,6 +160,7 @@ export default async function serve(
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server))
   });
+  await got.post(refreshMetadataAPIUrl);
   if (!silentStartup) {
     console.log(`Agent listening on port ${port}.`);
   }
