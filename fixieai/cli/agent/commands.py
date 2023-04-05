@@ -174,7 +174,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
-    current_config.language = language
+    current_config.language = "typescript" if is_typescript else "python"
     current_config.more_info_url = more_info_url
 
     entry_module, _ = entry_point.split(":")
@@ -451,17 +451,25 @@ def _validate_agent_loads_or_exit(
 )
 @click.option(
     "--venv/--no-venv",
-    "use_venv",
+    "use_venv_flag",
     is_flag=True,
     default=False,
     help="Run from virtual environment [Only used for Python agents]",
 )
 @click.pass_context
-def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
+def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+    is_typescript = config.language == "typescript"
     client: fixieai.FixieClient = ctx.obj.client
     agent_id = f"{client.get_current_username()}/{config.handle}"
+
+    if is_typescript and use_venv_flag:
+        console.print(
+            "[yellow]Warning: passing --venv has no effect for TypeScript agents.[/yellow]"
+        )
+    # Ignore the --venv flag for TypeScript agents.
+    use_venv = use_venv_flag and not is_typescript
 
     with contextlib.ExitStack() as stack:
         agent_dir = os.path.dirname(path) or "."
@@ -473,11 +481,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             python_exe, agent_env = sys.executable, os.environ.copy()
 
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
-
-        # Validate that the agent loads before setting up the server.
-        _validate_agent_loads_or_exit(
-            console, agent_dir, config.handle, python_exe, agent_env
-        )
 
         if use_tunnel:
             # Start up a tunnel via localhost.run.
@@ -510,22 +513,25 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
 
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
-        subprocess.run(
-            [
-                python_exe,
-                "-m",
-                "uvicorn",
-                "fixieai.cli.agent.loader:uvicorn_app_factory",
-                "--host",
-                host,
-                "--port",
-                str(port),
-                "--factory",
-            ]
-            + (["--reload"] if reload else []),
-            env=agent_env,
-            cwd=agent_dir or None,
-        ).check_returncode()
+        if is_typescript:
+            pass
+        else:
+            subprocess.run(
+                [
+                    python_exe,
+                    "-m",
+                    "uvicorn",
+                    "fixieai.cli.agent.loader:uvicorn_app_factory",
+                    "--host",
+                    host,
+                    "--port",
+                    str(port),
+                    "--factory",
+                ]
+                + (["--reload"] if reload else []),
+                env=agent_env,
+                cwd=agent_dir or None,
+            ).check_returncode()
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
 import os
