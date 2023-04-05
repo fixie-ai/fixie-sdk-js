@@ -9,12 +9,9 @@
  *     https://github.com/fixie-ai/fixie-examples
  */
 
-// @ts-expect-error
-import { CodeShotAgent, Message } from 'fixieai';
+export const BASE_PROMPT = 'General info about what this agent does and the tone it should use.';
 
-const BASE_PROMPT = 'General info about what this agent does and the tone it should use.';
-
-const FEW_SHOTS = `
+export const FEW_SHOTS = `
 Q: Sample query to this agent
 A: Sample response
 
@@ -24,11 +21,9 @@ Func[example] says: output
 A: The other response is output
 `;
 
-const agent = new CodeShotAgent(BASE_PROMPT, FEW_SHOTS);
-
-agent.registerFunc((query: Message): string => {
+export function example(query: any): string {
   if (query.text === 'input') {
     return 'output';
   }
   throw new Error('Invalid input');
-});
+}
