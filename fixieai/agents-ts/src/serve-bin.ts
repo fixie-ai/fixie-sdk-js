@@ -19,7 +19,7 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'string',
       required: true,
       default: 'config.yaml',
-      coerce: (path: string): AgentConfig => {
+      coerce: (path: string): {parsed: AgentConfig, path: string} => {
         let fileContents;
         try {
           fileContents = fs.readFileSync(path, 'utf8');
@@ -30,7 +30,8 @@ const { argv } = yargs(hideBin(process.argv))
           throw e;
         }
         try {
-          return yaml.load(fileContents) as AgentConfig;
+          const parsed = yaml.load(fileContents) as AgentConfig;
+          return {parsed, path}
         } catch (e: any) {
           throw new Error(`The provided path (${path}) is not a valid YAML file. The error was:\n${e.toString()}`);
         }
@@ -47,4 +48,4 @@ const { argv } = yargs(hideBin(process.argv))
 type ExcludePromiseType<T> = Exclude<T, Promise<any>>;
 const staticArgv = argv as ExcludePromiseType<typeof argv>; 
 
-serve(staticArgv.agent, staticArgv.port);
+serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port);

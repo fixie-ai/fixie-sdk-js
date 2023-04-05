@@ -188,6 +188,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
 
         if current_config.entry_point == agent_config.AgentConfig().entry_point:
             current_config.entry_point = "index.ts"
+            expected_main_path = 'index.ts'
 
     expected_main_path = entry_module.replace(".", "/") + main_file_extension
 
