@@ -77,7 +77,7 @@ class AgentRunner {
     }
     if (typeof requiredAgent.FEW_SHOTS !== 'string') {
       throw new Error(
-        `Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}`,
+        `Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}.`,
       );
     }
     const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
