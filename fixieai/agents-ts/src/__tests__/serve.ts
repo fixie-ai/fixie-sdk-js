@@ -16,7 +16,7 @@ nock('http://fake:3000').post('/refresh-metadata').reply(200, {});
 
 describe('error handling', () => {
   it('throws an error if the entry point does not exist', async () => {
-    await expect(async () =>{
+    await expect(async () => {
       const close = await serve({
         agentConfigPath: 'agent.yaml',
         agentConfig: {
@@ -26,7 +26,7 @@ describe('error handling', () => {
         port: 3000,
         silentStartup: true,
         refreshMetadataAPIUrl,
-      })
+      });
       close();
     }).rejects.toThrowError(
       /The entry point \(.*\) does not exist. Did you specify the wrong path in your agent.yaml\? The entry_point is interpreted relative to the agent.yaml./,

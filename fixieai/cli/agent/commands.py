@@ -184,7 +184,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         agent_template_url = "https://raw.githubusercontent.com/NickHeiner/fixie-sdk/nth/nodejs-server/fixieai/agents-ts/src/template.ts"
 
         current_config.entry_point = "index.ts"
-        expected_main_path = 'index.ts'
+        expected_main_path = "index.ts"
     else:
         expected_main_path = entry_module.replace(".", "/") + main_file_extension
 
@@ -513,19 +513,26 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
         if is_typescript:
             # Get path from this file to ../../agents-ts/dist/serve-bin.js
             serve_bin_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "agents-ts", "dist", "serve-bin.js"
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "agents-ts",
+                "dist",
+                "serve-bin.js",
             )
-            subprocess.run([
-                serve_bin_path,
-                "--port",
-                str(port),
-                "--agent",
-                path,
-                "--silentStartup",
-                "--humanReadableLogs",
-                "--refreshMetadataAPIUrl",
-                client.get_refresh_agent_url(config.handle),
-            ]).check_returncode()
+            subprocess.run(
+                [
+                    serve_bin_path,
+                    "--port",
+                    str(port),
+                    "--agent",
+                    path,
+                    "--silentStartup",
+                    "--humanReadableLogs",
+                    "--refreshMetadataAPIUrl",
+                    client.get_refresh_agent_url(config.handle),
+                ]
+            ).check_returncode()
         else:
             subprocess.run(
                 [
@@ -543,6 +550,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
                 env=agent_env,
                 cwd=agent_dir or None,
             ).check_returncode()
+
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
 import os
