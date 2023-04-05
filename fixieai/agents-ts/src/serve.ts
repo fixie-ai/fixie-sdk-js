@@ -3,6 +3,8 @@ import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import _ from 'lodash';
+import bunyanMiddleware from "bunyan-middleware";
+import bunyan from "bunyan";
 
 /**
  * This should be kept in sync with the `AgentConfig` dataclass.
@@ -55,7 +57,7 @@ class AgentRunner {
     if (typeof requiredAgent.FEW_SHOTS !== 'string') {
       throw new Error(`Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}`);
     }
-    const funcs = _.omit(requiredAgent, 'basePrompt', 'fewShots');
+    const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
 
     this.agent = {
       basePrompt: requiredAgent.BASE_PROMPT,
@@ -80,6 +82,13 @@ class AgentRunner {
   }
 }
 
+/**
+ * TODO:
+ *  - watch mode
+ *  - logger formatting for local dev
+ *  - async agent functions
+ */
+
 export default async function serve(agentConfigPath: string, agentConfig: AgentConfig, port: number) {
   const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
   if (!fs.existsSync(entryPointPath)) {
@@ -92,23 +101,43 @@ export default async function serve(agentConfigPath: string, agentConfig: AgentC
   const agentRunner = new AgentRunner(entryPointPath);
 
   const app = express();
+  
+  const logger = bunyan.createLogger({ name: "fixie-serve" });
+  app.use(bunyanMiddleware(logger));
+
   app.use(bodyParser.json());
+
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
   app.post('/:funcName', (req, res) => {
     const funcName = req.params.funcName;
     const body = req.body;
+
+    if (typeof req.body.message?.text !== "string") {
+      res
+        .status(400)
+        // Is it a security problem to stringify untrusted input?
+        .send(
+          `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${JSON.stringify(
+            req.body
+          )}`
+        );
+      return;
+    }
+
     try {
       const result = agentRunner.runFunction(funcName, body.message.text);
       const response: AgentResponse = { message: { text: result } };
       res.send(response);
     } catch (e: any) {
-      if (e.name === 'FunctionNotFoundError') {
+      if (e.name === "FunctionNotFoundError") {
         res.status(404).send(e.message);
-      } else {
-        res.status(500).send(e.toString());
+        return;
       }
+      const errorForLogging = _.pick(e, 'message', 'stack');
+      logger.error({error: errorForLogging, functionName: funcName}, 'Error running agent function');
+      res.status(500).send(errorForLogging);
     }
   });
   await new Promise<void>((resolve) => app.listen(port, () => resolve()));
-  console.log(`Codeshot agent listening on port ${port}.`);
+  console.log(`Agent listening on port ${port}.`);
 }
