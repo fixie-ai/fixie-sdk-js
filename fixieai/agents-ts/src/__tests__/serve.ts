@@ -11,27 +11,106 @@ const agentConfig = yaml.load(agentConfigContents) as AgentConfig;
 
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
-const refreshMetadataHostname = new URL(refreshMetadataAPIUrl).hostname;
-nock('http://fake:3000').post('/refresh-metadata').reply(200, {});
+nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(200, {});
 
-describe('error handling', () => {
-  it('throws an error if the entry point does not exist', async () => {
-    await expect(async () => {
-      const close = await serve({
-        agentConfigPath: 'agent.yaml',
-        agentConfig: {
-          ...agentConfig,
-          entry_point: 'does-not-exist.ts',
-        },
-        port: 3000,
-        silentStartup: true,
-        refreshMetadataAPIUrl,
-      });
-      close();
-    }).rejects.toThrowError(
-      /The entry point \(.*\) does not exist. Did you specify the wrong path in your agent.yaml\? The entry_point is interpreted relative to the agent.yaml./,
-    );
+it('throws an error if the entry point does not exist', async () => {
+  await expect(async () => {
+    const close = await serve({
+      agentConfigPath: 'agent.yaml',
+      agentConfig: {
+        ...agentConfig,
+        entry_point: 'does-not-exist.ts',
+      },
+      port: 3000,
+      silentStartup: true,
+      refreshMetadataAPIUrl,
+    });
+    close();
+  }).rejects.toThrowError(
+    /The entry point \(.*\) does not exist. Did you specify the wrong path in your agent.yaml\? The entry_point is interpreted relative to the agent.yaml./,
+  );
+});
+
+it('Request body is not in the expected format', async () => {
+  const port = 3000;
+  const silentStartup = true;
+
+  const close = await serve({
+    agentConfigPath,
+    agentConfig,
+    port,
+    silentStartup,
+    refreshMetadataAPIUrl,
+    silentRequestHandling: true,
   });
+
+  try {
+    const response = await got.post(`http://localhost:${port}/roll`, {
+      json: { message: { not_text: 'invalid' } },
+      throwHttpErrors: false,
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toBe(
+      'Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: {"message":{"not_text":"invalid"}}',
+    );
+  } finally {
+    close();
+  }
+});
+
+it('Function being called does not exist', async () => {
+  const port = 3000;
+  const silentStartup = true;
+
+  const close = await serve({
+    agentConfigPath,
+    agentConfig,
+    port,
+    silentStartup,
+    refreshMetadataAPIUrl,
+    silentRequestHandling: true,
+  });
+
+  try {
+    const response = await got.post(`http://localhost:${port}/function-does-not-exist`, {
+      json: { message: { text: 'input' } },
+      throwHttpErrors: false,
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toBe(
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError',
+    );
+  } finally {
+    close();
+  }
+});
+
+it('Function being called throws an error', async () => {
+  const port = 3000;
+  const silentStartup = true;
+
+  const close = await serve({
+    agentConfigPath,
+    agentConfig,
+    port,
+    silentStartup,
+    refreshMetadataAPIUrl,
+    silentRequestHandling: true,
+  });
+
+  try {
+    const response = await got.post(`http://localhost:${port}/willThrowError`, {
+      json: { message: { text: 'input' } },
+      throwHttpErrors: false,
+    });
+
+    expect(response.statusCode).toBe(500);
+    expect(response.body).toMatch(/Error: This is an error/);
+  } finally {
+    close();
+  }
 });
 
 it('Agent metadata', async () => {
