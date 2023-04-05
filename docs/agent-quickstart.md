@@ -65,7 +65,7 @@ In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the functi
 ## Test your Agent
 
 To test your Agent, you have two options: 
-1. Run it on your local machine using the `fixie agent serve` command
+1. Run it on your local machine using the `fixie Agent serve` command
 1. Deploy it to the Fixie platform using the `fixie agent deploy` command.
 
 ```bash
@@ -77,7 +77,7 @@ Tunneling 0.0.0.0:8181 via https://df03e6d61a9f11.lhr.life
 When running `fixie agent serve`, a tunnel is set up that allows the Agent, running on your local machine, to be accessed from the Fixie Platform. The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
 tunnel is torn down and your Agent is no longer accessible.
 
-You can now use `fixie console` to send a message to your agent directly:
+You can now use `fixie console` to send a message to your Agent directly:
 
 ```bash
 $ fixie console
@@ -92,11 +92,11 @@ fixie 🦊❯ @myagent Generate a random number between 10 and 50
 1❯ The random number is 48.
 ```
 
-In the `fixie agent serve` window, you should also see debugging output showing that your agent code was invoked with a `POST` request to the `/genrand` endpoint.
+In the `fixie agent serve` window, you should also see debugging output showing that your Agent code was invoked with a `POST` request to the `/genrand` endpoint.
 
 ## Deploy Your Agent
 
-Agents can be deployed on any web server that supports Python. Alternatively, you can deploy your agent directly to the Fixie platform, which will handle hosting the agent functions in the cloud.
+Agents can be deployed on any web server that supports Python. Alternatively, you can deploy your Agent directly to the Fixie platform, which will handle hosting the Agent functions in the cloud.
 
 To deploy your agent, simply run `fixie agent deploy`:
 
@@ -106,8 +106,8 @@ $ fixie agent deploy
 ✅ Refreshing...
 ```
 
-This process takes about a minute to complete. Once deployed, you can use your agent via the [Fixie Web UI](http://app.fixie.ai) or the `fixie console` tool.
+This process takes about a minute to complete. Once deployed, you can use your Agent via the [Fixie Web UI](http://app.fixie.ai) or the `fixie console` tool.
 
 ## Implementing Agents without Python
 
-Refer to the [Agent Protocol](agent-protocol.md) documentation for details on implementing an agent in a language other than Python. For complete information on the Fixie Agent API, see [Agent API](agents.md).
+Refer to the [Agent Protocol](agent-protocol.md) documentation for details on implementing an Agent in a language other than Python. For complete information on the Fixie Agent API, see [Agent API](agents.md).

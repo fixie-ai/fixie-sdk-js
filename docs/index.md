@@ -21,24 +21,24 @@ Learn more about Fixie at [https://fixie.ai](https://fixie.ai).
 ## Demo an agent
 1. Choose any example agent
 1. `cd` into the directory
-1. Run `fixie agent deploy`
+1. Run `fixie Agent deploy`
 
-You can now test the agent through the following methods:
+You can now test the Agent through the following methods:
 * Run `fixie console -a username/agent_name` and input a test query.
-* Run `fixie console` and then @ your specific agent (e.g., `@username/agent_name this is the query`).
+* Run `fixie console` and then @ your specific Agent (e.g., `@username/agent_name this is the query`).
 * Talk to deployed agents directly at [app.fixie.ai](http://app.fixie.ai).
-* Interact with the agent programmatically:
+* Interact with the Agent programmatically:
   ```py
   import fixieai
   response = fixieai.query("How many countries start with the letter R ?")
   print(response)
   ```
 
-For local development and testing, run your agent locally with `fixie agent serve`. This is useful for debugging issues. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent via `fixie console`.
+For local development and testing, run your Agent locally with `fixie Agent serve`. This is useful for debugging issues. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the Agent via `fixie console`.
 
 # Agent Examples
 
-Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. Start by scaffolding a default agent with `fixie init`. For more examples, check out [Building Fixie Agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
+Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. Start by scaffolding a default Agent with `fixie init`. For more examples, check out [Building Fixie Agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
 
 # Documentation
 

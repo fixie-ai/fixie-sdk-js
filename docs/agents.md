@@ -33,18 +33,18 @@ def my_func(query: fixieai.Message) -> str:
     return "Response to the query"
 ```
 
-The `BASE_PROMPT` and `FEW_SHOTS` strings provide examples for the underlying Large Language Model (LLM), such as GPT-3, as well as supply the Fixie Platform with information about the types of queries this agent can support.
+The `BASE_PROMPT` and `FEW_SHOTS` strings provide examples for the underlying Large Language Model (LLM), such as GPT-3, as well as supply the Fixie Platform with information about the types of queries this Agent can support.
 
 `FEW_SHOTS` must be a string composed of one or more _stanzas_, where each stanza consists of a question, one or more rounds of internal actions performed by the agent, and a final answer. Stanzas must be separated by a blank line. The query line in the stanza must start with `Q:`, and the answer line must start with `A:`.
 
-Internal actions performed by the agent can be one of two forms:
+Internal actions performed by the Agent can be one of two forms:
 
 1. `Ask Func[<func_name>]: <query_text>`: This indicates that the function `<func_name>` should be invoked when the output of the underlying LLM starts with this string. The string following `Ask Func[<func_name>]:` is passed to the function as the `query.text` parameter.
-1. `Ask Agent[<agent_name>]: <query_text>`: This indicates that the agent `<agent_name>` should be invoked when the output of the underlying LLM starts with this string. The string following `Ask Agent[<agent_name>]:` is passed to the agent as the `query.text` parameter.
+1. `Ask Agent[<agent_name>]: <query_text>`: This indicates that the Agent `<agent_name>` should be invoked when the output of the underlying LLM starts with this string. The string following `Ask Agent[<agent_name>]:` is passed to the Agent as the `query.text` parameter.
 
 ## Agent Funcs
 
-A **Func** is a Python function that the agent can invoke. (To implement Funcs in languages other than Python, create a service that implements the [Fixie Agent Protocol](agent-protocol.md).) When the language model for an agent emits the token `Ask Func[<func_name>]`, the function `<func_name>` will be invoked.
+A **Func** is a Python function that the Agent can invoke. (To implement Funcs in languages other than Python, create a service that implements the [Fixie Agent Protocol](agent-protocol.md).) When the language model for an Agent emits the token `Ask Func[<func_name>]`, the function `<func_name>` will be invoked.
 
 The `register_func` decorator is used to register a function for invocation by the agent.
 
@@ -56,7 +56,7 @@ def my_func(query, user_storage=None, oauth_handler=None):
     ...
 ```
 
-The `query` parameter is either a `str` or a [`Message`][fixieai.agents.api.message] object. If the query parameter is a string, this parameter contains the text of the agent query. If the query parameter is a `Message` object, this parameter contains the text of the agent along with zero or more [`Embed`][fixieai.agents.api.embed] objects, as described in the [Embeds](#embeds) section below.
+The `query` parameter is either a `str` or a [`Message`][fixieai.agents.api.message] object. If the query parameter is a string, this parameter contains the text of the Agent query. If the query parameter is a `Message` object, this parameter contains the text of the Agent along with zero or more [`Embed`][fixieai.agents.api.embed] objects, as described in the [Embeds](#embeds) section below.
 
 The optional `user_storage` parameter provides the Func an interface to the Fixie [User Storage](#user-storage) service, as described below.
 

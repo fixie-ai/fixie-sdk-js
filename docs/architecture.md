@@ -17,7 +17,7 @@ The core Fixie service can run on the cloud or in a customer's environment. Agen
 The Fixie GraphQL API allows clients to interact with the system in several ways:
 
 - Query the set of Agents in the system, returning metadata about each Agent, such as the name, owner, set of example queries that the Agent supports, etc.
-- Register a new agent (described in the Creating an Agent section below).
+- Register a new Agent (described in the Creating an Agent section below).
 - Create, list, and delete Sessions. A Session can be thought of as a chat session with the Fixie system, between the client and one or more Agents.
 - Post a Message to a Session, sending a new query to Fixie for system processing.
 - Retrieve the Messages in a Session, including those Messages sent by Agents.
