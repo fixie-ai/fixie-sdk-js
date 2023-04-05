@@ -24,8 +24,8 @@ export interface AgentConfig {
 }
 
 interface AgentMetadata {
-  basePrompt: string;
-  fewShots: string[];
+  base_prompt: string;
+  few_shots: string[];
 }
 
 interface AgentResponse {
@@ -68,7 +68,7 @@ class AgentRunner {
 
     this.agent = {
       basePrompt: requiredAgent.BASE_PROMPT,
-      fewShots: requiredAgent.FEW_SHOTS,
+      fewShots: requiredAgent.FEW_SHOTS.split('\n\n'),
       funcs,
     };
   }
@@ -85,8 +85,8 @@ class AgentRunner {
 
   getAgentMetadata(): AgentMetadata {
     return {
-      basePrompt: this.agent.basePrompt,
-      fewShots: this.agent.fewShots,
+      base_prompt: this.agent.basePrompt,
+      few_shots: this.agent.fewShots,
     };
   }
 }
