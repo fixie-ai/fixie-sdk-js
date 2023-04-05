@@ -1,7 +1,7 @@
 /**
  * This should be kept in sync with the `AgentConfig` dataclass.
  */
-interface AgentConfig {
+export interface AgentConfig {
   handle: string;
   name?: string;
   description: string;
@@ -12,5 +12,4 @@ interface AgentConfig {
   public?: boolean;
 }
 export default function serve(agent: AgentConfig, port: number) {
-
 }
