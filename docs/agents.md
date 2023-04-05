@@ -33,7 +33,7 @@ def my_func(query: fixieai.Message) -> str:
     return "Response to the query"
 ```
 
-The `BASE_PROMPT` and `FEW_SHOTS` strings provide examples for the underlying Large Language Model (LLM), such as GPT-3, as well as supply the Fixie Platform with information about the types of queries this Agent can support.
+The `BASE_PROMPT` and `FEW_SHOTS` strings provide examples for the underlying Large Language Model (LLM), such as GPT-4, as well as supply the Fixie Platform with information about the types of queries this Agent can support.
 
 `FEW_SHOTS` must be a string composed of one or more _stanzas_, where each stanza consists of a question, one or more rounds of internal actions performed by the agent, and a final answer. Stanzas must be separated by a blank line. The query line in the stanza must start with `Q:`, and the answer line must start with `A:`.
 

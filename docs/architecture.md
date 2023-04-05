@@ -87,7 +87,7 @@ queries and generate responses. There are two ways of doing this in Fixie.
 
 ## Fully Custom Agents
 
-An Agent can do whatever it wants with the input query. Most of the time, it directly calls a Large Language Model (LLM), such as OpenAI's GPT-3. Fixie is agnostic to the Agent's query processing method, which could use GPT-3, fine-tuned models like InstructGPT, or custom models from developers or third parties. Libraries like [LangChain](https://github.com/hwchase17/langchain) can assist in interfacing LLM with external code.
+An Agent can do whatever it wants with the input query. Most of the time, it directly calls a Large Language Model (LLM), such as OpenAI's GPT-4. Fixie is agnostic to the Agent's query processing method, which could use GPT-4, fine-tuned models like InstructGPT, or custom models from developers or third parties. Libraries like [LangChain](https://github.com/hwchase17/langchain) can assist in interfacing LLM with external code.
 
 An Agent can also serve as a wrapper for third-party AI-powered services, such as text summarization, text generation, and search. Building an Agent to wrap around services like [Jasper.ai](http://Jasper.ai), Instructive.ai, or [Copy.ai](http://Copy.ai) is simple. This approach interconnects and composes various functions within the Fixie ecosystem.
 

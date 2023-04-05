@@ -57,7 +57,7 @@ def genrand(query: fixieai.Message) -> str:
 
 The code consists of two main parts:
 
-* **`BASE_PROMPT`** and **`FEW_SHOTS`**: These are the few-shot examples that define the Agent's purpose and behavior. The few-shots are used to provide examples to the underlying Large Language Model, such as GPT-3, as well as to provide the Fixie Platform information on what kinds of queries this Agent can support.
+* **`BASE_PROMPT`** and **`FEW_SHOTS`**: These are the few-shot examples that define the Agent's purpose and behavior. The few-shots are used to provide examples to the underlying Large Language Model, such as GPT-4, as well as to provide the Fixie Platform information on what kinds of queries this Agent can support.
 * **Code snippets**: These are the functions that are invoked by the Code Shots. The code snippets are registered with the agent using the `register_func` decorator.
 
 In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the function `genrand` should be invoked when the output of the underlying LLM starts with this string. The values following `Ask Func[genrand]:` are passed to the function as the `query.text` parameter. In this case, the function parses out the values and returns a random number between those two values.

@@ -9,7 +9,7 @@ A Fixie Agent is a program that accepts HTTP requests of two types:
 
 ## Few-shot examples
 
-Upon receiving an HTTP `GET` request to the `/` endpoint, the Agent must return a list of few-shot examples that it supports. The few-shot examples are used to provide examples to the underlying Large Language Model, such as GPT-3, as well as to provide the Fixie Platform information on what kinds of queries this Agent can support.
+Upon receiving an HTTP `GET` request to the `/` endpoint, the Agent must return a list of few-shot examples that it supports. The few-shot examples are used to provide examples to the underlying Large Language Model, such as GPT-4, as well as to provide the Fixie Platform information on what kinds of queries this Agent can support.
 
 The few-shot examples are returned as a JSON object with the following format:
 
