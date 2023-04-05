@@ -98,7 +98,12 @@ class AgentRunner {
  *  - async agent functions
  */
 
-export default async function serve(agentConfigPath: string, agentConfig: AgentConfig, port: number, silentStartup: boolean) {
+export default async function serve(
+  agentConfigPath: string,
+  agentConfig: AgentConfig,
+  port: number,
+  silentStartup: boolean,
+) {
   const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
   if (!fs.existsSync(entryPointPath)) {
     const absolutePath = path.resolve(entryPointPath);
