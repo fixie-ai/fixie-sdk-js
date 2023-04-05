@@ -14,6 +14,11 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'number',
       required: true,
     },
+    silentStartup: {
+      describe: 'Do not log on startup',
+      type: 'boolean',
+      default: false,
+    },
     agent: {
       describe: 'Path to the agent.yaml',
       type: 'string',
@@ -48,4 +53,4 @@ const { argv } = yargs(hideBin(process.argv))
 type ExcludePromiseType<T> = Exclude<T, Promise<any>>;
 const staticArgv = argv as ExcludePromiseType<typeof argv>;
 
-serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port);
+serve(staticArgv.agent.path, staticArgv.agent.parsed, staticArgv.port, staticArgv.silentStartup);

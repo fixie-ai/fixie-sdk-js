@@ -505,13 +505,25 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
             agent_api = _ensure_agent_updated(client, agent_id, config)
 
         console.print(
-            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
+            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}. Run `fixie console` in another terminal window to interact with this agent. In `fixie console`, send a command like \"@{agent_api.agent_id} hello world\" to talk to your agent."
         )
 
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         if is_typescript:
-            pass
+            # Get path from this file to ../../agents-ts/dist/serve-bin.js
+            serve_bin_path = os.path.join(
+                os.path.dirname(__file__), "..", "..", "agents-ts", "dist", "serve-bin.js"
+            )
+
+            subprocess.run([
+                serve_bin_path,
+                "--port",
+                str(port),
+                "--agent",
+                path,
+                "--silentStartup"
+            ]).check_returncode()
         else:
             subprocess.run(
                 [

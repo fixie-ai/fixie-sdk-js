@@ -1,10 +1,13 @@
-import fs from 'fs';
-import path from 'path';
-import express from 'express';
 import bodyParser from 'body-parser';
+import bunyan from 'bunyan';
+import bunyanMiddleware from 'bunyan-middleware';
+import express from 'express';
+import fs from 'fs';
 import _ from 'lodash';
-import bunyanMiddleware from "bunyan-middleware";
-import bunyan from "bunyan";
+import path from 'path';
+import * as tsNode from 'ts-node';
+
+tsNode.register();
 
 /**
  * This should be kept in sync with the `AgentConfig` dataclass.
@@ -52,24 +55,30 @@ class AgentRunner {
     const allExports = Object.keys(requiredAgent).join(', ');
 
     if (typeof requiredAgent.BASE_PROMPT !== 'string') {
-      throw new Error(`Agent must have a string export named BASE_PROMPT. The agent exported the following: ${allExports}.`);
+      throw new Error(
+        `Agent must have a string export named BASE_PROMPT. The agent exported the following: ${allExports}.`,
+      );
     }
     if (typeof requiredAgent.FEW_SHOTS !== 'string') {
-      throw new Error(`Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}`);
+      throw new Error(
+        `Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}`,
+      );
     }
     const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
 
     this.agent = {
       basePrompt: requiredAgent.BASE_PROMPT,
       fewShots: requiredAgent.FEW_SHOTS,
-      funcs
-    }
+      funcs,
+    };
   }
 
   runFunction(funcName: string, args: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
     const func = this.agent.funcs[funcName];
     if (!func) {
-      throw new FunctionNotFoundError(`Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).join(', ')}`);
+      throw new FunctionNotFoundError(
+        `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).join(', ')}`,
+      );
     }
     return func(args);
   }
@@ -89,7 +98,7 @@ class AgentRunner {
  *  - async agent functions
  */
 
-export default async function serve(agentConfigPath: string, agentConfig: AgentConfig, port: number) {
+export default async function serve(agentConfigPath: string, agentConfig: AgentConfig, port: number, silentStartup: boolean) {
   const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
   if (!fs.existsSync(entryPointPath)) {
     const absolutePath = path.resolve(entryPointPath);
@@ -101,8 +110,8 @@ export default async function serve(agentConfigPath: string, agentConfig: AgentC
   const agentRunner = new AgentRunner(entryPointPath);
 
   const app = express();
-  
-  const logger = bunyan.createLogger({ name: "fixie-serve" });
+
+  const logger = bunyan.createLogger({ name: 'fixie-serve' });
   app.use(bunyanMiddleware(logger));
 
   app.use(bodyParser.json());
@@ -112,14 +121,16 @@ export default async function serve(agentConfigPath: string, agentConfig: AgentC
     const funcName = req.params.funcName;
     const body = req.body;
 
-    if (typeof req.body.message?.text !== "string") {
+    if (typeof req.body.message?.text !== 'string') {
       res
         .status(400)
         // Is it a security problem to stringify untrusted input?
         .send(
-          `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${JSON.stringify(
-            req.body
-          )}`
+          `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${
+            JSON.stringify(
+              req.body,
+            )
+          }`,
         );
       return;
     }
@@ -129,15 +140,17 @@ export default async function serve(agentConfigPath: string, agentConfig: AgentC
       const response: AgentResponse = { message: { text: result } };
       res.send(response);
     } catch (e: any) {
-      if (e.name === "FunctionNotFoundError") {
+      if (e.name === 'FunctionNotFoundError') {
         res.status(404).send(e.message);
         return;
       }
       const errorForLogging = _.pick(e, 'message', 'stack');
-      logger.error({error: errorForLogging, functionName: funcName}, 'Error running agent function');
+      logger.error({ error: errorForLogging, functionName: funcName }, 'Error running agent function');
       res.status(500).send(errorForLogging);
     }
   });
   await new Promise<void>((resolve) => app.listen(port, () => resolve()));
-  console.log(`Agent listening on port ${port}.`);
+  if (!silentStartup) {
+    console.log(`Agent listening on port ${port}.`);
+  }
 }
