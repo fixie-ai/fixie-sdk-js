@@ -505,7 +505,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
             agent_api = _ensure_agent_updated(client, agent_id, config)
 
         console.print(
-            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}. Run `fixie console` in another terminal window to interact with this agent. In `fixie console`, send a command like \"@{agent_api.agent_id} hello world\" to talk to your agent."
+            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}. To interact with this agent, open another terminal window, and run: `fixie console --agent {agent_api.agent_id}`.`"
         )
 
         # Trigger an agent refresh each time it reloads.
