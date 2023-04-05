@@ -167,10 +167,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
 
     is_typescript = language.lower() in ["typescript", "ts"]
 
-    try:
-        current_config = agent_config.load_config()
-    except FileNotFoundError:
-        current_config = agent_config.AgentConfig()
+    current_config = agent_config.AgentConfig()
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
@@ -186,11 +183,10 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
         # Before merging to main, update this to match the Python version.
         agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/feature-ts/fixieai/agents-ts/src/template.ts"
 
-        if current_config.entry_point == agent_config.AgentConfig().entry_point:
-            current_config.entry_point = "index.ts"
-            expected_main_path = 'index.ts'
-
-    expected_main_path = entry_module.replace(".", "/") + main_file_extension
+        current_config.entry_point = "index.ts"
+        expected_main_path = 'index.ts'
+    else:
+        expected_main_path = entry_module.replace(".", "/") + main_file_extension
 
     agent_config.save_config(current_config)
 
