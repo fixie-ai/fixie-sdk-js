@@ -10,7 +10,7 @@ The following diagram is a high-level representation of the Fixie platform:
 
 The Fixie system comprises a cloud-hosted API (app.fixie.ai) that provides a GraphQL-based API endpoint to clients and a set of Agents, each possessing a specific set of skills such as accessing a remote API, pulling data from a database, summarizing text, etc.
 
-The core Fixie service can run on the cloud or in a customer's environment. Agents can operate anywhere: hosted by Fixie, hosted by a customer, or hosted by third parties. Each Agent functions as an independent microservice. Fixie's Agent registry maintains metadata about each agent, including its description, owner information, and the URL where messages can be sent to the Agent.
+The core Fixie service runs on the cloud. Agents can operate anywhere: hosted by Fixie, hosted by a customer, or hosted by third parties. Each Agent functions as an independent microservice. Fixie's Agent registry maintains metadata about each agent, including its description, owner information, and the URL where messages can be sent to the Agent.
 
 ### GraphQL API
 
