@@ -515,8 +515,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
             serve_bin_path = os.path.join(
                 os.path.dirname(__file__), "..", "..", "agents-ts", "dist", "serve-bin.js"
             )
-            print(client.get_refresh_agent_url(agent_id))
-
             subprocess.run([
                 serve_bin_path,
                 "--port",
@@ -524,8 +522,9 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
                 "--agent",
                 path,
                 "--silentStartup",
+                "--humanReadableLogs",
                 "--refreshMetadataAPIUrl",
-                client.get_refresh_agent_url(agent_id),
+                client.get_refresh_agent_url(config.handle),
             ]).check_returncode()
         else:
             subprocess.run(

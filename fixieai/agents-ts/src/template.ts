@@ -28,7 +28,7 @@ Func[roll] says: 5 3 8
 A: You rolled 5, 3, and 8, for a total of 16.
 `;
 
-export function roll(query: {text: string}): string {
+export function roll(query: { text: string; }): string {
   const [dsize, num_dice] = query.text.split(' ');
   const dice = Array.from({ length: Number(num_dice) }, () => Math.floor(Math.random() * Number(dsize)) + 1);
   return dice.join(' ');

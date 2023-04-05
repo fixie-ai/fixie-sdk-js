@@ -1,14 +1,29 @@
 import bodyParser from 'body-parser';
 import bunyan from 'bunyan';
+import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
 import fs from 'fs';
+import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
-import got from 'got';
 
-tsNode.register();
+/**
+ * This file can be called in two environmentS:
+ *
+ *    1. From Python: calling the compiled JS. (This is the normal case.)
+ *    2. From ts-node (This is for local dev.)
+ *
+ * In both cases, we want to be able to `require` an Agent written in TS.
+ * In case (1), we need to call tsNode.register() to enable that.
+ * In case (2), we don't need to call tsNode.register(), because we're already in ts-node. And if we do call it, it
+ * actually creates problems.
+ */
+// @ts-expect-error
+if (!process[Symbol.for('ts-node.register.instance')]) {
+  tsNode.register();
+}
 
 /**
  * This should be kept in sync with the `AgentConfig` dataclass.
@@ -99,15 +114,27 @@ class AgentRunner {
  *  - async agent functions
  */
 
-export default async function serve(
-  agentConfigPath: string,
-  agentConfig: AgentConfig,
-  port: number,
-  silentStartup: boolean,
-  refreshMetadataAPIUrl: string,
-  silentRequestHandling: boolean = false,
-) {
-  const entryPointPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
+export default async function serve({
+  agentConfigPath,
+  agentConfig,
+  port,
+  silentStartup,
+  refreshMetadataAPIUrl,
+  silentRequestHandling = false,
+  humanReadableLogs = false,
+}: {
+  agentConfigPath: string;
+  agentConfig: AgentConfig;
+  port: number;
+  silentStartup: boolean;
+  refreshMetadataAPIUrl: string;
+  silentRequestHandling?: boolean;
+  humanReadableLogs?: boolean;
+}) {
+  const entryPointPath = path.resolve(
+    path.dirname(agentConfigPath),
+    agentConfig.entry_point,
+  );
   if (!fs.existsSync(entryPointPath)) {
     const absolutePath = path.resolve(entryPointPath);
     throw new Error(
@@ -119,7 +146,21 @@ export default async function serve(
 
   const app = express();
 
-  const logger = bunyan.createLogger({ name: 'fixie-serve', streams: silentRequestHandling ? [] : [{ stream: process.stdout }] });
+  function getLogStream() {
+    if (silentRequestHandling) {
+      return [];
+    }
+    if (humanReadableLogs) {
+      // This looks pretty bad but we can iterate on it later.
+      return [{ stream: bunyanFormat({ outputMode: 'short' }) }];
+    }
+    return [{ stream: process.stdout }];
+  }
+
+  const logger = bunyan.createLogger({
+    name: 'fixie-serve',
+    streams: getLogStream(),
+  });
   app.use(bunyanMiddleware(logger));
 
   app.use(bodyParser.json());
@@ -153,12 +194,15 @@ export default async function serve(
         return;
       }
       const errorForLogging = _.pick(e, 'message', 'stack');
-      logger.error({ error: errorForLogging, functionName: funcName }, 'Error running agent function');
+      logger.error(
+        { error: errorForLogging, functionName: funcName },
+        'Error running agent function',
+      );
       res.status(500).send(errorForLogging);
     }
   });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
-    const server = app.listen(port, () => resolve(server))
+    const server = app.listen(port, () => resolve(server));
   });
   await got.post(refreshMetadataAPIUrl);
   if (!silentStartup) {
