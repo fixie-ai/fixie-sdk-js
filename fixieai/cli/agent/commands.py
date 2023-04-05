@@ -181,7 +181,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
     if is_typescript:
         main_file_extension = ".ts"
         # Before merging to main, update this to match the Python version.
-        agent_template_url = "https://raw.githubusercontent.com/fixie-ai/fixie-sdk/feature-ts/fixieai/agents-ts/src/template.ts"
+        agent_template_url = "https://raw.githubusercontent.com/NickHeiner/fixie-sdk/nth/nodejs-server/fixieai/agents-ts/src/template.ts"
 
         current_config.entry_point = "index.ts"
         expected_main_path = 'index.ts'
