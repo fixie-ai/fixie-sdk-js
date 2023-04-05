@@ -511,7 +511,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         if is_typescript:
-            # Get path from this file to ../../agents-ts/dist/serve-bin.js
             serve_bin_path = os.path.join(
                 os.path.dirname(__file__),
                 "..",
