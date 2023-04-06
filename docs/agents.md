@@ -35,9 +35,9 @@ def my_func(query: fixieai.Message) -> str:
 
 The `BASE_PROMPT` and `FEW_SHOTS` strings provide examples for the underlying Large Language Model (LLM), such as GPT-4, as well as supply the Fixie Platform with information about the types of queries this agent can support.
 
-`FEW_SHOTS` must be a string composed of one or more _stanzas_, where each stanza consists of a question, one or more rounds of internal actions performed by the agent, and a final answer. Stanzas must be separated by a blank line. The query line in the stanza must start with `Q:`, and the answer line must start with `A:`.
+`FEW_SHOTS` must be a string composed of one or more _stanzas_, where each stanza consists of a question, one or more rounds of internal actions taken by the agent, and a final answer. Stanzas must be separated by a blank line. The query line in the stanza must start with `Q:`, and the answer line must start with `A:`.
 
-Internal actions performed by the agent can be one of two forms:
+Internal actions taken by the agent can be one of two forms:
 
 1. `Ask Func[<func_name>]: <query_text>`: This indicates that the function `<func_name>` should be invoked when the output of the underlying LLM starts with this string. The string following `Ask Func[<func_name>]:` is passed to the function as the `query.text` parameter.
 1. `Ask Agent[<agent_name>]: <query_text>`: This indicates that the agent `<agent_name>` should be invoked when the output of the underlying LLM starts with this string. The string following `Ask Agent[<agent_name>]:` is passed to the agent as the `query.text` parameter.
@@ -90,7 +90,7 @@ def my_func(query: fixieai.Message) -> fixieai.Message:
     reply.embeds["my_embed"].text = "Hello, world!"
 ```
 
-Embeds can be queried by leveraging the built-in `fixie_query_embed` function (e.g., `Ask Func[fixie_query_embed]`). See this [example](https://github.com/fixie-ai/fixie-examples/tree/main/agents/chatembed) for implementation.
+Embeds can be queried by leveraging the built-in `fixie_query_embed` func. e.g., `Ask Func[fixie_query_embed]`. See [example](https://github.com/fixie-ai/fixie-examples/tree/main/agents/chatembed) of how this works.
 
 ## External Knowledge Base Support
 

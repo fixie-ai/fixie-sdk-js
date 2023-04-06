@@ -62,7 +62,7 @@ The code consists of two main parts:
 
 In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the function `genrand` should be invoked when the output of the underlying LLM starts with this string. The values following `Ask Func[genrand]:` are passed to the function as the `query.text` parameter. In this case, the function parses out the values and returns a random number between those two values.
 
-## Test your agent
+## Test Your agent
 
 To test your agent, you have two options: 
 1. Run it on your local machine using the `fixie agent serve` command

@@ -1,4 +1,4 @@
-# Fixie Developer Portal
+# Fixie Developer Portal 🦊
 
 [Fixie](https://fixie.ai) is a platform for building applications using large language models. With Fixie, you can create apps that communicate in natural language with one or more *agents* that access individual APIs or sources of data, such as GitHub, Google Calendar, or a database.
 

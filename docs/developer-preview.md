@@ -8,4 +8,4 @@ During the Developer Preview period, you can use Fixie for free, with a limit of
 
 If you are new to Fixie, consider checking out our [agent examples repo](https://github.com/fixie-ai/fixie-examples) and explore the rest of the documentation on this site.
 
-Please note: as Fixie is continually evolving, you might encounter occasional bugs. We appreciate your feedback and will promptly address any issues. If you have a feature request, let us know! We value your input.
+Please note: as Fixie is continually evolving, you might encounter occasional bugs. We appreciate your feedback and will promptly address any issues. If you have a feature request, let us know! We love feature requests.
