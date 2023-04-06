@@ -100,6 +100,4 @@ def _split_few_shots(few_shots: str) -> List[str]:
         "Q:" + few_shot for few_shot in few_shot_splits[1:]
     ]
 
-    def not_empty(s):
-        return s != ""
-    return list(filter(not_empty, few_shot_splits))
+    return [few_shot for few_shot in few_shot_splits if few_shot]
