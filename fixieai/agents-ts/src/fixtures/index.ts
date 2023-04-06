@@ -29,11 +29,11 @@ A: You rolled 5, 3, and 8, for a total of 16.
 `;
 
 export function roll(query: { text: string; }): string {
-  const [dsize, num_dice] = query.text.split(' ');
-  const dice = Array.from({ length: Number(num_dice) }, () => Math.floor(Math.random() * Number(dsize)) + 1);
+  const [diceSize, numDice] = query.text.split(' ');
+  const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
 }
 
-export function willThrowError(query: { text: string; }): string {
+export function willThrowError() {
   throw new Error('This is an error');
 }
