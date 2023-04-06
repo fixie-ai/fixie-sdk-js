@@ -26,7 +26,7 @@ More info url []:
 
 Running `fixie init` will create the file `agent.yaml` in the current directory, containing metadata on the agent.
 
-## Write the Agent code
+## Write the Agent Code
 
 Next, paste the following code into a file called `main.py`:
 
@@ -62,7 +62,7 @@ The code consists of two main parts:
 
 In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the function `genrand` should be invoked when the output of the underlying LLM starts with this string. The values following `Ask Func[genrand]:` are passed to the function as the `query.text` parameter. In this case, the function parses out the values and returns a random number between those two values.
 
-## Test Your agent
+## Test Your Agent
 
 To test your agent, you have two options: 
 1. Run it on your local machine using the `fixie agent serve` command
