@@ -9,7 +9,7 @@
  *     https://github.com/fixie-ai/fixie-examples
  */
 
-export const BASE_PROMPT = `I'm an agent that rolls virtual dice!`;
+export const BASE_PROMPT = 'I\'m an agent that rolls virtual dice!';
 
 export const FEW_SHOTS = `
 Q: Roll a d20
@@ -29,7 +29,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
 `;
 
 export function roll(query: { text: string; }): string {
-  const [dsize, num_dice] = query.text.split(' ');
-  const dice = Array.from({ length: Number(num_dice) }, () => Math.floor(Math.random() * Number(dsize)) + 1);
+  const [diceSize, numDice] = query.text.split(' ');
+  const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
 }
