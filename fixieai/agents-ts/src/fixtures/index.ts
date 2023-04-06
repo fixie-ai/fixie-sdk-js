@@ -37,3 +37,12 @@ export function roll(query: { text: string; }): string {
 export function willThrowError() {
   throw new Error('This is an error');
 }
+
+export function willThrowErrorAsync() {
+  return Promise.reject(new Error('This is an async error'));
+}
+
+export function rollAsync(query: { text: string; }) {
+  return Promise.resolve(roll(query));
+}
+

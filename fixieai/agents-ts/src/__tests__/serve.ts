@@ -68,19 +68,57 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync',
     );
   });
 
-  it('Function being called throws an error', async () => {
-    const response = await got.post(`http://localhost:${port}/willThrowError`, {
-      json: { message: { text: 'input' } },
-      throwHttpErrors: false,
+  describe('sync functions', () => {
+    it('calls a function', async () => {
+      const response = await got.post(`http://localhost:${port}/roll`, {
+        responseType: 'json',
+        json: { message: { text: '20 1' } },
+      });
+      expect(response.statusCode).toBe(200);
+      const diceResult = Number((response.body as any).message.text);
+      expect(diceResult).not.toBeNaN();
+      expect(diceResult).toBeGreaterThanOrEqual(1);
+      expect(diceResult).toBeLessThanOrEqual(20);
     });
+  
+    it('Function being called throws an error', async () => {
+      const response = await got.post(`http://localhost:${port}/willThrowError`, {
+        json: { message: { text: 'input' } },
+        throwHttpErrors: false,
+      });
+  
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatch(/Error: This is an error/);
+    });
+  })
 
-    expect(response.statusCode).toBe(500);
-    expect(response.body).toMatch(/Error: This is an error/);
-  });
+  describe('async functions', () => {
+    it('calls a function', async () => {
+      const response = await got.post(`http://localhost:${port}/rollAsync`, {
+        responseType: 'json',
+        json: { message: { text: '10 1' } },
+      });
+      expect(response.statusCode).toBe(200);
+      const diceResult = Number((response.body as any).message.text);
+      expect(diceResult).not.toBeNaN();
+      expect(diceResult).toBeGreaterThanOrEqual(1);
+      expect(diceResult).toBeLessThanOrEqual(10);
+    });
+  
+    it('Function being called throws an error', async () => {
+      const response = await got.post(`http://localhost:${port}/willThrowErrorAsync`, {
+        json: { message: { text: 'input' } },
+        throwHttpErrors: false,
+      });
+  
+      expect(response.statusCode).toBe(500);
+      expect(response.body).toMatch(/Error: This is an async error/);
+    });
+  })
 
   it('Agent metadata', async () => {
     const response = await got(`http://localhost:${port}`);
@@ -105,18 +143,6 @@ A: You rolled 5, 3, and 8, for a total of 16.
 `,
       ],
     }));
-  });
-
-  it('calls a function', async () => {
-    const response = await got.post(`http://localhost:${port}/roll`, {
-      responseType: 'json',
-      json: { message: { text: '20 1' } },
-    });
-    expect(response.statusCode).toBe(200);
-    const diceResult = Number((response.body as any).message.text);
-    expect(diceResult).not.toBeNaN();
-    expect(diceResult).toBeGreaterThanOrEqual(1);
-    expect(diceResult).toBeLessThanOrEqual(20);
   });
 
   afterEach(() => {

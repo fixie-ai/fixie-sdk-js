@@ -8,6 +8,8 @@ import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
+import {Promisable} from 'type-fest';
+import asyncHandler from 'express-async-handler'
 
 /**
  * This file can be called in two environmentS:
@@ -51,7 +53,7 @@ interface AgentResponse {
   message: Message;
 }
 
-type AgentFunc = (args: string) => string;
+type AgentFunc = (args: string) => Promisable<string>;
 
 interface Agent {
   basePrompt: string;
@@ -165,7 +167,7 @@ export default async function serve({
   app.use(bodyParser.json());
 
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
-  app.post('/:funcName', (req, res) => {
+  app.post('/:funcName', asyncHandler(async (req, res) => {
     const funcName = req.params.funcName;
     const body = req.body;
 
@@ -184,7 +186,7 @@ export default async function serve({
     }
 
     try {
-      const result = agentRunner.runFunction(funcName, body.message);
+      const result = await agentRunner.runFunction(funcName, body.message);
       const response: AgentResponse = { message: { text: result } };
       res.send(response);
     } catch (e: any) {
@@ -199,7 +201,7 @@ export default async function serve({
       );
       res.status(500).send(errorForLogging);
     }
-  });
+  }));
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
