@@ -1,6 +1,9 @@
-# Fixie SDK
+# Fixie - The LLM Application Platform
 
-This is the official Python SDK for Fixie.
+This is the official Python SDK for [Fixie](https://fixie.ai). Fixie lets you integrate LLMs with arbitrary
+APIs, tools, and data.
+
+![Fixie logo](https://docs.fixie.ai/assets/fixie-logo-dark.png)
 
 ## What is Fixie?
 

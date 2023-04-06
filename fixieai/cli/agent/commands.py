@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import threading
 import urllib.request
 import venv
 from contextlib import contextmanager
@@ -132,18 +133,12 @@ def _update_agent_requirements(
     callback=_validate_url,
 )
 @click.option(
-    "--public",
-    prompt=True,
-    default=lambda: _current_config().public,
-    type=click.BOOL,
-)
-@click.option(
     "--requirement",
     multiple=True,
     type=str,
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
-def init_agent(handle, description, entry_point, more_info_url, public, requirement):
+def init_agent(handle, description, entry_point, more_info_url, requirement):
     try:
         current_config = agent_config.load_config()
     except FileNotFoundError:
@@ -152,7 +147,6 @@ def init_agent(handle, description, entry_point, more_info_url, public, requirem
     current_config.description = description
     current_config.entry_point = entry_point
     current_config.more_info_url = more_info_url
-    current_config.public = public
     agent_config.save_config(current_config)
 
     entry_module, _ = entry_point.split(":")
@@ -295,7 +289,7 @@ def _ensure_agent_updated(
             description=config.description,
             more_info_url=config.more_info_url,
             func_url=config.deployment_url,
-            published=config.public,
+            published=config.public or False,
         )
     else:
         agent.update_agent(
@@ -304,7 +298,7 @@ def _ensure_agent_updated(
             description=config.description,
             more_info_url=config.more_info_url,
             func_url=config.deployment_url,
-            published=config.public,
+            published=config.public or False,
         )
 
     return agent
@@ -319,7 +313,8 @@ def _configure_venv(
     console.print(f"Configuring virtual environment in {venv_path}")
     python_exe = os.path.join(venv_path, "bin", "python")
     if not os.path.exists(python_exe):
-        venv.create(venv_path, with_pip=True)
+        # Match `python -m venv` behavior with symlinks on non-Windows to work around https://bugs.python.org/issue38705
+        venv.create(venv_path, with_pip=True, symlinks=os.name != "nt")
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
         raise ValueError(
@@ -422,9 +417,25 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             console.print(
                 f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
             )
-            config.deployment_url = stack.enter_context(tunnel.Tunnel(port))
+            deployment_urls_iter = iter(stack.enter_context(tunnel.Tunnel(port)))
+            config.deployment_url = next(deployment_urls_iter)
 
-        agent_api = _ensure_agent_updated(client, agent_id, config)
+            agent_api = _ensure_agent_updated(client, agent_id, config)
+
+            def _watch_tunnel():
+                while True:
+                    url = next(deployment_urls_iter, None)
+                    if url is None:
+                        break
+                    agent_api.update_agent(func_url=url)
+                    console.print(
+                        f"[yellow]Tunnel URL was updated, now serving via {url}[/yellow]"
+                    )
+
+            threading.Thread(target=_watch_tunnel, daemon=True).start()
+        else:
+            agent_api = _ensure_agent_updated(client, agent_id, config)
+
         console.print(
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
@@ -513,6 +524,7 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     is_flag=True,
     help="Only publish metadata and refresh, do not redeploy.",
 )
+@click.option("--public", is_flag=True, help="Make the agent public.", default=None)
 @click.option(
     "--validate/--no-validate",
     "validate",
@@ -521,11 +533,22 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     help="(default enabled) Validate that the agent loads in a local venv before deploying",
 )
 @click.pass_context
-def deploy(ctx, path, metadata_only, validate):
+def deploy(ctx, path, metadata_only, public, validate):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+    if config.public is not None:
+        console.print(
+            "[yellow]Warning:[/] The [blue]`public`[/] option in the agent config is deprecated and will be removed soon."
+        )
+        console.print(
+            "[yellow]Warning:[/] Use [blue]`fixie agent deploy --public`[/] instead."
+        )
+    if public:
+        config.public = True
+
     client: fixieai.FixieClient = ctx.obj.client
     agent_id = f"{client.get_current_username()}/{config.handle}"
+    console.print(f"🦊 Deploying agent [green]{agent_id}[/]...")
 
     agent_dir = os.path.dirname(path) or "."
     if validate:
@@ -589,3 +612,53 @@ def deploy(ctx, path, metadata_only, validate):
     console.print(
         f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\n{suggested_command}"
     )
+
+
+@agent.command("publish", help="Make the current agent public.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.pass_context
+def publish(ctx, path):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+    if config.public is not None:
+        console.print(
+            "[yellow]Warning:[/] The [blue]`public`[/] option in the agent config is deprecated and will be removed soon."
+        )
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
+    console.print(f"🦊 Publishing agent [green]{agent_id}[/]...")
+
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        console.print(
+            f"[red]Error:[/] Agent [green]{agent_id}[/] not deployed. Use [blue]`fixie agent deploy`[/] to deploy it."
+        )
+        raise click.Abort()
+    agent.update_agent(published=True)
+
+    console.print(f"Agent [green]{agent_id}[/] has been made public.")
+
+
+@agent.command("unpublish", help="Make the current agent not public.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.pass_context
+def unpublish(ctx, path):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+    if config.public is not None:
+        console.print(
+            "[yellow]Warning:[/] The [blue]`public`[/] option in the agent config is deprecated and will be removed soon."
+        )
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
+    console.print(f"🦊 Unpublishing agent [green]{agent_id}[/]...")
+
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        console.print(
+            f"[red]Error:[/] Agent [green]{agent_id}[/] not deployed. Use [blue]`fixie agent deploy`[/] to deploy it."
+        )
+        raise click.Abort()
+    agent.update_agent(published=False)
+
+    console.print(f"Agent [green]{agent_id}[/] has been made private.")

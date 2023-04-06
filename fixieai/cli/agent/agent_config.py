@@ -21,7 +21,7 @@ class AgentConfig(utils.DataClassYamlMixin):
     more_info_url: str = ""
     entry_point: str = "main:agent"
     deployment_url: Optional[str] = None
-    public: bool = False
+    public: Optional[bool] = None
 
 
 def normalize_path(path: Optional[str] = None) -> str:

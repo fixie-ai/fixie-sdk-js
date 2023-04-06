@@ -57,7 +57,9 @@ class StandaloneAgent(agent_base.AgentBase):
         the previously specified `handle_message` function. Depending on the return
         value of that function, either a single or a streaming response is returned.
         """
-        token_claims = self.validate_token(credentials)
+        token_claims = self.validate_token_and_update_query_access_token(
+            query, credentials
+        )
 
         kwargs = self.get_func_kwargs(
             query,

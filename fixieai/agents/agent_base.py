@@ -159,14 +159,23 @@ class AgentBase(abc.ABC):
             media_type="application/yaml",
         )
 
-    def validate_token(
-        self, credentials: fastapi.security.HTTPAuthorizationCredentials
+    def validate_token_and_update_query_access_token(
+        self,
+        query: api.AgentQuery,
+        credentials: fastapi.security.HTTPAuthorizationCredentials,
     ):
         token_claims = VerifiedTokenClaims.from_token(
             credentials.credentials, self._jwks_client, self._allowed_agent_id
         )
         if token_claims is None:
             raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        elif (
+            query.access_token is not None
+            and query.access_token != credentials.credentials
+        ):
+            raise fastapi.HTTPException(status_code=403, detail="Mismatched tokens")
+        else:
+            query.access_token = credentials.credentials
 
         return token_claims
 
@@ -181,7 +190,9 @@ class AgentBase(abc.ABC):
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        token_claims = self.validate_token(credentials)
+        token_claims = self.validate_token_and_update_query_access_token(
+            query, credentials
+        )
 
         try:
             pyfunc = self._funcs[func_name]
