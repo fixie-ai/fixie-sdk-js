@@ -10,7 +10,7 @@ import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
-import { watch as turbowatch } from 'turbowatch';
+import nodemon from 'nodemon';
 import { Promisable } from 'type-fest';
 
 /**
@@ -148,29 +148,17 @@ export default async function serve({
 
   let agentRunner = new AgentRunner(entryPointPath);
   if (watch) {
-    turbowatch({
-      project: path.dirname(entryPointPath),
-      triggers: [
-        {
-          expression: [
-            'allof',
-            ['not', ['dirname', 'node_modules']],
-            ['anyof', ['match', '*.ts', 'basename']],
-          ],
-          name: 'start-server',
-          onChange() {
-            clearModule(entryPointPath);
-            agentRunner = new AgentRunner(entryPointPath);
-            console.log('Server reloaded for agent change');
-            return Promise.resolve();
-          },
-          /**
-           * The docs make it seem like we should enable this, but it's not clear why.
-           */
-          persistent: true
-        },
-      ],
-    });
+    const entryPointDir = path.dirname(entryPointPath);
+    nodemon({
+      script: `${require.resolve('../empty-bin')} --help`,
+      watch: [entryPointDir],
+    })
+      .on('start', () => console.log(`Watching ${entryPointDir} for changes...`))
+      .on('restart', () => {
+        clearModule(entryPointPath);
+        agentRunner = new AgentRunner(entryPointPath);
+        console.log('Server reloaded for agent change');
+      })
   }
 
   const app = express();
