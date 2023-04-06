@@ -23,6 +23,9 @@ import * as tsNode from 'ts-node';
 // @ts-expect-error
 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 if (!process[Symbol.for('ts-node.register.instance')]) {
+  /**
+   * We may need to explicitly pass the tsconfig.json here. Let's try omitting it and see if that works.
+   */
   tsNode.register();
 }
 
