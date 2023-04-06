@@ -112,7 +112,6 @@ class AgentRunner {
  * TODO:
  *  - watch mode
  *  - logger formatting for local dev
- *  - async agent functions
  */
 
 export default async function serve({
