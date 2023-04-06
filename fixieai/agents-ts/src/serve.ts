@@ -147,9 +147,10 @@ export default async function serve({
   }
 
   let agentRunner = new AgentRunner(entryPointPath);
+  let watcher: ReturnType<typeof nodemon> | undefined;
   if (watch) {
     const entryPointDir = path.dirname(entryPointPath);
-    nodemon({
+    watcher = nodemon({
       script: `${require.resolve('../empty-bin')} --help`,
       watch: [entryPointDir],
     })
@@ -232,5 +233,8 @@ export default async function serve({
     console.log(`Agent listening on port ${port}.`);
   }
 
-  return server.close.bind(server);
+  return () => {
+    server.close();
+    watcher?.removeAllListeners();
+  }
 }

@@ -1,13 +1,15 @@
-import fs from 'fs';
+import fsSync from 'fs';
+import fs from 'fs/promises';
 import got from 'got';
 import yaml from 'js-yaml';
 import nock from 'nock';
 import path from 'path';
+import tempy from 'tempy';
 import type { PromiseType } from 'utility-types';
 import serve, { AgentConfig } from '../serve';
 
 const agentConfigPath = path.resolve(__dirname, '..', 'fixtures', 'agent.yaml');
-const agentConfigContents = fs.readFileSync(agentConfigPath, 'utf8');
+const agentConfigContents = fsSync.readFileSync(agentConfigPath, 'utf8');
 const agentConfig = yaml.load(agentConfigContents) as AgentConfig;
 
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
@@ -148,4 +150,48 @@ A: You rolled 5, 3, and 8, for a total of 16.
   afterEach(() => {
     close?.();
   });
+});
+
+it('watch mode', async () => {
+  const temporaryAgentConfigPath = tempy.file({ extension: 'yaml' });
+  const temporaryAgentTSPath = tempy.file({ extension: 'ts' });
+
+  const temporaryAgentConfig = {
+    ...agentConfig,
+    entry_point: temporaryAgentTSPath,
+  };
+
+  await fs.writeFile(temporaryAgentConfigPath, yaml.dump(temporaryAgentConfig));
+
+  const agentTSPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
+  await fs.copyFile(agentTSPath, temporaryAgentTSPath);
+
+  let close;
+  try {
+    close = await serve({
+      agentConfigPath: temporaryAgentConfigPath,
+      agentConfig: temporaryAgentConfig,
+      port,
+      silentStartup: true,
+      watch: true,
+      silentRequestHandling: true,
+      refreshMetadataAPIUrl,
+    });
+  
+    const response = await got(`http://localhost:${port}`);
+    expect(JSON.parse(response.body)).toEqual(expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }));
+  
+    const orginalTSContents = await fs.readFile(temporaryAgentTSPath, 'utf8');
+    const modifiedTSContents = orginalTSContents.replace(
+      "I'm an agent that rolls virtual dice!",
+      "I'm a modified agent!",
+    );
+    await fs.writeFile(temporaryAgentTSPath, modifiedTSContents);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  
+    const responseAfterWatch = await got(`http://localhost:${port}`);
+    expect(JSON.parse(responseAfterWatch.body)).toEqual(expect.objectContaining({ base_prompt: "I'm a modified agent!" }));
+  } finally {
+    await close?.();
+  }
 });
