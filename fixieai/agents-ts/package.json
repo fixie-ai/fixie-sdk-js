@@ -1,7 +1,6 @@
 {
   "name": "@fixie/sdk",
-  "private": true,
-  "version": "1.0.0",
+  "version": "1.0.0-0+internal-testing-do-not-use",
   "description": "The Fixie SDK (https://fixie.ai/)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
