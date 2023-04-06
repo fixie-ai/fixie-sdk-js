@@ -8,9 +8,9 @@ import asyncHandler from 'express-async-handler';
 import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
+import nodemon from 'nodemon';
 import path from 'path';
 import * as tsNode from 'ts-node';
-import nodemon from 'nodemon';
 import { Promisable } from 'type-fest';
 
 /**
@@ -153,12 +153,13 @@ export default async function serve({
       script: `${require.resolve('../empty-bin')} --help`,
       watch: [entryPointDir],
     })
-      .on('start', () => console.log(`Watching ${entryPointDir} for changes...`))
       .on('restart', () => {
         clearModule(entryPointPath);
         agentRunner = new AgentRunner(entryPointPath);
+        // This will look kinda gross but we can polish the CLI UX later.
         console.log('Server reloaded for agent change');
-      })
+      });
+    console.log(`Watching ${entryPointDir} for changes...`);
   }
 
   const app = express();
