@@ -20,7 +20,7 @@
     "bin:dev": "npx ts-node src/serve-bin.ts",
     "unit": "npx jest --runInBand",
     "unit:watch": "npm run unit -- --watch",
-    "test": "npm run format:check && npm run lint"
+    "test": "npm run format:check && npm run lint && npm run unit"
   },
   "keywords": [
     "fixieai",

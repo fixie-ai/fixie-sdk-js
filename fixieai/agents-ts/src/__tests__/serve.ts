@@ -34,7 +34,8 @@ it('throws an error if the entry point does not exist', async () => {
 
 const port = 3000;
 describe('server starts', () => {
-  let close: PromiseType<ReturnType<typeof serve>>;
+  // If `serve` throws an error, then `close` will be undefined. Jest will invoke the tests even if `beforeEach` throws.
+  let close: PromiseType<ReturnType<typeof serve>> | undefined;
 
   beforeEach(async () => {
     close = await serve({
@@ -55,7 +56,7 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.body).toBe(
-      'Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: {"message":{"not_text":"invalid"}}',
+      'Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: {"message":{"unrecognizedKey":"invalid"}}',
     );
   });
 
@@ -119,6 +120,6 @@ A: You rolled 5, 3, and 8, for a total of 16.
   });
 
   afterEach(() => {
-    close();
+    close?.();
   });
 });
