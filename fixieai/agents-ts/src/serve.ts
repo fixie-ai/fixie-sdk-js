@@ -21,6 +21,7 @@ import * as tsNode from 'ts-node';
  * actually creates problems.
  */
 // @ts-expect-error
+// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 if (!process[Symbol.for('ts-node.register.instance')]) {
   tsNode.register();
 }
@@ -43,12 +44,11 @@ interface AgentMetadata {
   base_prompt: string;
   few_shots: string[];
 }
-
-interface AgentResponse {
-  message: Message;
-}
 interface Message {
   text: string;
+}
+interface AgentResponse {
+  message: Message;
 }
 
 type AgentFunc = (args: string) => string;
@@ -90,13 +90,12 @@ class AgentRunner {
   }
 
   runFunction(funcName: string, args: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
-    const func = this.agent.funcs[funcName];
-    if (!func) {
+    if (!(funcName in this.agent.funcs)) {
       throw new FunctionNotFoundError(
         `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).join(', ')}`,
       );
     }
-    return func(args);
+    return this.agent.funcs[funcName](args);
   }
 
   getAgentMetadata(): AgentMetadata {
@@ -127,7 +126,7 @@ export default async function serve({
   agentConfig: AgentConfig;
   port: number;
   silentStartup: boolean;
-  refreshMetadataAPIUrl: string;
+  refreshMetadataAPIUrl?: string;
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
@@ -204,7 +203,9 @@ export default async function serve({
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
-  await got.post(refreshMetadataAPIUrl);
+  if (refreshMetadataAPIUrl !== undefined) {
+    await got.post(refreshMetadataAPIUrl);
+  }
   if (!silentStartup) {
     console.log(`Agent listening on port ${port}.`);
   }
