@@ -41,7 +41,7 @@ fixie 🦊❯  What's the price of Nvidia?
    @user: What's the price of Nvidia?
    @fixie: What's the price of Nvidia?
    @fixie: Thought: This is an atomic task.
-   @fixie: Ask Agent: What's the price of Nvidia?
+   @fixie: Ask agent: What's the price of Nvidia?
    @router: What's the price of Nvidia?
    @router: justin/stock
    @stock: What's the price of Nvidia?
