@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
+import clearModule from 'clear-module';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs';
@@ -9,6 +10,7 @@ import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
+import { watch as turbowatch } from 'turbowatch';
 import { Promisable } from 'type-fest';
 
 /**
@@ -120,6 +122,7 @@ export default async function serve({
   port,
   silentStartup,
   refreshMetadataAPIUrl,
+  watch = false,
   silentRequestHandling = false,
   humanReadableLogs = false,
 }: {
@@ -128,6 +131,7 @@ export default async function serve({
   port: number;
   silentStartup: boolean;
   refreshMetadataAPIUrl?: string;
+  watch?: boolean;
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
@@ -142,7 +146,32 @@ export default async function serve({
     );
   }
 
-  const agentRunner = new AgentRunner(entryPointPath);
+  let agentRunner = new AgentRunner(entryPointPath);
+  if (watch) {
+    turbowatch({
+      project: path.dirname(entryPointPath),
+      triggers: [
+        {
+          expression: [
+            'allof',
+            ['not', ['dirname', 'node_modules']],
+            ['anyof', ['match', '*.ts', 'basename']],
+          ],
+          name: 'start-server',
+          onChange() {
+            clearModule(entryPointPath);
+            agentRunner = new AgentRunner(entryPointPath);
+            console.log('Server reloaded for agent change');
+            return Promise.resolve();
+          },
+          /**
+           * The docs make it seem like we should enable this, but it's not clear why.
+           */
+          persistent: true
+        },
+      ],
+    });
+  }
 
   const app = express();
 

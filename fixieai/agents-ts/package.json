@@ -55,12 +55,14 @@
     "bunyan": "^1.8.15",
     "bunyan-format": "^0.2.1",
     "bunyan-middleware": "^1.0.2",
+    "clear-module": "^4.1.2",
     "express": "^4.18.2",
     "express-async-handler": "^1.2.0",
     "got": "^11.8.6",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "ts-node": "^10.9.1",
+    "turbowatch": "^2.20.1",
     "yargs": "^17.7.1"
   },
   "volta": {

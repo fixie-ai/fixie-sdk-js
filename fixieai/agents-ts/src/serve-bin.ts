@@ -29,6 +29,11 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
+    watch: {
+      describe: 'Watch for changes to the agent and reload',
+      type: 'boolean',
+      default: false,
+    },
     agent: {
       describe: 'Path to the agent.yaml',
       type: 'string',
@@ -77,5 +82,6 @@ serve({
     'silentStartup',
     'refreshMetadataAPIUrl',
     'humanReadableLogs',
+    'watch',
   ),
 });
