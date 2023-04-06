@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   extends: [
     'eslint:recommended',
@@ -6,7 +8,10 @@ module.exports = {
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: 'tsconfig.json',
+    project: [
+      path.join(__dirname, 'tsconfig.json'),
+      path.join(__dirname, 'src', '__tests__', 'tsconfig.json'),
+    ],
   },
   plugins: ['@typescript-eslint'],
   root: true,
@@ -24,10 +29,12 @@ module.exports = {
       'warn',
       {
         ignoreReadonlyClassProperties: true,
-        ignore: [0, 1, 2],
+        ignore: [0, 1, 2, 400, 404, 500],
         ignoreTypeIndexes: true,
       },
     ],
+
+    camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point'] }],
 
     'no-use-before-define': ['error', { functions: false, variables: true }],
 
@@ -48,4 +55,15 @@ module.exports = {
     '@typescript-eslint/strict-boolean-expressions': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
   },
+
+  overrides: [{
+    files: ['src/__tests__/**/*.ts'],
+    plugins: ['eslint-plugin-jest'],
+    env: {
+      'jest/globals': true,
+    },
+    rules: {
+      '@typescript-eslint/no-magic-numbers': 'off',
+    },
+  }],
 };

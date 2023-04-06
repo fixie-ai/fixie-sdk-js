@@ -33,3 +33,7 @@ export function roll(query: { text: string; }): string {
   const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
 }
+
+export function willThrowError() {
+  throw new Error('This is an error');
+}
