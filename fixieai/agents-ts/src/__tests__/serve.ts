@@ -84,17 +84,17 @@ describe('server starts', () => {
       expect(diceResult).toBeGreaterThanOrEqual(1);
       expect(diceResult).toBeLessThanOrEqual(20);
     });
-  
+
     it('Function being called throws an error', async () => {
       const response = await got.post(`http://localhost:${port}/willThrowError`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
       });
-  
+
       expect(response.statusCode).toBe(500);
       expect(response.body).toMatch(/Error: This is an error/);
     });
-  })
+  });
 
   describe('async functions', () => {
     it('calls a function', async () => {
@@ -108,17 +108,17 @@ describe('server starts', () => {
       expect(diceResult).toBeGreaterThanOrEqual(1);
       expect(diceResult).toBeLessThanOrEqual(10);
     });
-  
+
     it('Function being called throws an error', async () => {
       const response = await got.post(`http://localhost:${port}/willThrowErrorAsync`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
       });
-  
+
       expect(response.statusCode).toBe(500);
       expect(response.body).toMatch(/Error: This is an async error/);
     });
-  })
+  });
 
   it('Agent metadata', async () => {
     const response = await got(`http://localhost:${port}`);

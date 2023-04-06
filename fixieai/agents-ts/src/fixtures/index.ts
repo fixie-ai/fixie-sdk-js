@@ -45,4 +45,3 @@ export function willThrowErrorAsync() {
 export function rollAsync(query: { text: string; }) {
   return Promise.resolve(roll(query));
 }
-
