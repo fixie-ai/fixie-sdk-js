@@ -34,7 +34,7 @@ module.exports = {
       },
     ],
 
-    camelcase: ['warn', {allow: ['base_prompt', 'few_shots', 'entry_point']}],
+    camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point'] }],
 
     'no-use-before-define': ['error', { functions: false, variables: true }],
 
@@ -60,10 +60,10 @@ module.exports = {
     files: ['src/__tests__/**/*.ts'],
     plugins: ['eslint-plugin-jest'],
     env: {
-      'jest/globals': true
+      'jest/globals': true,
     },
     rules: {
       '@typescript-eslint/no-magic-numbers': 'off',
-    }
-  }]
+    },
+  }],
 };

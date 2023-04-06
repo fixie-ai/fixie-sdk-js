@@ -86,7 +86,7 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual(JSON.stringify({
-      base_prompt: 'I\'m an agent that rolls virtual dice!',
+      base_prompt: "I'm an agent that rolls virtual dice!",
       few_shots: [
         `
 Q: Roll a d20

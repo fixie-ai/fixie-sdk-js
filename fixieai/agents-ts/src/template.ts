@@ -9,7 +9,7 @@
  *     https://github.com/fixie-ai/fixie-examples
  */
 
-export const BASE_PROMPT = 'I\'m an agent that rolls virtual dice!';
+export const BASE_PROMPT = "I'm an agent that rolls virtual dice!";
 
 export const FEW_SHOTS = `
 Q: Roll a d20
