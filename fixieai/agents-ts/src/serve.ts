@@ -3,10 +3,13 @@ import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
+import asyncHandler from 'express-async-handler';
+import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
+import { Promisable } from 'type-fest';
 
 /**
  * This file can be called in two environmentS:
@@ -41,7 +44,7 @@ interface AgentResponse {
 export interface FuncParam {
   text: string;
 }
-export type AgentFunc = (funcParam: FuncParam) => string;
+export type AgentFunc = (funcParam: FuncParam) => Promisable<string>;
 
 interface Agent {
   basePrompt: string;
@@ -117,7 +120,6 @@ class FuncHost {
  * TODO:
  *  - watch mode
  *  - logger formatting for local dev
- *  - async agent functions
  */
 
 export default async function serve({
@@ -159,7 +161,7 @@ export default async function serve({
   app.use(bodyParser.json());
 
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
-  app.post('/:funcName', (req, res) => {
+  app.post('/:funcName', asyncHandler(async (req, res) => {
     const funcName = req.params.funcName;
 
     if (typeof req.body.message?.text !== 'string') {
@@ -179,7 +181,7 @@ export default async function serve({
     const body = req.body as AgentResponse;
 
     try {
-      const result = agentRunner.runFunction(funcName, body.message);
+      const result = await agentRunner.runFunction(funcName, body.message);
       const response: AgentResponse = { message: { text: result } };
       res.send(response);
     } catch (e: any) {
@@ -187,14 +189,25 @@ export default async function serve({
         res.status(404).send(e.message);
         return;
       }
-      const errorForLogging = _.pick(e, 'message', 'stack');
-      logger.error(
-        { error: errorForLogging, functionName: funcName },
-        'Error running agent function',
-      );
-      res.status(500).send(errorForLogging);
+
+      try {
+        const result = await agentRunner.runFunction(funcName, body.message);
+        const response: AgentResponse = { message: { text: result } };
+        res.send(response);
+      } catch (e: any) {
+        if (e.name === 'FunctionNotFoundError') {
+          res.status(404).send(e.message);
+          return;
+        }
+        const errorForLogging = _.pick(e, 'message', 'stack');
+        logger.error(
+          { error: errorForLogging, functionName: funcName },
+          'Error running agent function',
+        );
+        res.status(500).send(errorForLogging);
+      }
     }
-  });
+  }));
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
