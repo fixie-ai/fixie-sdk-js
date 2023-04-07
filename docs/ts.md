@@ -27,9 +27,6 @@ export const makeAPICall: AgentFunc = async () => {
 
 Use `npm install --save @fixieai/sdk` to get the SDK.
 
-## TypeScript
-
-
 ## Contract
 * Fixie expects your funcs to be exported from [the `main` module of your package](https://docs.npmjs.com/cli/v9/configuring-npm/package-json#main). 
 
