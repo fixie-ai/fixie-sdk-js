@@ -152,6 +152,11 @@ export default async function serve({
     const entryPointDir = path.dirname(entryPointPath);
     watcher = nodemon({
       script: `${require.resolve('../empty-bin')} --help`,
+      /**
+       * This will only watch the dir (and subdirs) that contain the entry point. If the entry point depends on files
+       * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
+       * Nodemon works, and I think it's unlikely to be a problem in practice.
+       */
       watch: [entryPointDir],
     })
       .on('restart', () => {
@@ -236,5 +241,5 @@ export default async function serve({
   return () => {
     server.close();
     watcher?.removeAllListeners();
-  }
+  };
 }

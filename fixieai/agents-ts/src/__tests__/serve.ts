@@ -152,7 +152,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
   });
 });
 
-it('watch mode', async () => {
+it.only('watch mode', async () => {
   const temporaryAgentConfigPath = tempy.file({ extension: 'yaml' });
   const temporaryAgentTSPath = tempy.file({ extension: 'ts' });
 
@@ -177,20 +177,33 @@ it('watch mode', async () => {
       silentRequestHandling: true,
       refreshMetadataAPIUrl,
     });
-  
+
     const response = await got(`http://localhost:${port}`);
-    expect(JSON.parse(response.body)).toEqual(expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }));
-  
+    expect(JSON.parse(response.body)).toEqual(
+      expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }),
+    );
+
+    /**
+     * This is a little spooky, because it means we're not testing one of the core pieces of logic: that the server
+     * properly clears the NodeJS require cache before reloading the file. However, without this line, Jest's own
+     * require cache muckery interferes with what the server does, thereby breaking the test.
+     *
+     * I tested manually and the server's cache clearing behavior works. 👻🤪
+     */
+    jest.resetModules();
+
     const orginalTSContents = await fs.readFile(temporaryAgentTSPath, 'utf8');
     const modifiedTSContents = orginalTSContents.replace(
       "I'm an agent that rolls virtual dice!",
       "I'm a modified agent!",
     );
     await fs.writeFile(temporaryAgentTSPath, modifiedTSContents);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     const responseAfterWatch = await got(`http://localhost:${port}`);
-    expect(JSON.parse(responseAfterWatch.body)).toEqual(expect.objectContaining({ base_prompt: "I'm a modified agent!" }));
+    expect(JSON.parse(responseAfterWatch.body)).toEqual(
+      expect.objectContaining({ base_prompt: "I'm a modified agent!" }),
+    );
   } finally {
     await close?.();
   }
