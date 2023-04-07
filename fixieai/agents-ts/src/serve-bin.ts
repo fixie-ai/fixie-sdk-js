@@ -27,7 +27,7 @@ const { argv } = yargs(hideBin(process.argv))
       default: false,
     },
     packagePath: {
-      describe: 'Path to the package to serve functions from',
+      describe: 'Path to the package to serve functions from. If this is a relative path, it will be interpreted relative to the current working directory.',
       type: 'string',
       default: '.',
     },

@@ -19,9 +19,19 @@ it('throws an error if the entry point does not exist', async () => {
     });
     close();
   }).rejects.toThrowError(
-    /Could not find package at path: does-not-exist. Does this path exist\? If it does, did you specify a "main" field in your package.json\?/,
+    /Could not find package at path: .*does-not-exist. Does this path exist\? If it does, did you specify a "main" field in your package.json\?/,
   );
 });
+
+it('relative path to agent', async () => {
+  const close = await serve({
+    packagePath: path.relative(process.cwd(), agentPackagePath),
+    port: 3000,
+    silentStartup: true,
+    refreshMetadataAPIUrl,
+  });
+  await close();
+})
 
 const port = 3000;
 describe('server starts', () => {

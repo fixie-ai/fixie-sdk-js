@@ -6,6 +6,7 @@ import express from 'express';
 import got from 'got';
 import _ from 'lodash';
 import * as tsNode from 'ts-node';
+import path from 'path';
 
 /**
  * This file can be called in two environmentS:
@@ -62,18 +63,19 @@ class FuncHost {
   private readonly agent: Agent;
 
   constructor(packagePath: string) {
+    const absolutePath = path.resolve(packagePath);
     try {
-      const requiredAgent = require(packagePath);
+      const requiredAgent = require(absolutePath);
       const allExports = Object.keys(requiredAgent).join(', ');
 
       if (typeof requiredAgent.BASE_PROMPT !== 'string') {
         throw new Error(
-          `Agent must have a string export named BASE_PROMPT. The agent at ${packagePath} exported the following: ${allExports}.`,
+          `Agent must have a string export named BASE_PROMPT. The agent at ${absolutePath} exported the following: "${allExports}".`,
         );
       }
       if (typeof requiredAgent.FEW_SHOTS !== 'string') {
         throw new Error(
-          `Agent must have a string export named FEW_SHOTS. The agent at ${packagePath} exported the following: ${allExports}.`,
+          `Agent must have a string export named FEW_SHOTS. The agent at ${absolutePath} exported the following: "${allExports}".`,
         );
       }
       const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
@@ -86,7 +88,7 @@ class FuncHost {
     } catch (e: any) {
       if (e.code === 'MODULE_NOT_FOUND') {
         throw new ErrorWrapper(
-          `Could not find package at path: ${packagePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
+          `Could not find package at path: ${absolutePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
           e,
         );
       }
