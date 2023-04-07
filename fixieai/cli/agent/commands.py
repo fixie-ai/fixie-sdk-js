@@ -14,12 +14,12 @@ import threading
 import urllib.request
 import venv
 from contextlib import contextmanager
-from typing import Dict, List, Optional, Tuple
+from typing import BinaryIO, Dict, List, Optional, Tuple
 
 import click
 import rich.console as rich_console
 import validators
-import findup
+import findup # type: ignore
 
 import fixieai.client
 from fixieai import constants
@@ -678,11 +678,17 @@ def deploy(ctx, path, metadata_only, public, validate):
 
             tarball_name = result.stdout.splitlines()[-1]
             path_of_tarball_to_upload = os.path.join(temp_dir, tarball_name)
-            tarball_file = open(path_of_tarball_to_upload, "rb")
+            ts_tarball_file = open(path_of_tarball_to_upload, "rb")
+
+            with _spinner(console, "Deploying..."):
+                ctx.obj.client.deploy_agent(
+                    config.handle,
+                    ts_tarball_file,
+                )
         else: 
             # Deploy the agent to fixie with some bootstrapping code.
-            with tempfile.TemporaryFile() as tarball_file:
-                with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
+            with tempfile.TemporaryFile() as py_tarball_file:
+                with tarfile.open(fileobj=py_tarball_file, mode="w:gz") as tarball:
                     tarball.add(
                         agent_dir,
                         arcname="agent",
@@ -707,12 +713,12 @@ def deploy(ctx, path, metadata_only, public, validate):
                         tarball,
                     )
 
-        tarball_file.seek(0)
-        with _spinner(console, "Deploying..."):
-            ctx.obj.client.deploy_agent(
-                config.handle,
-                tarball_file,
-            )
+                py_tarball_file.seek(0)
+                with _spinner(console, "Deploying..."):
+                    ctx.obj.client.deploy_agent(
+                        config.handle,
+                        py_tarball_file,
+                    )
 
     # Trigger a refresh with the updated deployment
     with _spinner(console, "Refreshing..."):
