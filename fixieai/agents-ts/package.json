@@ -1,7 +1,6 @@
 {
-  "name": "@fixie/sdk",
-  "private": true,
-  "version": "1.0.0",
+  "name": "@fixieai/sdk",
+  "version": "1.0.0-8",
   "description": "The Fixie SDK (https://fixie.ai/)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,12 +8,15 @@
     "/dist",
     "/src"
   ],
+  "bin": {
+    "serve-bin": "dist/serve-bin.js"
+  },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "dprint fmt",
     "format:check": "dprint check",
-    "postinstall": "npm run build",
+    "prepublishOnly": "npm run build",
     "build": "tsc -p . && chmod a+x dist/serve-bin.js",
     "start:dev": "npx nodemon",
     "bin:dev": "npx ts-node src/serve-bin.ts",

@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from typing import Dict, List, Optional, Tuple
 
 import click
+import findup  # type: ignore
 import rich.console as rich_console
 import validators
 
@@ -222,7 +223,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
             "devDependencies": {
                 "@tsconfig/node18": "^1.0.1",
             },
-            "dependencies": {"fixieai": "^1.0.0"},
+            "dependencies": {"fixieai": "latest"},
         }
 
         tsconfig = {
@@ -511,21 +512,23 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         if is_typescript:
+            agent_yaml_dir = os.path.dirname(path)
+            package_path = os.path.dirname(
+                findup.glob("package.json", dirname=agent_yaml_dir)
+            )
             serve_bin_path = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "agents-ts",
-                "dist",
-                "serve-bin.js",
+                agent_yaml_dir,
+                "node_modules",
+                ".bin",
+                "serve-bin",
             )
             subprocess.run(
                 [
                     serve_bin_path,
                     "--port",
                     str(port),
-                    "--agent",
-                    path,
+                    "--packagePath",
+                    package_path,
                     "--silentStartup",
                     "--humanReadableLogs",
                     "--refreshMetadataAPIUrl",
@@ -613,7 +616,7 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
 @click.option(
     "--metadata-only",
     is_flag=True,
-    help="Only publish metadata and refresh, do not redeploy.",
+    help="Only publish metadata and refresh. Do not redeploy.",
 )
 @click.option("--public", is_flag=True, help="Make the agent public.", default=None)
 @click.option(
@@ -627,6 +630,7 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
 def deploy(ctx, path, metadata_only, public, validate):
     console = rich_console.Console(soft_wrap=True)
     config = agent_config.load_config(path)
+    is_typescript = config.language == "typescript"
     if config.public is not None:
         console.print(
             "[yellow]Warning:[/] The [blue]`public`[/] option in the agent config is deprecated and will be removed soon."
@@ -643,49 +647,75 @@ def deploy(ctx, path, metadata_only, public, validate):
 
     agent_dir = os.path.dirname(path) or "."
     if validate:
-        # Validate that the agent loads in a virtual environment before deploying.
-        python_exe, agent_env = _configure_venv(console, agent_dir)
-        agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
-        _validate_agent_loads_or_exit(
-            console, agent_dir, config.handle, python_exe, agent_env
-        )
+        # Skip this step for TS. The only thing TS is validating is pieces that ultimately should end up in the agent.yml
+        if not is_typescript:
+            # Validate that the agent loads in a virtual environment before deploying.
+            python_exe, agent_env = _configure_venv(console, agent_dir)
+            agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
+            _validate_agent_loads_or_exit(
+                console, agent_dir, config.handle, python_exe, agent_env
+            )
 
     agent_api = _ensure_agent_updated(client, agent_id, config)
 
     if config.deployment_url is None and not metadata_only:
-        # Deploy the agent to fixie with some bootstrapping code.
-        with tempfile.TemporaryFile() as tarball_file:
-            with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
-                tarball.add(
-                    agent_dir,
-                    arcname="agent",
-                    filter=functools.partial(
-                        _tarinfo_filter, console, agent_dir, "agent/"
-                    ),
-                )
+        if is_typescript:
+            package_dir = os.path.dirname(
+                findup.glob("package.json", dirname=agent_dir)
+            )
+            temp_dir = tempfile.gettempdir()
+            result = subprocess.run(
+                ["npm", "pack", "--pack-destination", temp_dir, "--json"],
+                capture_output=True,
+                text=True,
+                cwd=package_dir,
+            )
 
-                # Add the bootstrapping code and environment variables
-                _add_text_file_to_tarfile(
-                    "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
-                )
-                _add_text_file_to_tarfile(
-                    ".env",
-                    "\n".join(
-                        f"{key}={value}"
-                        for key, value in {
-                            FIXIE_ALLOWED_AGENT_ID: agent_id,
-                            "FIXIE_API_URL": constants.FIXIE_API_URL,
-                        }.items()
-                    ),
-                    tarball,
-                )
+            result.check_returncode()
 
-            tarball_file.seek(0)
+            tarball_name = json.loads(result.stdout)[0]["filename"]
+            path_of_tarball_to_upload = os.path.join(temp_dir, tarball_name)
+            ts_tarball_file = open(path_of_tarball_to_upload, "rb")
+
             with _spinner(console, "Deploying..."):
                 ctx.obj.client.deploy_agent(
                     config.handle,
-                    tarball_file,
+                    ts_tarball_file,
                 )
+        else:
+            # Deploy the agent to fixie with some bootstrapping code.
+            with tempfile.TemporaryFile() as py_tarball_file:
+                with tarfile.open(fileobj=py_tarball_file, mode="w:gz") as tarball:
+                    tarball.add(
+                        agent_dir,
+                        arcname="agent",
+                        filter=functools.partial(
+                            _tarinfo_filter, console, agent_dir, "agent/"
+                        ),
+                    )
+
+                    # Add the bootstrapping code and environment variables
+                    _add_text_file_to_tarfile(
+                        "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
+                    )
+                    _add_text_file_to_tarfile(
+                        ".env",
+                        "\n".join(
+                            f"{key}={value}"
+                            for key, value in {
+                                FIXIE_ALLOWED_AGENT_ID: agent_id,
+                                "FIXIE_API_URL": constants.FIXIE_API_URL,
+                            }.items()
+                        ),
+                        tarball,
+                    )
+
+                py_tarball_file.seek(0)
+                with _spinner(console, "Deploying..."):
+                    ctx.obj.client.deploy_agent(
+                        config.handle,
+                        py_tarball_file,
+                    )
 
     # Trigger a refresh with the updated deployment
     with _spinner(console, "Refreshing..."):

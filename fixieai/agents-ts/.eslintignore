@@ -1,1 +1,5 @@
 /dist/
+
+# We can't build this file in TS because it's supposed to be templated into a user directory, so the imports won't 
+# work. And because we can't build it in TS, we can't lint it.
+src/template.ts
