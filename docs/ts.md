@@ -5,7 +5,7 @@ You can implement agent funcs in NodeJS. To get started:
 $ fixie agent init --language ts
 ```
 
-This generates a TypeScript project template, and all the examples in the docs will be in TypeScript, but you can also use JS if you preferl
+This generates a TypeScript project template, and all the examples in the docs will be in TypeScript, but you can also use JS if you prefer.
 
 ## Example
 To make funcs available to your agent, export them from your module:
