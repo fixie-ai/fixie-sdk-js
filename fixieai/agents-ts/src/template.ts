@@ -8,6 +8,7 @@
  * Fixie agent example:
  *     https://github.com/fixie-ai/fixie-examples
  */
+import type { AgentFunc } from '@fixieai/sdk';
 
 export const BASE_PROMPT = "I'm an agent that rolls virtual dice!";
 
@@ -28,8 +29,8 @@ Func[roll] says: 5 3 8
 A: You rolled 5, 3, and 8, for a total of 16.
 `;
 
-export function roll(query: { text: string; }): string {
+export const roll: AgentFunc = (query) => {
   const [diceSize, numDice] = query.text.split(' ');
   const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
-}
+};

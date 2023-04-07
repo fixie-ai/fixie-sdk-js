@@ -3,10 +3,8 @@ import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
-import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
-import path from 'path';
 import * as tsNode from 'ts-node';
 
 /**
@@ -39,8 +37,10 @@ interface Message {
 interface AgentResponse {
   message: Message;
 }
-
-type AgentFunc = (args: string) => string;
+export interface FuncParam {
+  text: string;
+}
+export type AgentFunc = (funcParam: FuncParam) => string;
 
 interface Agent {
   basePrompt: string;
@@ -159,7 +159,6 @@ export default async function serve({
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
   app.post('/:funcName', (req, res) => {
     const funcName = req.params.funcName;
-    const body = req.body;
 
     if (typeof req.body.message?.text !== 'string') {
       res
@@ -174,6 +173,8 @@ export default async function serve({
         );
       return;
     }
+
+    const body = req.body as AgentResponse;
 
     try {
       const result = agentRunner.runFunction(funcName, body.message);
