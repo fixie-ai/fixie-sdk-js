@@ -4,10 +4,7 @@ and your Fixie API key."""
 import os
 
 # Base Fixie platform URL.
-# FIXIE_API_URL = os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
-FIXIE_API_URL = os.getenv(
-    "FIXIE_API_URL", "https://psalas-node-deployments-pgaenaxiea-uc.a.run.app"
-)
+FIXIE_API_URL = os.getenv("FIXIE_API_URL", "https://app.fixie.ai")
 # Path to fixie config file.
 FIXIE_CONFIG_PATH = os.getenv(
     "FIXIE_CONFIG_PATH",

@@ -223,7 +223,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement, lan
             "devDependencies": {
                 "@tsconfig/node18": "^1.0.1",
             },
-            "dependencies": {"fixieai": "^1.0.0"},
+            "dependencies": {"fixieai": "latest"},
         }
 
         tsconfig = {
@@ -660,12 +660,9 @@ def deploy(ctx, path, metadata_only, public, validate):
 
     if config.deployment_url is None and not metadata_only:
         if is_typescript:
+            package_dir = os.path.dirname(findup.glob("package.json", dirname=agent_dir))
             temp_dir = tempfile.gettempdir()
             result = subprocess.run(
-                # If the dev adds a `files` field to their package.json, and that field excludes `agent.yaml`, then
-                # this the tarball will omit that file, which would break the deploy.
-                # We could add it to the tarball manually, or check the built tarball to see if it's there, etc.
-                # But for now, I think we can skip worrying about it.
                 [
                     "npm",
                     "pack",
@@ -674,6 +671,7 @@ def deploy(ctx, path, metadata_only, public, validate):
                 ],
                 capture_output=True,
                 text=True,
+                cwd=package_dir,
             )
 
             result.check_returncode()
