@@ -2,13 +2,13 @@ import bodyParser from 'body-parser';
 import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
+import chokidar from 'chokidar';
 import clearModule from 'clear-module';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
-import nodemon from 'nodemon';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
@@ -147,25 +147,23 @@ export default async function serve({
   }
 
   let agentRunner = new AgentRunner(entryPointPath);
-  let watcher: ReturnType<typeof nodemon> | undefined;
+  let watcher: ReturnType<typeof chokidar.watch> | undefined;
   if (watch) {
     const entryPointDir = path.dirname(entryPointPath);
-    // Maybe we just want to switch this to chokidar.
-    watcher = nodemon({
-      script: `${require.resolve('../empty-bin')} --help`,
+    /**
+     * This will only watch the dir (and subdirs) that contain the entry point. If the entry point depends on files
+     * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
+     * Nodemon works, and I think it's unlikely to be a problem in practice.
+     */
+    watcher = chokidar.watch(entryPointDir).on('all', () => {
+      clearModule(entryPointPath);
+      agentRunner = new AgentRunner(entryPointPath);
       /**
-       * This will only watch the dir (and subdirs) that contain the entry point. If the entry point depends on files
-       * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
-       * Nodemon works, and I think it's unlikely to be a problem in practice.
+       * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
+       * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
+       * those from the actual change events. So if we were to log, it would look really spammy on startup.
        */
-      watch: [entryPointDir],
-    })
-      .on('restart', () => {
-        clearModule(entryPointPath);
-        agentRunner = new AgentRunner(entryPointPath);
-        // This will look kinda gross but we can polish the CLI UX later.
-        console.log('Server reloaded for agent change');
-      });
+    });
     console.log(`Watching ${entryPointDir} for changes...`);
   }
 
@@ -239,8 +237,8 @@ export default async function serve({
     console.log(`Agent listening on port ${port}.`);
   }
 
-  return () => {
+  return async () => {
     server.close();
-    // TODO: close the watcher
+    await watcher?.close();
   };
 }

@@ -153,18 +153,19 @@ A: You rolled 5, 3, and 8, for a total of 16.
 });
 
 it('watch mode', async () => {
-  const temporaryAgentConfigPath = tempy.file({ extension: 'yaml' });
-  const temporaryAgentTSPath = tempy.file({ extension: 'ts' });
+  const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
+  const temporaryAgentConfigPath = path.join(tempDir, 'agent.yaml');
+  const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
 
   const temporaryAgentConfig = {
     ...agentConfig,
-    entry_point: temporaryAgentTSPath,
+    entry_point: 'index.ts',
   };
 
   await fs.writeFile(temporaryAgentConfigPath, yaml.dump(temporaryAgentConfig));
 
-  const agentTSPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
-  await fs.copyFile(agentTSPath, temporaryAgentTSPath);
+  const originalfixtureAgentTSPath = path.resolve(path.dirname(agentConfigPath), agentConfig.entry_point);
+  await fs.copyFile(originalfixtureAgentTSPath, temporaryAgentTSPath);
 
   let close;
   try {
