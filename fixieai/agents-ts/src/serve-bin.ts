@@ -1,11 +1,8 @@
 #! /usr/bin/env node
 
-import fs from 'fs';
-import yaml from 'js-yaml';
-import _ from 'lodash';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import serve, { AgentConfig } from './serve';
+import serve from './serve';
 
 const { argv } = yargs(hideBin(process.argv))
   .scriptName('cli-tool')
@@ -29,35 +26,10 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
-    agent: {
-      describe: 'Path to the agent.yaml',
+    packagePath: {
+      describe: 'Path to the package to serve functions from',
       type: 'string',
-      required: true,
-      default: 'config.yaml',
-      coerce: (path: string): { parsed: AgentConfig; path: string; } => {
-        if (path === '.') {
-          // This is a hack to make this work with what's baked into the service.
-          // eslint-disable-next-line no-param-reassign
-          path = 'agent.yaml';
-        }
-        let fileContents;
-        try {
-          fileContents = fs.readFileSync(path, 'utf8');
-        } catch (e) {
-          if ((e as any).code === 'ENOENT') {
-            throw new Error(`The provided path (${path}) does not exist.`);
-          }
-          throw e;
-        }
-        try {
-          const parsed = yaml.load(fileContents) as AgentConfig;
-          return { parsed, path };
-        } catch (e: any) {
-          throw new Error(
-            `The provided path (${path}) is not a valid YAML file. The error was:\n${e.toString()}`,
-          );
-        }
-      },
+      default: '.',
     },
   })
   .strict()
@@ -73,14 +45,4 @@ const { argv } = yargs(hideBin(process.argv))
 type ExcludePromiseType<T> = Exclude<T, Promise<any>>;
 const staticArgv = argv as ExcludePromiseType<typeof argv>;
 
-serve({
-  agentConfigPath: staticArgv.agent.path,
-  agentConfig: staticArgv.agent.parsed,
-  ..._.pick(
-    staticArgv,
-    'port',
-    'silentStartup',
-    'refreshMetadataAPIUrl',
-    'humanReadableLogs',
-  ),
-});
+serve(staticArgv);

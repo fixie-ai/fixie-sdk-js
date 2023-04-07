@@ -29,20 +29,6 @@ if (!process[Symbol.for('ts-node.register.instance')]) {
   tsNode.register();
 }
 
-/**
- * This should be kept in sync with the `AgentConfig` dataclass.
- */
-export interface AgentConfig {
-  handle: string;
-  name?: string;
-  description: string;
-  more_info_url: string;
-  language: string;
-  entry_point: string;
-  deployment_url?: string;
-  public?: boolean;
-}
-
 interface AgentMetadata {
   base_prompt: string;
   few_shots: string[];
@@ -66,30 +52,46 @@ class FunctionNotFoundError extends Error {
   name = 'FunctionNotFoundError';
 }
 
-class AgentRunner {
+class ErrorWrapper extends Error {
+  constructor(readonly message: string, readonly innerError: Error) {
+    super(message);
+  }
+}
+
+class FuncHost {
   private readonly agent: Agent;
 
-  constructor(agentPath: string) {
-    const requiredAgent = require(agentPath);
-    const allExports = Object.keys(requiredAgent).join(', ');
+  constructor(packagePath: string) {
+    try {
+      const requiredAgent = require(packagePath);
+      const allExports = Object.keys(requiredAgent).join(', ');
 
-    if (typeof requiredAgent.BASE_PROMPT !== 'string') {
-      throw new Error(
-        `Agent must have a string export named BASE_PROMPT. The agent exported the following: ${allExports}.`,
-      );
-    }
-    if (typeof requiredAgent.FEW_SHOTS !== 'string') {
-      throw new Error(
-        `Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}.`,
-      );
-    }
-    const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
+      if (typeof requiredAgent.BASE_PROMPT !== 'string') {
+        throw new Error(
+          `Agent must have a string export named BASE_PROMPT. The agent at ${packagePath} exported the following: ${allExports}.`,
+        );
+      }
+      if (typeof requiredAgent.FEW_SHOTS !== 'string') {
+        throw new Error(
+          `Agent must have a string export named FEW_SHOTS. The agent at ${packagePath} exported the following: ${allExports}.`,
+        );
+      }
+      const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
 
-    this.agent = {
-      basePrompt: requiredAgent.BASE_PROMPT,
-      fewShots: requiredAgent.FEW_SHOTS.split('\n\n'),
-      funcs,
-    };
+      this.agent = {
+        basePrompt: requiredAgent.BASE_PROMPT,
+        fewShots: requiredAgent.FEW_SHOTS.split('\n\n'),
+        funcs,
+      };
+    } catch (e: any) {
+      if (e.code === 'MODULE_NOT_FOUND') {
+        throw new ErrorWrapper(
+          `Could not find package at path: ${packagePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
+          e,
+        );
+      }
+      throw e;
+    }
   }
 
   runFunction(funcName: string, args: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
@@ -117,34 +119,21 @@ class AgentRunner {
  */
 
 export default async function serve({
-  agentConfigPath,
-  agentConfig,
+  packagePath,
   port,
   silentStartup,
   refreshMetadataAPIUrl,
   silentRequestHandling = false,
   humanReadableLogs = false,
 }: {
-  agentConfigPath: string;
-  agentConfig: AgentConfig;
+  packagePath: string;
   port: number;
   silentStartup: boolean;
   refreshMetadataAPIUrl?: string;
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
-  const entryPointPath = path.resolve(
-    path.dirname(agentConfigPath),
-    agentConfig.entry_point,
-  );
-  if (!fs.existsSync(entryPointPath)) {
-    const absolutePath = path.resolve(entryPointPath);
-    throw new Error(
-      `The entry point (${absolutePath}) does not exist. Did you specify the wrong path in your agent.yaml? The entry_point is interpreted relative to the agent.yaml.`,
-    );
-  }
-
-  const agentRunner = new AgentRunner(entryPointPath);
+  const agentRunner = new FuncHost(packagePath);
 
   const app = express();
 

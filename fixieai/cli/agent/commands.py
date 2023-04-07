@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple
 import click
 import rich.console as rich_console
 import validators
+import findup
 
 import fixieai.client
 from fixieai import constants
@@ -511,21 +512,21 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         if is_typescript:
+            agent_yaml_dir = os.path.dirname(path)
+            package_path = os.path.dirname(findup.glob("package.json", dirname=agent_yaml_dir))
             serve_bin_path = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "agents-ts",
-                "dist",
-                "serve-bin.js",
+                agent_yaml_dir,
+                "node_modules",
+                ".bin",
+                "serve-bin",
             )
             subprocess.run(
                 [
                     serve_bin_path,
                     "--port",
                     str(port),
-                    "--agent",
-                    path,
+                    "--packagePath",
+                    package_path,
                     "--silentStartup",
                     "--humanReadableLogs",
                     "--refreshMetadataAPIUrl",

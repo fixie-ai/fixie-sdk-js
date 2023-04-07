@@ -1,15 +1,10 @@
-import fs from 'fs';
 import got from 'got';
-import yaml from 'js-yaml';
 import nock from 'nock';
 import path from 'path';
 import type { PromiseType } from 'utility-types';
-import serve, { AgentConfig } from '../serve';
+import serve from '../serve';
 
-const agentConfigPath = path.resolve(__dirname, '..', 'fixtures', 'agent.yaml');
-const agentConfigContents = fs.readFileSync(agentConfigPath, 'utf8');
-const agentConfig = yaml.load(agentConfigContents) as AgentConfig;
-
+const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
 nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(200, {});
@@ -17,18 +12,14 @@ nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infi
 it('throws an error if the entry point does not exist', async () => {
   await expect(async () => {
     const close = await serve({
-      agentConfigPath: 'agent.yaml',
-      agentConfig: {
-        ...agentConfig,
-        entry_point: 'does-not-exist.ts',
-      },
+      packagePath: 'does-not-exist',
       port: 3000,
       silentStartup: true,
       refreshMetadataAPIUrl,
     });
     close();
   }).rejects.toThrowError(
-    /The entry point \(.*\) does not exist. Did you specify the wrong path in your agent.yaml\? The entry_point is interpreted relative to the agent.yaml./,
+    /Could not find package at path: does-not-exist. Does this path exist\? If it does, did you specify a "main" field in your package.json\?/,
   );
 });
 
@@ -39,8 +30,7 @@ describe('server starts', () => {
 
   beforeEach(async () => {
     close = await serve({
-      agentConfigPath,
-      agentConfig,
+      packagePath: agentPackagePath,
       port,
       silentStartup: true,
       silentRequestHandling: true,
