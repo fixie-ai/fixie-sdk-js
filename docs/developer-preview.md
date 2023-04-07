@@ -1,11 +1,11 @@
 ## Welcome to the Fixie Developer Preview
 
-Welcome to Fixie! We're happy you're here. We wanted to give you a brief overview of how things work and where to get help if you need stuck.
+Welcome to Fixie! We're delighted to have you here. This brief overview will help you understand how things work and where to seek assistance if needed.
 
-We strongly recommend [joining the community on Discord](https://discord.gg/MsKAeKF8kU). The entire Fixie team is on hand ready to answer questions and help you if you get stuck.
+We highly recommend [joining our community on Discord](https://discord.gg/MsKAeKF8kU), where the entire Fixie team is available to answer your questions and provide support.
 
-For the Developer Preview Period, there is no charge to use Fixie, but you are limited to 1,000 Fixie queries per day. If you need more, or are interested in use-cases for business, please reach out at hello@fixie.ai and we can help.
+During the Developer Preview period, you can use Fixie for free, with a limit of 1,000 queries per day. If you require more queries or are interested in business use-cases, please contact us at hello@fixie.ai, and we will be happy to help.
 
-If you're just getting started, you'll probably want to check out our [agent examples repo](https://github.com/fixie-ai/fixie-examples) along with exploring the rest of the docs on this site.
+If you are new to Fixie, consider checking out our [agent examples repo](https://github.com/fixie-ai/fixie-examples) and explore the rest of the documentation on this site.
 
-Lastly, just a reminder that Fixie is evolving rapidly, so expect a few bugs here and there. Please let us know when you run into these, and we'll do our best to fix them ASAP. Also, is there something you can't do but you'd like to? Let us know! We love feature requests.
+Please note: as Fixie is continually evolving, you might encounter occasional bugs. We appreciate your feedback and will promptly address any issues. If you have a feature request, let us know! We love feature requests.
