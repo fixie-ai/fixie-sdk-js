@@ -660,16 +660,12 @@ def deploy(ctx, path, metadata_only, public, validate):
 
     if config.deployment_url is None and not metadata_only:
         if is_typescript:
-            package_dir = os.path.dirname(findup.glob("package.json", dirname=agent_dir))
+            package_dir = os.path.dirname(
+                findup.glob("package.json", dirname=agent_dir)
+            )
             temp_dir = tempfile.gettempdir()
             result = subprocess.run(
-                [
-                    "npm",
-                    "pack",
-                    "--pack-destination",
-                    temp_dir,
-                    "--json"
-                ],
+                ["npm", "pack", "--pack-destination", temp_dir, "--json"],
                 capture_output=True,
                 text=True,
                 cwd=package_dir,
