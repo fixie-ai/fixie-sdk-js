@@ -668,6 +668,7 @@ def deploy(ctx, path, metadata_only, public, validate):
                     "pack",
                     "--pack-destination",
                     temp_dir,
+                    "--json"
                 ],
                 capture_output=True,
                 text=True,
@@ -676,7 +677,7 @@ def deploy(ctx, path, metadata_only, public, validate):
 
             result.check_returncode()
 
-            tarball_name = result.stdout.splitlines()[-1]
+            tarball_name = json.loads(result.stdout)[0]["filename"]
             path_of_tarball_to_upload = os.path.join(temp_dir, tarball_name)
             ts_tarball_file = open(path_of_tarball_to_upload, "rb")
 
