@@ -38,6 +38,10 @@ Use `npm install --save @fixieai/sdk` to get the SDK.
 * If a `package-lock.json` or `yarn.lock` file is available, Fixie will install them via `npm ci`. If no lockfile is available, Fixie will install your package dependencies via `npm install`.
 
 * If your code is in TypeScript, it'll be loaded with [`ts-node`](https://typestrong.org/ts-node/). `ts-node` will look for a `tsconfig.json` in your project. The `@fixieai/sdk` dependency declared in your `package.json` will transitively pull in `ts-node`.
+    * If you want to control the TypeScript compilation yourself:
+        1. Create a `tsc` command that will emit JS.
+        1. Call that command from [the `prepublishOnly` hook](https://docs.npmjs.com/cli/v9/using-npm/scripts#prepare-and-prepublish).
+        1. Update your `package.json` `main` field to point to the emitted JS entrypoint.
 
 ### Limitations
 
