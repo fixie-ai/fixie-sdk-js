@@ -3,11 +3,13 @@ import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
+import asyncHandler from 'express-async-handler';
 import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
+import { Promisable } from 'type-fest';
 
 /**
  * This file can be called in two environmentS:
@@ -51,7 +53,7 @@ interface AgentResponse {
   message: Message;
 }
 
-type AgentFunc = (args: string) => string;
+type AgentFunc = (args: string) => Promisable<string>;
 
 interface Agent {
   basePrompt: string;
@@ -110,7 +112,6 @@ class AgentRunner {
  * TODO:
  *  - watch mode
  *  - logger formatting for local dev
- *  - async agent functions
  */
 
 export default async function serve({
@@ -165,41 +166,44 @@ export default async function serve({
   app.use(bodyParser.json());
 
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
-  app.post('/:funcName', (req, res) => {
-    const funcName = req.params.funcName;
-    const body = req.body;
+  app.post(
+    '/:funcName',
+    asyncHandler(async (req, res) => {
+      const funcName = req.params.funcName;
+      const body = req.body;
 
-    if (typeof req.body.message?.text !== 'string') {
-      res
-        .status(400)
-        // Is it a security problem to stringify untrusted input?
-        .send(
-          `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${
-            JSON.stringify(
-              req.body,
-            )
-          }`,
-        );
-      return;
-    }
-
-    try {
-      const result = agentRunner.runFunction(funcName, body.message);
-      const response: AgentResponse = { message: { text: result } };
-      res.send(response);
-    } catch (e: any) {
-      if (e.name === 'FunctionNotFoundError') {
-        res.status(404).send(e.message);
+      if (typeof req.body.message?.text !== 'string') {
+        res
+          .status(400)
+          // Is it a security problem to stringify untrusted input?
+          .send(
+            `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${
+              JSON.stringify(
+                req.body,
+              )
+            }`,
+          );
         return;
       }
-      const errorForLogging = _.pick(e, 'message', 'stack');
-      logger.error(
-        { error: errorForLogging, functionName: funcName },
-        'Error running agent function',
-      );
-      res.status(500).send(errorForLogging);
-    }
-  });
+
+      try {
+        const result = await agentRunner.runFunction(funcName, body.message);
+        const response: AgentResponse = { message: { text: result } };
+        res.send(response);
+      } catch (e: any) {
+        if (e.name === 'FunctionNotFoundError') {
+          res.status(404).send(e.message);
+          return;
+        }
+        const errorForLogging = _.pick(e, 'message', 'stack');
+        logger.error(
+          { error: errorForLogging, functionName: funcName },
+          'Error running agent function',
+        );
+        res.status(500).send(errorForLogging);
+      }
+    }),
+  );
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
