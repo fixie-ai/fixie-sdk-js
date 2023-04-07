@@ -35,6 +35,11 @@ const { argv } = yargs(hideBin(process.argv))
       required: true,
       default: 'config.yaml',
       coerce: (path: string): { parsed: AgentConfig; path: string; } => {
+        if (path === '.') {
+          // This is a hack to make this work with what's baked into the service.
+          // eslint-disable-next-line no-param-reassign
+          path = 'agent.yaml';
+        }
         let fileContents;
         try {
           fileContents = fs.readFileSync(path, 'utf8');
