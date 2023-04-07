@@ -161,34 +161,26 @@ export default async function serve({
   app.use(bodyParser.json());
 
   app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
-  app.post('/:funcName', asyncHandler(async (req, res) => {
-    const funcName = req.params.funcName;
+  app.post(
+    '/:funcName',
+    asyncHandler(async (req, res) => {
+      const funcName = req.params.funcName;
 
-    if (typeof req.body.message?.text !== 'string') {
-      res
-        .status(400)
-        // Is it a security problem to stringify untrusted input?
-        .send(
-          `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${
-            JSON.stringify(
-              req.body,
-            )
-          }`,
-        );
-      return;
-    }
-
-    const body = req.body as AgentResponse;
-
-    try {
-      const result = await agentRunner.runFunction(funcName, body.message);
-      const response: AgentResponse = { message: { text: result } };
-      res.send(response);
-    } catch (e: any) {
-      if (e.name === 'FunctionNotFoundError') {
-        res.status(404).send(e.message);
+      if (typeof req.body.message?.text !== 'string') {
+        res
+          .status(400)
+          // Is it a security problem to stringify untrusted input?
+          .send(
+            `Request body must be of the shape: {"message": {"text": "your input to the function"}}. However, the body was: ${
+              JSON.stringify(
+                req.body,
+              )
+            }`,
+          );
         return;
       }
+
+      const body = req.body as AgentResponse;
 
       try {
         const result = await agentRunner.runFunction(funcName, body.message);
@@ -199,15 +191,26 @@ export default async function serve({
           res.status(404).send(e.message);
           return;
         }
-        const errorForLogging = _.pick(e, 'message', 'stack');
-        logger.error(
-          { error: errorForLogging, functionName: funcName },
-          'Error running agent function',
-        );
-        res.status(500).send(errorForLogging);
+
+        try {
+          const result = await agentRunner.runFunction(funcName, body.message);
+          const response: AgentResponse = { message: { text: result } };
+          res.send(response);
+        } catch (e: any) {
+          if (e.name === 'FunctionNotFoundError') {
+            res.status(404).send(e.message);
+            return;
+          }
+          const errorForLogging = _.pick(e, 'message', 'stack');
+          logger.error(
+            { error: errorForLogging, functionName: funcName },
+            'Error running agent function',
+          );
+          res.status(500).send(errorForLogging);
+        }
       }
-    }
-  }));
+    }),
+  );
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
