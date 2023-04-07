@@ -14,12 +14,12 @@ import threading
 import urllib.request
 import venv
 from contextlib import contextmanager
-from typing import BinaryIO, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import click
+import findup  # type: ignore
 import rich.console as rich_console
 import validators
-import findup # type: ignore
 
 import fixieai.client
 from fixieai import constants
@@ -513,7 +513,9 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         if is_typescript:
             agent_yaml_dir = os.path.dirname(path)
-            package_path = os.path.dirname(findup.glob("package.json", dirname=agent_yaml_dir))
+            package_path = os.path.dirname(
+                findup.glob("package.json", dirname=agent_yaml_dir)
+            )
             serve_bin_path = os.path.join(
                 agent_yaml_dir,
                 "node_modules",
@@ -670,8 +672,8 @@ def deploy(ctx, path, metadata_only, public, validate):
                     "--pack-destination",
                     temp_dir,
                 ],
-                capture_output=True, 
-                text=True
+                capture_output=True,
+                text=True,
             )
 
             result.check_returncode()
@@ -685,7 +687,7 @@ def deploy(ctx, path, metadata_only, public, validate):
                     config.handle,
                     ts_tarball_file,
                 )
-        else: 
+        else:
             # Deploy the agent to fixie with some bootstrapping code.
             with tempfile.TemporaryFile() as py_tarball_file:
                 with tarfile.open(fileobj=py_tarball_file, mode="w:gz") as tarball:
