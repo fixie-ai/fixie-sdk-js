@@ -31,7 +31,7 @@ it('relative path to agent', async () => {
     refreshMetadataAPIUrl,
   });
   await close();
-})
+});
 
 const port = 3000;
 describe('server starts', () => {

@@ -5,8 +5,8 @@ import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
 import got from 'got';
 import _ from 'lodash';
-import * as tsNode from 'ts-node';
 import path from 'path';
+import * as tsNode from 'ts-node';
 
 /**
  * This file can be called in two environmentS:
