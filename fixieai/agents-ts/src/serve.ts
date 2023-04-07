@@ -4,7 +4,6 @@ import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
-import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
 import path from 'path';
