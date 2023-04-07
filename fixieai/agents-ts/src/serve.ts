@@ -150,6 +150,7 @@ export default async function serve({
   let watcher: ReturnType<typeof nodemon> | undefined;
   if (watch) {
     const entryPointDir = path.dirname(entryPointPath);
+    // Maybe we just want to switch this to chokidar.
     watcher = nodemon({
       script: `${require.resolve('../empty-bin')} --help`,
       /**
@@ -240,6 +241,6 @@ export default async function serve({
 
   return () => {
     server.close();
-    watcher?.removeAllListeners();
+    // TODO: close the watcher
   };
 }

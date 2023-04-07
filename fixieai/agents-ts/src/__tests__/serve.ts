@@ -152,7 +152,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
   });
 });
 
-it.only('watch mode', async () => {
+it('watch mode', async () => {
   const temporaryAgentConfigPath = tempy.file({ extension: 'yaml' });
   const temporaryAgentTSPath = tempy.file({ extension: 'ts' });
 
