@@ -1,3 +1,1 @@
-import { CodeShotAgent } from './codeshot';
-
-export { CodeShotAgent };
+export * from './serve';

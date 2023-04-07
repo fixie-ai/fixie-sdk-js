@@ -6,7 +6,6 @@ import chokidar from 'chokidar';
 import clearModule from 'clear-module';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
-import fs from 'fs';
 import got from 'got';
 import _ from 'lodash';
 import path from 'path';
@@ -27,21 +26,10 @@ import { Promisable } from 'type-fest';
 // @ts-expect-error
 // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 if (!process[Symbol.for('ts-node.register.instance')]) {
+  /**
+   * We may need to explicitly pass the tsconfig.json here. Let's try omitting it and see if that works.
+   */
   tsNode.register();
-}
-
-/**
- * This should be kept in sync with the `AgentConfig` dataclass.
- */
-export interface AgentConfig {
-  handle: string;
-  name?: string;
-  description: string;
-  more_info_url: string;
-  language: string;
-  entry_point: string;
-  deployment_url?: string;
-  public?: boolean;
 }
 
 interface AgentMetadata {
@@ -54,8 +42,10 @@ interface Message {
 interface AgentResponse {
   message: Message;
 }
-
-type AgentFunc = (args: string) => Promisable<string>;
+export interface FuncParam {
+  text: string;
+}
+export type AgentFunc = (funcParam: FuncParam) => Promisable<string>;
 
 interface Agent {
   basePrompt: string;
@@ -67,30 +57,46 @@ class FunctionNotFoundError extends Error {
   name = 'FunctionNotFoundError';
 }
 
-class AgentRunner {
+class ErrorWrapper extends Error {
+  constructor(readonly message: string, readonly innerError: Error) {
+    super(message);
+  }
+}
+
+class FuncHost {
   private readonly agent: Agent;
 
-  constructor(agentPath: string) {
-    const requiredAgent = require(agentPath);
-    const allExports = Object.keys(requiredAgent).join(', ');
+  constructor(absolutePackagePath: string) {
+    try {
+      const requiredAgent = require(absolutePackagePath);
+      const allExports = Object.keys(requiredAgent).join(', ');
 
-    if (typeof requiredAgent.BASE_PROMPT !== 'string') {
-      throw new Error(
-        `Agent must have a string export named BASE_PROMPT. The agent exported the following: ${allExports}.`,
-      );
-    }
-    if (typeof requiredAgent.FEW_SHOTS !== 'string') {
-      throw new Error(
-        `Agent must have a string export named FEW_SHOTS. The agent exported the following: ${allExports}.`,
-      );
-    }
-    const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
+      if (typeof requiredAgent.BASE_PROMPT !== 'string') {
+        throw new Error(
+          `Agent must have a string export named BASE_PROMPT. The agent at ${absolutePackagePath} exported the following: "${allExports}".`,
+        );
+      }
+      if (typeof requiredAgent.FEW_SHOTS !== 'string') {
+        throw new Error(
+          `Agent must have a string export named FEW_SHOTS. The agent at ${absolutePackagePath} exported the following: "${allExports}".`,
+        );
+      }
+      const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
 
-    this.agent = {
-      basePrompt: requiredAgent.BASE_PROMPT,
-      fewShots: requiredAgent.FEW_SHOTS.split('\n\n'),
-      funcs,
-    };
+      this.agent = {
+        basePrompt: requiredAgent.BASE_PROMPT,
+        fewShots: requiredAgent.FEW_SHOTS.split('\n\n'),
+        funcs,
+      };
+    } catch (e: any) {
+      if (e.code === 'MODULE_NOT_FOUND') {
+        throw new ErrorWrapper(
+          `Could not find package at path: ${absolutePackagePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
+          e,
+        );
+      }
+      throw e;
+    }
   }
 
   runFunction(funcName: string, args: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
@@ -117,8 +123,7 @@ class AgentRunner {
  */
 
 export default async function serve({
-  agentConfigPath,
-  agentConfig,
+  packagePath,
   port,
   silentStartup,
   refreshMetadataAPIUrl,
@@ -126,8 +131,7 @@ export default async function serve({
   silentRequestHandling = false,
   humanReadableLogs = false,
 }: {
-  agentConfigPath: string;
-  agentConfig: AgentConfig;
+  packagePath: string;
   port: number;
   silentStartup: boolean;
   refreshMetadataAPIUrl?: string;
@@ -135,39 +139,29 @@ export default async function serve({
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
-  const entryPointPath = path.resolve(
-    path.dirname(agentConfigPath),
-    agentConfig.entry_point,
-  );
-  if (!fs.existsSync(entryPointPath)) {
-    const absolutePath = path.resolve(entryPointPath);
-    throw new Error(
-      `The entry point (${absolutePath}) does not exist. Did you specify the wrong path in your agent.yaml? The entry_point is interpreted relative to the agent.yaml.`,
-    );
-  }
+  const absolutePackagePath = path.resolve(packagePath);
+  let funcHost = new FuncHost(absolutePackagePath);
 
-  let agentRunner = new AgentRunner(entryPointPath);
+  const app = express();
+
   let watcher: ReturnType<typeof chokidar.watch> | undefined;
   if (watch) {
-    const entryPointDir = path.dirname(entryPointPath);
     /**
      * This will only watch the dir (and subdirs) that contain the entry point. If the entry point depends on files
      * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
      * Nodemon works, and I think it's unlikely to be a problem in practice.
      */
-    watcher = chokidar.watch(entryPointDir).on('all', () => {
-      clearModule(entryPointPath);
-      agentRunner = new AgentRunner(entryPointPath);
+    watcher = chokidar.watch(absolutePackagePath).on('all', () => {
+      clearModule(absolutePackagePath);
+      funcHost = new FuncHost(absolutePackagePath);
       /**
        * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
        * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
        * those from the actual change events. So if we were to log, it would look really spammy on startup.
        */
     });
-    console.log(`Watching ${entryPointDir} for changes...`);
+    console.log(`Watching ${absolutePackagePath} for changes...`);
   }
-
-  const app = express();
 
   function getLogStream() {
     if (silentRequestHandling) {
@@ -188,12 +182,11 @@ export default async function serve({
 
   app.use(bodyParser.json());
 
-  app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
+  app.get('/', (_req, res) => res.send(funcHost.getAgentMetadata()));
   app.post(
     '/:funcName',
     asyncHandler(async (req, res) => {
       const funcName = req.params.funcName;
-      const body = req.body;
 
       if (typeof req.body.message?.text !== 'string') {
         res
@@ -209,8 +202,10 @@ export default async function serve({
         return;
       }
 
+      const body = req.body as AgentResponse;
+
       try {
-        const result = await agentRunner.runFunction(funcName, body.message);
+        const result = await funcHost.runFunction(funcName, body.message);
         const response: AgentResponse = { message: { text: result } };
         res.send(response);
       } catch (e: any) {
@@ -218,12 +213,23 @@ export default async function serve({
           res.status(404).send(e.message);
           return;
         }
-        const errorForLogging = _.pick(e, 'message', 'stack');
-        logger.error(
-          { error: errorForLogging, functionName: funcName },
-          'Error running agent function',
-        );
-        res.status(500).send(errorForLogging);
+
+        try {
+          const result = await funcHost.runFunction(funcName, body.message);
+          const response: AgentResponse = { message: { text: result } };
+          res.send(response);
+        } catch (e: any) {
+          if (e.name === 'FunctionNotFoundError') {
+            res.status(404).send(e.message);
+            return;
+          }
+          const errorForLogging = _.pick(e, 'message', 'stack');
+          logger.error(
+            { error: errorForLogging, functionName: funcName },
+            'Error running agent function',
+          );
+          res.status(500).send(errorForLogging);
+        }
       }
     }),
   );
