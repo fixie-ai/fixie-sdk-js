@@ -11,7 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
-import { base64FromUri, Embed, SerializedEmbed } from './embed';
+import { Embed, SerializedEmbed } from './embed';
 
 /**
  * This file can be called in two environmentS:
