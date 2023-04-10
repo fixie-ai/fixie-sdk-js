@@ -94,13 +94,12 @@ describe('server starts', () => {
             embeds: {
               chart: {
                 content_type: 'image/webp',
-                uri: expect.any(String),
+                uri: expect.stringMatching(/^data:base64,/),
               },
             },
           },
         },
       ));
-      expect((response.body as any).message.embeds.chart.uri).toMatch(/^data:base64,/);
     });
 
     it('func generates a url', async () => {
