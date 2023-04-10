@@ -163,7 +163,13 @@ export default async function serve({
      * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
      * Nodemon works, and I think it's unlikely to be a problem in practice.
      */
-    watcher = chokidar.watch(absolutePackagePath).on('all', async () => {
+    watcher = chokidar.watch(absolutePackagePath, {
+      /**
+       * We may eventually want to change this to ignore all gitignores.
+       */
+      ignored: /node_modules/,
+      ignoreInitial: true,
+    }).on('all', async (ev, filePath) => {
       const previousAgent = funcHost.getAgentMetadata();
 
       clearModule(absolutePackagePath);
@@ -172,11 +178,7 @@ export default async function serve({
       if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
         await postToRefreshMetadataUrl();
       }
-      /**
-       * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
-       * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
-       * those from the actual change events. So if we were to log, it would look really spammy on startup.
-       */
+      console.log(`Reloading agent because "${filePath}" changed`);
     });
     console.log(`Watching ${absolutePackagePath} for changes...`);
   }
