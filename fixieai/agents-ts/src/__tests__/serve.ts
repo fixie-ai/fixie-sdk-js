@@ -6,7 +6,7 @@ import tempy from 'tempy';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
-const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
+const agentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'normal');
 let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
@@ -76,7 +76,7 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chart',
     );
   });
 
@@ -161,8 +161,9 @@ A: You rolled 5, 3, and 8, for a total of 16.
 it('watch mode', async () => {
   const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
   const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
+  const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch')
 
-  const originalfixtureAgentTSPath = path.resolve(agentPackagePath, 'index.ts');
+  const originalfixtureAgentTSPath = path.resolve(originalAgentPackagePath, 'index.ts');
   await fs.copyFile(originalfixtureAgentTSPath, temporaryAgentTSPath);
 
   let close;

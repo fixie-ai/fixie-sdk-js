@@ -1,4 +1,3 @@
-// TODO: Move this to `fixie-examples/agents/template.ts` when we're ready.
 /**
  * A templated Fixie agent
  *
@@ -32,16 +31,4 @@ export function roll(query: { text: string; }): string {
   const [diceSize, numDice] = query.text.split(' ');
   const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
-}
-
-export function willThrowError() {
-  throw new Error('This is an error');
-}
-
-export function willThrowErrorAsync() {
-  return Promise.reject(new Error('This is an async error'));
-}
-
-export function rollAsync(query: { text: string; }) {
-  return Promise.resolve(roll(query));
 }
