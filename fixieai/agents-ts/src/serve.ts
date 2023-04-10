@@ -142,6 +142,12 @@ export default async function serve({
   const absolutePackagePath = path.resolve(packagePath);
   let funcHost = new FuncHost(absolutePackagePath);
 
+  async function postToRefreshMetadataUrl() {
+    if (refreshMetadataAPIUrl !== undefined) {
+      await got.post(refreshMetadataAPIUrl);
+    }
+  }
+
   const app = express();
 
   let watcher: ReturnType<typeof chokidar.watch> | undefined;
@@ -151,9 +157,15 @@ export default async function serve({
      * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
      * Nodemon works, and I think it's unlikely to be a problem in practice.
      */
-    watcher = chokidar.watch(absolutePackagePath).on('all', () => {
+    watcher = chokidar.watch(absolutePackagePath).on('all', async () => {
+      const previousAgent = funcHost.getAgentMetadata();
+
       clearModule(absolutePackagePath);
       funcHost = new FuncHost(absolutePackagePath);
+
+      if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
+        await postToRefreshMetadataUrl();
+      }
       /**
        * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
        * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
@@ -236,9 +248,9 @@ export default async function serve({
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
-  if (refreshMetadataAPIUrl !== undefined) {
-    await got.post(refreshMetadataAPIUrl);
-  }
+
+  await postToRefreshMetadataUrl();
+
   if (!silentStartup) {
     console.log(`Agent listening on port ${port}.`);
   }
