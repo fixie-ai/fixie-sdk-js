@@ -76,7 +76,7 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chart',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chart, chartAsync',
     );
   });
 
@@ -91,6 +91,25 @@ describe('server starts', () => {
       expect(diceResult).not.toBeNaN();
       expect(diceResult).toBeGreaterThanOrEqual(1);
       expect(diceResult).toBeLessThanOrEqual(20);
+    });
+
+    it('calls a function with a chart', async () => {
+      const response = await got.post(`http://localhost:${port}/chart`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual(expect.objectContaining(
+        {
+          text: 'here is your chart #chart',
+          embeds: {
+            chart: {
+              contentType: 'image/webp',
+              base64Data: expect.any(String),
+            },
+          },
+        },
+      ));
     });
 
     it('Function being called throws an error', async () => {
@@ -125,6 +144,34 @@ describe('server starts', () => {
 
       expect(response.statusCode).toBe(500);
       expect(response.body).toMatch(/Error: This is an async error/);
+    });
+
+    it('calls a function with a chart', async () => {
+      const embedUrl = new URL('https://sample-url-to-embed.com/image.webp');
+      nock(embedUrl.origin).get(embedUrl.pathname).reply(200, 'image-data');
+
+      const response = await got.post(`http://localhost:${port}/chartAsync`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual(expect.objectContaining(
+        {
+          text: 'here is your chart #chart',
+          embeds: {
+            chart: {
+              contentType: 'image/webp',
+              /**
+               * Oh my god.
+               *
+               * When I set the nock response above to be 'image-data', GH Copilot suggests the correct base64 encoded
+               * value in the assertion here.
+               */
+              base64Data: 'aW1hZ2UtZGF0YQ==',
+            },
+          },
+        },
+      ));
     });
   });
 
@@ -161,7 +208,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
 it('watch mode', async () => {
   const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
   const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
-  const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch')
+  const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch');
 
   const originalfixtureAgentTSPath = path.resolve(originalAgentPackagePath, 'index.ts');
   await fs.copyFile(originalfixtureAgentTSPath, temporaryAgentTSPath);

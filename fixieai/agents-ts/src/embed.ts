@@ -1,8 +1,12 @@
 import got from 'got';
 
-function isBase64String(str: string) {
-  // Lifted from https://github.com/Hexagon/base64/blob/f83c673ded56edf4976c123d7c0cf40e46910452/src/base64.js#L164.
-  return /^[-A-Za-z0-9+/]*={0,3}$/.test(str);
+function isURL(str: string) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -21,8 +25,11 @@ export class Embed {
      */
     public readonly base64Data: string,
   ) {
-    if (!isBase64String(base64Data)) {
-      throw new Error(`Invalid base64 data: ${base64Data}. If you're trying to pass a URI, use Embed.fromUri() instead.`);
+    // This won't catch every type of non-base64 string, but it will catch a common mistake.
+    if (isURL(base64Data)) {
+      throw new Error(
+        `Invalid base64 data: "${base64Data}". If you're trying to pass a URI, use Embed.fromUri() instead.`,
+      );
     }
   }
 

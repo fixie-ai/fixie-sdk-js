@@ -7,9 +7,9 @@
  * Fixie agent example:
  *     https://github.com/fixie-ai/fixie-examples
  */
-import path from 'path';
 import fs from 'fs';
-import {Embed, AgentFunc} from '../../';
+import path from 'path';
+import { AgentFunc, Embed } from '../../';
 
 export const BASE_PROMPT = "I'm an agent that rolls virtual dice!";
 
@@ -34,23 +34,29 @@ export const roll: AgentFunc = (query) => {
   const [diceSize, numDice] = query.text.split(' ');
   const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
-}
+};
 
 export const willThrowError: AgentFunc = () => {
   throw new Error('This is an error');
-}
+};
 
 export const willThrowErrorAsync: AgentFunc = () => Promise.reject(new Error('This is an async error'));
 
 export const rollAsync: AgentFunc = (query) => Promise.resolve(roll(query));
 
 export const chart: AgentFunc = () => {
-  const chartData = fs.readFileSync(path.join(__dirname, 'chart.json'), 'utf8');
+  const chartData = fs.readFileSync(path.join(__dirname, 'chart-data.txt'), 'utf8');
   return {
     text: 'here is your chart #chart',
     embeds: {
-      chart: new Embed('image/webp', chartData)
-    }
-  }
-}
+      chart: new Embed('image/webp', chartData),
+    },
+  };
+};
 
+export const chartAsync: AgentFunc = async () => ({
+  text: 'here is your chart #chart',
+  embeds: {
+    chart: await Embed.fromUri('image/webp', 'https://sample-url-to-embed.com/image.webp'),
+  },
+});

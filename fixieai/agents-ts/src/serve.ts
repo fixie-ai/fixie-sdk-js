@@ -11,7 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
-import {Embed} from './embed';
+import { Embed } from './embed';
 
 /**
  * This file can be called in two environmentS:
