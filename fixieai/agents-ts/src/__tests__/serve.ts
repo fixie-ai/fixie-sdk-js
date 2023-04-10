@@ -7,9 +7,15 @@ import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
 const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
+let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
-nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(200, {});
+nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(
+  200,
+  () => {
+    refreshMetadataAPIUrlCallCount++;
+  },
+);
 
 it('throws an error if the entry point does not exist', async () => {
   await expect(async () => {
@@ -183,6 +189,7 @@ it('watch mode', async () => {
      * I tested manually and the server's cache clearing behavior works. 👻🤪
      */
     jest.resetModules();
+    const originalRefreshMetadataCallCount = refreshMetadataAPIUrlCallCount;
 
     const orginalTSContents = await fs.readFile(temporaryAgentTSPath, 'utf8');
     const modifiedTSContents = orginalTSContents.replace(
@@ -194,10 +201,31 @@ it('watch mode', async () => {
     // This also kinda sucks but I think it'll be fine for now.
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
+    expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
+
     const responseAfterWatch = await got(`http://localhost:${port}`);
     expect(JSON.parse(responseAfterWatch.body)).toEqual(
       expect.objectContaining({ base_prompt: "I'm a modified agent!" }),
     );
+
+    const tsContentsWithNewFunc = `
+      ${modifiedTSContents}
+      export function newFunc() { return 'newFuncResponse'; }
+    `;
+
+    jest.resetModules();
+    await fs.writeFile(temporaryAgentTSPath, tsContentsWithNewFunc);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
+
+    const newFuncResponse = await got.post(`http://localhost:${port}/newFunc`, {
+      json: { message: { text: 'input' } },
+      responseType: 'json',
+    });
+
+    expect(newFuncResponse.statusCode).toBe(200);
+    expect(newFuncResponse.body).toEqual({ message: { text: 'newFuncResponse' } });
   } finally {
     await close?.();
   }
