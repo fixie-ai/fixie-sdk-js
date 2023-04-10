@@ -17,9 +17,14 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
-    refreshMetadataAPIUrl: {
+    refreshMetadataApiUrl: {
       describe: 'Fixie API URL to call to refresh the metadata',
       type: 'string',
+    },
+    userStorageApiUrl: {
+      describe: 'Fixie API URL for user storage',
+      type: 'string',
+      required: true,
     },
     humanReadableLogs: {
       describe: 'Log in a human-readable format, rather than JSON',

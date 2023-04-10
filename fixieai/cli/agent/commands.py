@@ -531,8 +531,10 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
                     package_path,
                     "--silentStartup",
                     "--humanReadableLogs",
-                    "--refreshMetadataAPIUrl",
+                    "--refreshMetadataApiUrl",
                     client.get_refresh_agent_url(config.handle),
+                    "--userStorageApiUrl",
+                    constants.FIXIE_USER_STORAGE_URL
                 ]
                 + (["--watch"] if reload else []),
             ).check_returncode()

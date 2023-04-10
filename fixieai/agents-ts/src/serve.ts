@@ -12,6 +12,7 @@ import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
 import { Embed, SerializedEmbed } from './embed';
+import { UserStorage } from './user-storage';
 
 /**
  * This file can be called in two environmentS:
@@ -48,7 +49,7 @@ interface SerializedMessage extends Pick<Message, 'text'> {
 interface SerializedMessageEnvelope {
   message: SerializedMessage;
 }
-export type AgentFunc = (funcParam: Message) => Promisable<string | Message>;
+export type AgentFunc = (message: Message, userStorage: UserStorage) => Promisable<string | Message>;
 
 interface Agent {
   basePrompt: string;
@@ -69,7 +70,7 @@ class ErrorWrapper extends Error {
 class FuncHost {
   private readonly agent: Agent;
 
-  constructor(absolutePackagePath: string) {
+  constructor(absolutePackagePath: string, private readonly userStorage: UserStorage) {
     try {
       const requiredAgent = require(absolutePackagePath);
       const allExports = Object.keys(requiredAgent).join(', ');
@@ -102,13 +103,13 @@ class FuncHost {
     }
   }
 
-  runFunction(funcName: string, args: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
+  runFunction(funcName: string, message: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
     if (!(funcName in this.agent.funcs)) {
       throw new FunctionNotFoundError(
         `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).join(', ')}`,
       );
     }
-    return this.agent.funcs[funcName](args);
+    return this.agent.funcs[funcName](message, this.userStorage);
   }
 
   getAgentMetadata(): AgentMetadata {
@@ -130,6 +131,7 @@ export default async function serve({
   port,
   silentStartup,
   refreshMetadataAPIUrl,
+  userStorageApiUrl,
   watch = false,
   silentRequestHandling = false,
   humanReadableLogs = false,
@@ -137,13 +139,15 @@ export default async function serve({
   packagePath: string;
   port: number;
   silentStartup: boolean;
+  userStorageApiUrl: string;
   refreshMetadataAPIUrl?: string;
   watch?: boolean;
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
   const absolutePackagePath = path.resolve(packagePath);
-  let funcHost = new FuncHost(absolutePackagePath);
+  const userStorage = new UserStorage(userStorageApiUrl);
+  let funcHost = new FuncHost(absolutePackagePath, userStorage);
 
   async function postToRefreshMetadataUrl() {
     if (refreshMetadataAPIUrl !== undefined) {
@@ -166,11 +170,11 @@ export default async function serve({
        */
       ignored: /node_modules/,
       ignoreInitial: true,
-    }).on('all', async (ev, filePath) => {
+    }).on('all', async (_ev, filePath) => {
       const previousAgent = funcHost.getAgentMetadata();
 
       clearModule(absolutePackagePath);
-      funcHost = new FuncHost(absolutePackagePath);
+      funcHost = new FuncHost(absolutePackagePath, userStorage);
 
       if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
         await postToRefreshMetadataUrl();
