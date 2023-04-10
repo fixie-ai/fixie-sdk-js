@@ -11,7 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
-import Embed from './embed';
+import {Embed} from './embed';
 
 /**
  * This file can be called in two environmentS:
@@ -38,7 +38,7 @@ interface AgentMetadata {
   few_shots: string[];
 }
 
-interface Message {
+export interface Message {
   text: string;
   embeds: Record<string, Embed>;
 }
@@ -48,7 +48,7 @@ interface AgentResponse {
 export interface FuncParam {
   text: string;
 }
-export type AgentFunc = (funcParam: FuncParam) => Promisable<string>;
+export type AgentFunc = (funcParam: FuncParam) => Promisable<string | Message>;
 
 interface Agent {
   basePrompt: string;
@@ -221,30 +221,19 @@ export default async function serve({
 
       try {
         const result = await funcHost.runFunction(funcName, body.message);
-        const response: AgentResponse = { message: { text: result } };
+        const response = typeof result === 'string' ? { message: { text: result } } : result;
         res.send(response);
       } catch (e: any) {
         if (e.name === 'FunctionNotFoundError') {
           res.status(404).send(e.message);
           return;
         }
-
-        try {
-          const result = await funcHost.runFunction(funcName, body.message);
-          const response: AgentResponse = { message: { text: result } };
-          res.send(response);
-        } catch (e: any) {
-          if (e.name === 'FunctionNotFoundError') {
-            res.status(404).send(e.message);
-            return;
-          }
-          const errorForLogging = _.pick(e, 'message', 'stack');
-          logger.error(
-            { error: errorForLogging, functionName: funcName },
-            'Error running agent function',
-          );
-          res.status(500).send(errorForLogging);
-        }
+        const errorForLogging = _.pick(e, 'message', 'stack');
+        logger.error(
+          { error: errorForLogging, functionName: funcName },
+          'Error running agent function',
+        );
+        res.status(500).send(errorForLogging);
       }
     }),
   );

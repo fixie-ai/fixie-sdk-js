@@ -1,14 +1,9 @@
 import got from 'got';
-import * as base64 from 'base-64';
 
-// interface Embed2 {
-//   contentType: string;
-//   content: Uint8Array;
-//   uri: string;
-//   text: string;
-// }
-
-// async function createEmbed()
+function isBase64String(str: string) {
+  // Lifted from https://github.com/Hexagon/base64/blob/f83c673ded56edf4976c123d7c0cf40e46910452/src/base64.js#L164.
+  return /^[-A-Za-z0-9+/]*={0,3}$/.test(str);
+}
 
 /**
  * A binary object attached to a Message.
@@ -20,44 +15,28 @@ export class Embed {
      *
      * https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
      */
-    public contentType: string,
-  ) {}
-
-  /**
-   * A public URL where the object can be downloaded. This can be a data URI.
-   */
-  private uri?: string;
-
-  get content(): Uint8Array {
-    /* Retrieves the content for this Embed object. */
-    if (this.uri?.startsWith('data:')) {
-      return base64.toByteArray(this.uri.split(',')[1]);
+    public readonly contentType: string,
+    /**
+     * The base64-encoded data for this embed.
+     */
+    public readonly base64Data: string,
+  ) {
+    if (!isBase64String(base64Data)) {
+      throw new Error(`Invalid base64 data: ${base64Data}. If you're trying to pass a URI, use Embed.fromUri() instead.`);
     }
-    return new Uint8Array(await (await axios.get(this.uri, { responseType: 'arraybuffer' })).data);
   }
 
-  set content(content: Uint8Array) {
-    /* Sets the content of the Embed object as a data URI. */
-    this.uri = `data:base64,${base64.fromByteArray(content)}`;
-  }
+  static async fromUri(contentType: string, uri: string): Promise<Embed> {
+    const response = await got(uri, {
+      responseType: 'buffer',
+    });
 
-  /** Retrieve the content of the Embed object as a string. */
-  get text(): string {
-    return new TextDecoder('utf-8').decode(this.content);
-  }
+    if (response.statusCode !== 200) {
+      throw new Error(`Got status code ${response.statusCode} when fetching ${uri}`);
+    }
 
-  /** Set the content of the Embed object as a string. */
-  set text(text: string) {
-    this.content = new TextEncoder().encode(text);
+    console.log(response.body);
+
+    return new Embed(contentType, response.body.toString('base64'));
   }
 }
-
-export async function createEmbedFromUri(contentType: string, uri: string): Promise<Embed> {
-  // Get the contents via got, then create a base64 data URI
-  const content = await got(uri).buffer();
-  
-
-  const embed = new Embed(contentType, content);
-  embed.uri = uri;
-  return embed;
-} 

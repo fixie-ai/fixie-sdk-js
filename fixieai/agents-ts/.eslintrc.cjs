@@ -29,7 +29,7 @@ module.exports = {
       'warn',
       {
         ignoreReadonlyClassProperties: true,
-        ignore: [0, 1, 2, 400, 404, 500],
+        ignore: [0, 1, 2, 200, 400, 404, 500],
         ignoreTypeIndexes: true,
       },
     ],
