@@ -205,6 +205,8 @@ export default async function serve({
     asyncHandler(async (req, res) => {
       const funcName = req.params.funcName;
 
+      logger.debug(_.pick(req, 'body', 'params'), 'Handling request');
+
       if (typeof req.body.message?.text !== 'string') {
         res
           .status(400)
