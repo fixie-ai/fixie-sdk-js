@@ -41,7 +41,7 @@ export class Embed {
     /**
      * The base64-encoded data for this embed.
      */
-    public readonly base64Data: string,
+    private readonly base64Data: string,
     /**
      * The URI for this embed.
      *
@@ -56,11 +56,23 @@ export class Embed {
    */
   serialize(): SerializedEmbed {
     return {
-      // This is to match the Python agent's API.
-      // eslint-disable-next-line camelcase
       content_type: this.contentType,
       uri: uriFromBase64(this.base64Data),
     };
+  }
+
+  /**
+   * @returns this embed's data as a UTF-8 string.
+   */
+  getDataAsText() {
+    return this.getDataAsBinary().toString('utf-8');
+  }
+
+  /**
+   * @returns this embed's data as a [Buffer](https://nodejs.org/docs/latest/api/buffer.html).
+   */
+  getDataAsBinary() {
+    return Buffer.from(this.base64Data, 'base64');
   }
 
   /**

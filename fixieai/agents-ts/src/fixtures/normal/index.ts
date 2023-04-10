@@ -61,4 +61,4 @@ export const chartAsUri: AgentFunc = async () => ({
   },
 });
 
-export const getBase64OfEmbed: AgentFunc = (query) => query.embeds[query.text].uri;
+export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].getDataAsText();
