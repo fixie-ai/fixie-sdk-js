@@ -26,6 +26,11 @@ const { argv } = yargs(hideBin(process.argv))
       type: 'boolean',
       default: false,
     },
+    watch: {
+      describe: 'Watch for changes to the agent and reload',
+      type: 'boolean',
+      default: false,
+    },
     packagePath: {
       describe:
         'Path to the package to serve functions from. If this is a relative path, it will be interpreted relative to the current working directory.',

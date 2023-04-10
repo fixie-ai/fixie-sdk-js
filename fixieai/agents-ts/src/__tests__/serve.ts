@@ -1,13 +1,21 @@
+import fs from 'fs/promises';
 import got from 'got';
 import nock from 'nock';
 import path from 'path';
+import tempy from 'tempy';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
 const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
+let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
-nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(200, {});
+nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(
+  200,
+  () => {
+    refreshMetadataAPIUrlCallCount++;
+  },
+);
 
 it('throws an error if the entry point does not exist', async () => {
   await expect(async () => {
@@ -148,4 +156,77 @@ A: You rolled 5, 3, and 8, for a total of 16.
   afterEach(() => {
     close?.();
   });
+});
+
+it('watch mode', async () => {
+  const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
+  const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
+
+  const originalfixtureAgentTSPath = path.resolve(agentPackagePath, 'index.ts');
+  await fs.copyFile(originalfixtureAgentTSPath, temporaryAgentTSPath);
+
+  let close;
+  try {
+    close = await serve({
+      packagePath: tempDir,
+      port,
+      silentStartup: true,
+      watch: true,
+      silentRequestHandling: true,
+      refreshMetadataAPIUrl,
+    });
+
+    const response = await got(`http://localhost:${port}`);
+    expect(JSON.parse(response.body)).toEqual(
+      expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }),
+    );
+
+    /**
+     * This is a little spooky, because it means we're not testing one of the core pieces of logic: that the server
+     * properly clears the NodeJS require cache before reloading the file. However, without this line, Jest's own
+     * require cache muckery interferes with what the server does, thereby breaking the test.
+     *
+     * I tested manually and the server's cache clearing behavior works. 👻🤪
+     */
+    jest.resetModules();
+    const originalRefreshMetadataCallCount = refreshMetadataAPIUrlCallCount;
+
+    const orginalTSContents = await fs.readFile(temporaryAgentTSPath, 'utf8');
+    const modifiedTSContents = orginalTSContents.replace(
+      "I'm an agent that rolls virtual dice!",
+      "I'm a modified agent!",
+    );
+    await fs.writeFile(temporaryAgentTSPath, modifiedTSContents);
+
+    // This also kinda sucks but I think it'll be fine for now.
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
+
+    const responseAfterWatch = await got(`http://localhost:${port}`);
+    expect(JSON.parse(responseAfterWatch.body)).toEqual(
+      expect.objectContaining({ base_prompt: "I'm a modified agent!" }),
+    );
+
+    const tsContentsWithNewFunc = `
+      ${modifiedTSContents}
+      export function newFunc() { return 'newFuncResponse'; }
+    `;
+
+    jest.resetModules();
+    await fs.writeFile(temporaryAgentTSPath, tsContentsWithNewFunc);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
+
+    const newFuncResponse = await got.post(`http://localhost:${port}/newFunc`, {
+      json: { message: { text: 'input' } },
+      responseType: 'json',
+    });
+
+    expect(newFuncResponse.statusCode).toBe(200);
+    expect(newFuncResponse.body).toEqual({ message: { text: 'newFuncResponse' } });
+  } finally {
+    await close?.();
+  }
 });

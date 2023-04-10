@@ -2,6 +2,8 @@ import bodyParser from 'body-parser';
 import bunyan from 'bunyan';
 import bunyanFormat from 'bunyan-format';
 import bunyanMiddleware from 'bunyan-middleware';
+import chokidar from 'chokidar';
+import clearModule from 'clear-module';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import got from 'got';
@@ -64,20 +66,19 @@ class ErrorWrapper extends Error {
 class FuncHost {
   private readonly agent: Agent;
 
-  constructor(packagePath: string) {
-    const absolutePath = path.resolve(packagePath);
+  constructor(absolutePackagePath: string) {
     try {
-      const requiredAgent = require(absolutePath);
+      const requiredAgent = require(absolutePackagePath);
       const allExports = Object.keys(requiredAgent).join(', ');
 
       if (typeof requiredAgent.BASE_PROMPT !== 'string') {
         throw new Error(
-          `Agent must have a string export named BASE_PROMPT. The agent at ${absolutePath} exported the following: "${allExports}".`,
+          `Agent must have a string export named BASE_PROMPT. The agent at ${absolutePackagePath} exported the following: "${allExports}".`,
         );
       }
       if (typeof requiredAgent.FEW_SHOTS !== 'string') {
         throw new Error(
-          `Agent must have a string export named FEW_SHOTS. The agent at ${absolutePath} exported the following: "${allExports}".`,
+          `Agent must have a string export named FEW_SHOTS. The agent at ${absolutePackagePath} exported the following: "${allExports}".`,
         );
       }
       const funcs = _.omit(requiredAgent, 'BASE_PROMPT', 'FEW_SHOTS');
@@ -90,7 +91,7 @@ class FuncHost {
     } catch (e: any) {
       if (e.code === 'MODULE_NOT_FOUND') {
         throw new ErrorWrapper(
-          `Could not find package at path: ${absolutePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
+          `Could not find package at path: ${absolutePackagePath}. Does this path exist? If it does, did you specify a "main" field in your package.json?`,
           e,
         );
       }
@@ -126,6 +127,7 @@ export default async function serve({
   port,
   silentStartup,
   refreshMetadataAPIUrl,
+  watch = false,
   silentRequestHandling = false,
   humanReadableLogs = false,
 }: {
@@ -133,12 +135,45 @@ export default async function serve({
   port: number;
   silentStartup: boolean;
   refreshMetadataAPIUrl?: string;
+  watch?: boolean;
   silentRequestHandling?: boolean;
   humanReadableLogs?: boolean;
 }) {
-  const agentRunner = new FuncHost(packagePath);
+  const absolutePackagePath = path.resolve(packagePath);
+  let funcHost = new FuncHost(absolutePackagePath);
+
+  async function postToRefreshMetadataUrl() {
+    if (refreshMetadataAPIUrl !== undefined) {
+      await got.post(refreshMetadataAPIUrl);
+    }
+  }
 
   const app = express();
+
+  let watcher: ReturnType<typeof chokidar.watch> | undefined;
+  if (watch) {
+    /**
+     * This will only watch the dir (and subdirs) that contain the entry point. If the entry point depends on files
+     * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
+     * Nodemon works, and I think it's unlikely to be a problem in practice.
+     */
+    watcher = chokidar.watch(absolutePackagePath).on('all', async () => {
+      const previousAgent = funcHost.getAgentMetadata();
+
+      clearModule(absolutePackagePath);
+      funcHost = new FuncHost(absolutePackagePath);
+
+      if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
+        await postToRefreshMetadataUrl();
+      }
+      /**
+       * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
+       * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
+       * those from the actual change events. So if we were to log, it would look really spammy on startup.
+       */
+    });
+    console.log(`Watching ${absolutePackagePath} for changes...`);
+  }
 
   function getLogStream() {
     if (silentRequestHandling) {
@@ -159,7 +194,7 @@ export default async function serve({
 
   app.use(bodyParser.json());
 
-  app.get('/', (_req, res) => res.send(agentRunner.getAgentMetadata()));
+  app.get('/', (_req, res) => res.send(funcHost.getAgentMetadata()));
   app.post(
     '/:funcName',
     asyncHandler(async (req, res) => {
@@ -182,7 +217,7 @@ export default async function serve({
       const body = req.body as AgentResponse;
 
       try {
-        const result = await agentRunner.runFunction(funcName, body.message);
+        const result = await funcHost.runFunction(funcName, body.message);
         const response: AgentResponse = { message: { text: result } };
         res.send(response);
       } catch (e: any) {
@@ -192,7 +227,7 @@ export default async function serve({
         }
 
         try {
-          const result = await agentRunner.runFunction(funcName, body.message);
+          const result = await funcHost.runFunction(funcName, body.message);
           const response: AgentResponse = { message: { text: result } };
           res.send(response);
         } catch (e: any) {
@@ -213,12 +248,15 @@ export default async function serve({
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const server = app.listen(port, () => resolve(server));
   });
-  if (refreshMetadataAPIUrl !== undefined) {
-    await got.post(refreshMetadataAPIUrl);
-  }
+
+  await postToRefreshMetadataUrl();
+
   if (!silentStartup) {
     console.log(`Agent listening on port ${port}.`);
   }
 
-  return server.close.bind(server);
+  return async () => {
+    server.close();
+    await watcher?.close();
+  };
 }
