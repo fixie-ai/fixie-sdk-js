@@ -10,7 +10,7 @@ const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
 let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
-const refreshMetadataMock = nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(
+nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infinity).reply(
   200,
   () => {
     refreshMetadataAPIUrlCallCount++;
