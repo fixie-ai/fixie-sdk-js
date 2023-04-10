@@ -20,6 +20,10 @@ export interface SerializedEmbed {
 
 /**
  * A binary object attached to a Message.
+ *
+ * You can create an embed with from base64 data or from a URI.
+ *
+ * You can also always read either the base64 data or the URI; creating an Embed from one will populate the other.
  */
 export class Embed {
   private constructor(
@@ -33,10 +37,18 @@ export class Embed {
      * The base64-encoded data for this embed.
      */
     public readonly base64Data: string,
+    /**
+     * The URI for this embed.
+     *
+     * If this embed was constructed from base64 data, then this URI will be a data URI. This URL is not guaranteed to point to an external resource.
+     */
     public readonly uri: string,
   ) {
   }
 
+  /**
+   * Format this Embed for sending to the Fixie API.
+   */
   serialize(): SerializedEmbed {
     return {
       // This is to match the Python agent's API.
@@ -46,6 +58,12 @@ export class Embed {
     };
   }
 
+  /**
+   * Create an embed from base64 data.
+   *
+   * @param contentType The MIME content type of the object, e.g., "image/png" or "application/json" (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
+   * @param base64Data The base64-encoded data for this embed.
+   */
   static fromBase64(contentType: string, base64Data: string): Embed {
     // This won't catch every type of non-base64 string, but it will catch a common mistake.
     if (isURL(base64Data)) {
@@ -59,6 +77,12 @@ export class Embed {
     return new Embed(contentType, base64Data, uri);
   }
 
+  /**
+   * Create an embed from a URI of an external resource.
+   *
+   * @param contentType The MIME content type of the object, e.g., "image/png" or "application/json" (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
+   * @param uri
+   */
   static async fromUri(contentType: string, uri: string): Promise<Embed> {
     const response = await got(uri, {
       responseType: 'buffer',
