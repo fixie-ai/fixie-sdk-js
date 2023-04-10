@@ -76,7 +76,7 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartAsBase64, chartAsUri',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartAsBase64, chartAsUri, getBase64OfEmbed',
     );
   });
 
@@ -126,6 +126,30 @@ describe('server starts', () => {
               uri: 'data:base64,aW1hZ2UtZGF0YQ==',
             },
           },
+        },
+      }));
+    });
+
+    it('func is able to access an inbound embed', async () => {
+      const response = await got.post(`http://localhost:${port}/getBase64OfEmbed`, {
+        responseType: 'json',
+        json: {
+          message: {
+            text: 'chart',
+            embeds: {
+              chart: {
+                content_type: 'image/webp',
+                uri: 'data:base64,aW1hZ2UtZGF0YQ==',
+              },
+            },
+          },
+        },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual(expect.objectContaining({
+        message: {
+          text: 'data:base64,aW1hZ2UtZGF0YQ==',
+          embeds: {},
         },
       }));
     });

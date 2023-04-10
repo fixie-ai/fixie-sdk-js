@@ -13,6 +13,11 @@ function uriFromBase64(base64Data: string): string {
   return `data:base64,${base64Data}`;
 }
 
+export function base64FromUri(uri: string): string {
+  const [, base64Data] = uri.split('data:base64,');
+  return base64Data;
+}
+
 export interface SerializedEmbed {
   content_type: string;
   uri: string;
@@ -84,6 +89,10 @@ export class Embed {
    * @param uri
    */
   static async fromUri(contentType: string, uri: string): Promise<Embed> {
+    if (base64FromUri(uri)) {
+      return new Embed(contentType, base64FromUri(uri), uri);
+    }
+
     const response = await got(uri, {
       responseType: 'buffer',
     });

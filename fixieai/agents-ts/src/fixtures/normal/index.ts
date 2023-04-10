@@ -60,3 +60,5 @@ export const chartAsUri: AgentFunc = async () => ({
     chart: await Embed.fromUri('image/webp', 'https://sample-url-to-embed.com/image.webp'),
   },
 });
+
+export const getBase64OfEmbed: AgentFunc = (query) => query.embeds[query.text].uri;

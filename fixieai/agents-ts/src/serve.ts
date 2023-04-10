@@ -11,7 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
-import { Embed, SerializedEmbed } from './embed';
+import { base64FromUri, Embed, SerializedEmbed } from './embed';
 
 /**
  * This file can be called in two environmentS:
@@ -40,18 +40,15 @@ interface AgentMetadata {
 
 export interface Message {
   text: string;
-  embeds?: Record<string, Embed>;
+  embeds: Record<string, Embed>;
 }
 interface SerializedMessage extends Pick<Message, 'text'> {
   embeds?: Record<string, SerializedEmbed>;
 }
-interface AgentResponse {
+interface SerializedMessageEnvelope {
   message: SerializedMessage;
 }
-export interface FuncParam {
-  text: string;
-}
-export type AgentFunc = (funcParam: FuncParam) => Promisable<string | Message>;
+export type AgentFunc = (funcParam: Message) => Promisable<string | Message>;
 
 interface Agent {
   basePrompt: string;
@@ -222,18 +219,28 @@ export default async function serve({
         return;
       }
 
-      const body = req.body as AgentResponse;
+      const body = req.body as SerializedMessageEnvelope;
+      const reqMessage = await messageOfSerializedMessage(body.message);
 
       function serializedMessageOfMessage(message: Message): SerializedMessage {
-        const result: SerializedMessage = _.pick(message, 'text');
+        const result: Partial<SerializedMessage> = _.pick(message, 'text');
         result.embeds = _.mapValues(message.embeds, (e) => e.serialize());
-        return result;
+        return result as SerializedMessage;
+      }
+
+      async function messageOfSerializedMessage(serializedMessage: SerializedMessage): Promise<Message> {
+        const result: Partial<Message> = _.pick(serializedMessage, 'text');
+        const embedPromises = Object.entries(serializedMessage.embeds ?? {}).map(async (
+          [embedName, embed],
+        ) => [embedName, await Embed.fromUri(embed.content_type, embed.uri)]);
+        result.embeds = Object.fromEntries(await Promise.all(embedPromises));
+        return result as Message;
       }
 
       try {
-        const result = await funcHost.runFunction(funcName, body.message);
-        const message = typeof result === 'string' ? { text: result } : result;
-        const agentResponse: AgentResponse = { message: serializedMessageOfMessage(message) };
+        const result = await funcHost.runFunction(funcName, reqMessage);
+        const resMessage = typeof result === 'string' ? { text: result, embeds: {} } : result;
+        const agentResponse: SerializedMessageEnvelope = { message: serializedMessageOfMessage(resMessage) };
         res.send(agentResponse);
       } catch (e: any) {
         if (e.name === 'FunctionNotFoundError') {
