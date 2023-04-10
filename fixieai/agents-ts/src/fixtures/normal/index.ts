@@ -44,17 +44,17 @@ export const willThrowErrorAsync: AgentFunc = () => Promise.reject(new Error('Th
 
 export const rollAsync: AgentFunc = (query) => Promise.resolve(roll(query));
 
-export const chart: AgentFunc = () => {
+export const chartAsBase64: AgentFunc = () => {
   const chartData = fs.readFileSync(path.join(__dirname, 'chart-data.txt'), 'utf8');
   return {
     text: 'here is your chart #chart',
     embeds: {
-      chart: new Embed('image/webp', chartData),
+      chart: Embed.fromBase64('image/webp', chartData),
     },
   };
 };
 
-export const chartAsync: AgentFunc = async () => ({
+export const chartAsUri: AgentFunc = async () => ({
   text: 'here is your chart #chart',
   embeds: {
     chart: await Embed.fromUri('image/webp', 'https://sample-url-to-embed.com/image.webp'),

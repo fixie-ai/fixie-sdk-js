@@ -34,7 +34,7 @@ module.exports = {
       },
     ],
 
-    camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point'] }],
+    camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point', 'content_type'] }],
 
     'no-use-before-define': ['error', { functions: false, variables: true }],
 

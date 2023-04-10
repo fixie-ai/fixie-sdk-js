@@ -11,7 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
-import { Embed } from './embed';
+import { Embed, SerializedEmbed } from './embed';
 
 /**
  * This file can be called in two environmentS:
@@ -40,10 +40,13 @@ interface AgentMetadata {
 
 export interface Message {
   text: string;
-  embeds: Record<string, Embed>;
+  embeds?: Record<string, Embed>;
+}
+interface SerializedMessage extends Pick<Message, 'text'> {
+  embeds?: Record<string, SerializedEmbed>;
 }
 interface AgentResponse {
-  message: Message;
+  message: SerializedMessage;
 }
 export interface FuncParam {
   text: string;
@@ -219,10 +222,17 @@ export default async function serve({
 
       const body = req.body as AgentResponse;
 
+      function serializedMessageOfMessage(message: Message): SerializedMessage {
+        const result: SerializedMessage = _.pick(message, 'text');
+        result.embeds = _.mapValues(message.embeds, (e) => e.serialize());
+        return result;
+      }
+
       try {
         const result = await funcHost.runFunction(funcName, body.message);
-        const response = typeof result === 'string' ? { message: { text: result } } : result;
-        res.send(response);
+        const message = typeof result === 'string' ? { text: result } : result;
+        const agentResponse: AgentResponse = { message: serializedMessageOfMessage(message) };
+        res.send(agentResponse);
       } catch (e: any) {
         if (e.name === 'FunctionNotFoundError') {
           res.status(404).send(e.message);
