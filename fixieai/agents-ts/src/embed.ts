@@ -35,8 +35,6 @@ export class Embed {
       throw new Error(`Got status code ${response.statusCode} when fetching ${uri}`);
     }
 
-    console.log(response.body);
-
     return new Embed(contentType, response.body.toString('base64'));
   }
 }
