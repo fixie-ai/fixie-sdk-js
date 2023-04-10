@@ -533,8 +533,8 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
                     "--humanReadableLogs",
                     "--refreshMetadataAPIUrl",
                     client.get_refresh_agent_url(config.handle),
-                    "--watch",
                 ]
+                + (["--watch"] if reload else []),
             ).check_returncode()
         else:
             subprocess.run(
