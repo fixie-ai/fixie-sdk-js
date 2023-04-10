@@ -11,6 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
+import Embed from './embed';
 
 /**
  * This file can be called in two environmentS:
@@ -36,8 +37,10 @@ interface AgentMetadata {
   base_prompt: string;
   few_shots: string[];
 }
+
 interface Message {
   text: string;
+  embeds: Record<string, Embed>;
 }
 interface AgentResponse {
   message: Message;
