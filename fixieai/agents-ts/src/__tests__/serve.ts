@@ -248,7 +248,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
   });
 });
 
-it.skip('watch mode', async () => {
+it('watch mode', async () => {
   const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
   const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
   const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch');
@@ -321,7 +321,3 @@ it.skip('watch mode', async () => {
     await close?.();
   }
 });
-
-/**
- * TODO: Add test for when an embed is passed into the agent
- */
