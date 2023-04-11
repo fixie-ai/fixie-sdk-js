@@ -3,6 +3,8 @@ const path = require('path');
 module.exports = {
   extends: [
     'eslint:recommended',
+    'plugin:jest/recommended',
+    'plugin:jest/style',
     'plugin:@typescript-eslint/strict',
     'nth',
   ],
@@ -40,6 +42,11 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': ['error', { functions: false, variables: true }],
 
     'no-trailing-spaces': 'warn',
+
+    'jest/prefer-expect-assertions': 'off',
+    'jest/require-top-level-describe': 'off',
+    'jest/expect-expect': 'off',
+    'jest/prefer-strict-equal': 'warn',
 
     // Disable style rules to let dprint own it
     'object-curly-spacing': 'off',
