@@ -106,7 +106,7 @@ class FuncHost {
   runFunction(funcName: string, message: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
     if (!(funcName in this.agent.funcs)) {
       throw new FunctionNotFoundError(
-        `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).join(', ')}`,
+        `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).sort().join(', ')}`,
       );
     }
     return this.agent.funcs[funcName](message, this.userStorage);
@@ -122,7 +122,6 @@ class FuncHost {
 
 /**
  * TODO:
- *  - watch mode
  *  - logger formatting for local dev
  */
 
@@ -132,11 +131,13 @@ export default async function serve({
   silentStartup,
   refreshMetadataAPIUrl,
   userStorageApiUrl,
+  agentId,
   watch = false,
   silentRequestHandling = false,
   humanReadableLogs = false,
 }: {
   packagePath: string;
+  agentId: string;
   port: number;
   silentStartup: boolean;
   userStorageApiUrl: string;
@@ -146,7 +147,7 @@ export default async function serve({
   humanReadableLogs?: boolean;
 }) {
   const absolutePackagePath = path.resolve(packagePath);
-  const userStorage = new UserStorage(userStorageApiUrl);
+  const userStorage = new UserStorage(userStorageApiUrl, agentId);
   let funcHost = new FuncHost(absolutePackagePath, userStorage);
 
   async function postToRefreshMetadataUrl() {

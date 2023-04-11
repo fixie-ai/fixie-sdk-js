@@ -535,6 +535,8 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv_flag):
                     client.get_refresh_agent_url(config.handle),
                     "--userStorageApiUrl",
                     constants.FIXIE_USER_STORAGE_URL
+                    "--agentId",
+                    agent_id,
                 ]
                 + (["--watch"] if reload else []),
             ).check_returncode()

@@ -27,8 +27,14 @@ export class UserStorage {
 
   /**
    * Get the value for a key. If the key does not exist, an error will be thrown.
+   *
+   * Use the <T> type parameter to set the expected return type. This is essentially a cast, so be careful that your
+   * assertion is accurate. 😀
+   *
+   * @example
+   *  await userStorage.get<string[]>('my-list-of-strings');
    */
-  get(key: string): Promise<JsonValue> {
+  get<T extends JsonValue>(key: string): Promise<T> {
     return this.gotClient.get(key).json();
   }
 

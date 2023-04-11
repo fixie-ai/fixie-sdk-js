@@ -21,6 +21,11 @@ const { argv } = yargs(hideBin(process.argv))
       describe: 'Fixie API URL to call to refresh the metadata',
       type: 'string',
     },
+    agentId: {
+      describe: 'Agent ID. An instance of this server can only serve funcs to one agent.',
+      type: 'string',
+      required: true,
+    },
     userStorageApiUrl: {
       describe: 'Fixie API URL for user storage',
       type: 'string',
