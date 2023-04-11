@@ -30,7 +30,7 @@ Func[roll] says: 5 3 8
 A: You rolled 5, 3, and 8, for a total of 16.
 `;
 
-export const roll: AgentFunc = (query) => {
+export const roll = (query: Parameters<AgentFunc>[0]) => {
   const [diceSize, numDice] = query.text.split(' ');
   const dice = Array.from({ length: Number(numDice) }, () => Math.floor(Math.random() * Number(diceSize)) + 1);
   return dice.join(' ');
@@ -69,3 +69,23 @@ export const chartFromUri: AgentFunc = () => ({
 });
 
 export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].loadDataAsText();
+
+export const saveItem: AgentFunc = async (query, userStorage) => {
+  const [key, value] = query.text.split(':');
+  await userStorage.set(key, value);
+  return 'Set value';
+};
+
+export const getItem: AgentFunc = (query, userStorage) => userStorage.get<string>(query.text);
+
+export const getItems: AgentFunc = async (_query, userStorage) => {
+  const items = await userStorage.getKeys();
+  return JSON.stringify(items);
+};
+
+export const deleteItem: AgentFunc = async (query, userStorage) => {
+  await userStorage.delete(query.text);
+  return 'Deleted value';
+};
+
+export const hasItem: AgentFunc = async (query, userStorage) => (await userStorage.has(query.text)).toString();
