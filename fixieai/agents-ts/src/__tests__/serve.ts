@@ -7,6 +7,7 @@ import { Jsonifiable } from 'type-fest';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
+const agentId = 'my-agent';
 const agentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'normal');
 let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';

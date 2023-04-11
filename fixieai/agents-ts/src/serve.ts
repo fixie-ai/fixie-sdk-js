@@ -12,6 +12,7 @@ import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
 import { Embed, SerializedEmbed } from './embed';
+import { UserStorage } from './user-storage';
 
 /**
  * This file can be called in two environmentS:
@@ -48,7 +49,7 @@ interface SerializedMessage extends Pick<Message, 'text'> {
 interface SerializedMessageEnvelope {
   message: SerializedMessage;
 }
-export type AgentFunc = (funcParam: Message) => Promisable<string | Message>;
+export type AgentFunc = (message: Message, userStorage: UserStorage) => Promisable<string | Message>;
 
 interface Agent {
   basePrompt: string;
@@ -170,7 +171,7 @@ export default async function serve({
        */
       ignored: /node_modules/,
       ignoreInitial: true,
-    }).on('all', async (ev, filePath) => {
+    }).on('all', async (_ev, filePath) => {
       const previousAgent = funcHost.getAgentMetadata();
 
       clearModule(absolutePackagePath);
