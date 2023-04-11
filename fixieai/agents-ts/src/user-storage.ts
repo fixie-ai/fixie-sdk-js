@@ -1,4 +1,6 @@
+import Logger from 'bunyan';
 import got, { Got, Response } from 'got';
+import _ from 'lodash';
 import { Jsonifiable, JsonValue } from 'type-fest';
 
 class GotError extends Error {
@@ -6,6 +8,8 @@ class GotError extends Error {
     super(message);
   }
 }
+
+/* eslint-disable id-blacklist */
 
 /**
  * https://docs.fixie.ai/agents/#user-storage
@@ -17,12 +21,28 @@ class GotError extends Error {
 export class UserStorage {
   private readonly gotClient: Got;
 
-  constructor(apiUrl: string, agentId: string, authToken: string) {
+  constructor(private readonly apiUrl: string, private readonly agentId: string, authToken: string, logger: Logger) {
     this.gotClient = got.extend({
       prefixUrl: `${apiUrl}/${agentId}/`,
       responseType: 'json',
       headers: {
         Authorization: `Bearer ${authToken}`,
+      },
+      hooks: {
+        beforeError: [
+          (error) => {
+            logger.error({
+              request: {
+                url: error.request?.options.url,
+                headers: error.request?.options.headers,
+                body: error.request?.options.body,
+                json: error.request?.options.json,
+              },
+              responseBody: error.response?.body,
+            }, 'Error from user storage call');
+            return error;
+          },
+        ],
       },
     });
   }
@@ -36,15 +56,18 @@ export class UserStorage {
    * @example
    *  await userStorage.get<string[]>('my-list-of-strings');
    */
-  get<T extends JsonValue>(key: string): Promise<T> {
-    return this.gotClient.get(key).json();
+  async get<T extends JsonValue>(key: string): Promise<T> {
+    return (await this.gotClient.get(key).json<{ data: T; }>()).data;
   }
 
   /**
    * Get all saved keys.
    */
-  getKeys(): Promise<string[]> {
-    return this.gotClient.get('').json();
+  async getKeys(): Promise<string[]> {
+    const keys = await this.gotClient.get(`${this.apiUrl}/${this.agentId}`, {
+      prefixUrl: '',
+    }).json<{ key: string; }[]>();
+    return _.map(keys, 'key');
   }
 
   /**
@@ -52,8 +75,7 @@ export class UserStorage {
    */
   async set(key: string, value: Jsonifiable): Promise<void> {
     await this.gotClient.post(key, {
-      // Got's types are incorrectly restrictive, so we'll cast.
-      json: value as Record<string, any>,
+      json: { data: value },
     });
   }
 

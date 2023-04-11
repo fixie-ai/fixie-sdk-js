@@ -137,9 +137,9 @@ describe('server starts', () => {
   describe('user storage', () => {
     const gotClientForUserStorageTests = gotClient.extend({
       headers: {
-        authorization: 'Bearer auth-token'
-      }
-    })
+        authorization: 'Bearer auth-token',
+      },
+    });
 
     it('has no keys when there are no items', async () => {
       const response = await gotClientForUserStorageTests.post(`http://localhost:${port}/getItems`, {

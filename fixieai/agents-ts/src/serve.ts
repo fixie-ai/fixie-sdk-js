@@ -281,6 +281,7 @@ export default async function serve({
            * now. We don't have any sort of better fallback.
            */
           getAuthToken(req.headers)!,
+          logger,
         );
         const result = await funcHost.runFunction(
           funcName,
