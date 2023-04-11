@@ -311,10 +311,13 @@ def _configure_venv(
 
     venv_path = os.path.join(agent_dir, ".fixie.venv")
     console.print(f"Configuring virtual environment in {venv_path}")
-    python_exe = os.path.join(venv_path, "bin", "python")
+
+    is_windows = os.name == "nt"
+    bin_path = os.path.join(venv_path, "bin" if not is_windows else "Scripts")
+    python_exe = os.path.join(bin_path, "python")
     if not os.path.exists(python_exe):
         # Match `python -m venv` behavior with symlinks on non-Windows to work around https://bugs.python.org/issue38705
-        venv.create(venv_path, with_pip=True, symlinks=os.name != "nt")
+        venv.create(venv_path, with_pip=True, symlinks=not is_windows)
     requirements_txt_path = os.path.join(agent_dir, REQUIREMENTS_TXT)
     if not os.path.exists(requirements_txt_path):
         raise ValueError(
@@ -336,7 +339,7 @@ def _configure_venv(
     env = os.environ.copy()
 
     # Quasi-activate the venv by putting the bin directory at the front of the path
-    env["PATH"] = os.path.join(venv_path, "bin") + ":" + env.get("PATH", "")
+    env["PATH"] = bin_path + ":" + env.get("PATH", "")
 
     return python_exe, env
 
