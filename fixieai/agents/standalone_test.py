@@ -6,6 +6,7 @@ import yaml
 from fastapi import testclient
 
 from fixieai.agents import agent_base
+from fixieai.agents import api
 from fixieai.agents import standalone
 
 
@@ -18,17 +19,33 @@ def mock_token_verifier(mocker):
     )
 
 
+def mock_handle_message_single(query) -> api.AgentResponse:
+    return api.AgentResponse.from_value(query.text.upper())
+
+
+def mock_handle_message_stream(query) -> api.AgentResponseGenerator:
+    yield api.AgentResponse.from_value(query.text.upper())
+
+
 @pytest.fixture
-def standalone_agent(mocker):
+def standalone_agent_single(mocker):
     mocker.patch.dict(os.environ, {"FIXIE_ALLOWED_AGENT_ID": "fake agent id"})
     return standalone.StandaloneAgent(
-        handle_message=lambda query: query.text.upper(), sample_queries=["sample query"]
+        handle_message=mock_handle_message_single, sample_queries=["sample query"]
     )
 
 
-def test_standalone_handshake(standalone_agent):
+@pytest.fixture
+def standalone_agent_stream(mocker):
+    mocker.patch.dict(os.environ, {"FIXIE_ALLOWED_AGENT_ID": "fake agent id"})
+    return standalone.StandaloneAgent(
+        handle_message=mock_handle_message_stream, sample_queries=["sample query"]
+    )
+
+
+def test_standalone_handshake(standalone_agent_single):
     fast_api = fastapi.FastAPI()
-    fast_api.include_router(standalone_agent.api_router())
+    fast_api.include_router(standalone_agent_single.api_router())
     client = testclient.TestClient(fast_api)
 
     response = client.get("/", headers={"Authorization": "Bearer fixie-test-token"})
@@ -38,9 +55,18 @@ def test_standalone_handshake(standalone_agent):
     assert yaml_content == {"sample_queries": ["sample query"], "type": "standalone"}
 
 
-def test_standalone_query(standalone_agent):
+# call this test with both the standalone_agent_single and standalone_agent_stream fixtures
+def test_standalone_query_single(standalone_agent_single):
+    _standalone_query(standalone_agent_single)
+
+
+def test_standalone_query_stream(standalone_agent_stream):
+    _standalone_query(standalone_agent_stream)
+
+
+def _standalone_query(agent: standalone.StandaloneAgent):
     fast_api = fastapi.FastAPI()
-    fast_api.include_router(standalone_agent.api_router())
+    fast_api.include_router(agent.api_router())
     client = testclient.TestClient(fast_api)
 
     response = client.post(
@@ -53,11 +79,11 @@ def test_standalone_query(standalone_agent):
     assert json == {"message": {"text": "SAMPLE TEXT", "embeds": {}}}
 
 
-def test_invalid_token(standalone_agent, mock_token_verifier):
+def test_invalid_token(standalone_agent_single, mock_token_verifier):
     mock_token_verifier.return_value = None
 
     fast_api = fastapi.FastAPI()
-    fast_api.include_router(standalone_agent.api_router())
+    fast_api.include_router(standalone_agent_single.api_router())
     client = testclient.TestClient(fast_api, raise_server_exceptions=False)
     headers = {"Authorization": "Bearer fixie-test-token"}
     response = client.post("/", json={"message": {"text": "Howdy"}}, headers=headers)

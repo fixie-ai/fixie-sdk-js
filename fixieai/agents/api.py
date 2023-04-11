@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import base64
 import dataclasses
-from typing import Dict, Optional, Union
+from typing import Dict, Generator, Optional, Union
 
 import requests
 from pydantic import dataclasses as pydantic_dataclasses
@@ -86,3 +86,6 @@ class AgentResponse:
             return value
         else:
             raise TypeError(f"Unexpected type to wrap: {type(value)}")
+
+
+AgentResponseGenerator = Generator[AgentResponse, None, None]

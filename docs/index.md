@@ -1,66 +1,59 @@
 # Fixie Developer Portal 🦊
 
-[Fixie](https://fixie.ai) is a platform for building applications using Large Language
-Models. With Fixie, you can write apps that communicate, in natural
-language, with one or more *Agents* that can access individual APIs or
-sources of data, such as GitHub, Google Calendar, or a database.
+[Fixie](https://fixie.ai) is a platform for building applications using large language models. With Fixie, you can create apps that communicate in natural language with one or more *agents* that access individual APIs or sources of data, such as GitHub, Google Calendar, or a database.
 
-You can access the Fixie web interface at [app.fixie.ai](https://app.fixie.ai).
-Using the Fixie SDK allows you to connect your own
-applications to the Fixie platform, either as a client, or by
-building custom agents that plug into the platform.
+Access the Fixie web interface at [app.fixie.ai](https://app.fixie.ai). The Fixie SDK allows you to connect your applications to the Fixie platform, either as a client or by building custom agents that plug into the platform.
 
-To learn more about Fixie, check us out at [https://fixie.ai](https://fixie.ai).
+Learn more about Fixie at [https://fixie.ai](https://fixie.ai).
 
-> 🔥 **Fixie Developer Preview**
-> 
-> Fixie is currently available as a Developer Preview. During this time, Fixie is free to use,
-> however, there is a limit on the number of queries per user per day. Please check out
-> [Fixie Develper Preview](developer-preview.md) for more information.
+**Fixie Developer Preview**: Fixie is currently available as a Developer Preview. During this time, Fixie is free to use; however, there is a limit on the number of queries per user per day. Please see [Fixie Developer Preview](developer-preview.md) for more information.
 
-> 🤔 **Need help?**
-> 
-> The best way to contact us and get support is to join our [Discord server](https://discord.gg/MsKAeKF8kU).
+**Need help?**: The best way to contact us and get support is to join our [Discord server](https://discord.gg/MsKAeKF8kU).
 
 ---
 
-# Getting started
+# Getting Started
 
-1. Verify you can access [app.fixie.ai](http://app.fixie.ai) with your Google or GitHub email
-2. Install the fixie CLI with `pip install fixieai` and run `fixie auth` to ensure your are successfully authenticated
-3. Fork the [examples repo](https://github.com/fixie-ai/fixie-examples)
-4. Choose any of the example agents, `cd` into the directory, and run `fixie agent deploy`
-5. Test that agent by running `fixie console -a username/agent_name` and inputting a test query. You can also run `fixie console` and then @ your specific agent (e.g. `@username/agent_name this is the query`)
-6. You can also talk to deployed agents directly at [app.fixie.ai](http://app.fixie.ai)
-7. For local development and testing, you can also run your agent locally with `fixie agent serve`. This is easier for debugging what’s happening when things go wrong. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent just like in step 5.
+1. Verify access to [app.fixie.ai](http://app.fixie.ai) with your Google or GitHub email.
+1. Install the Fixie CLI using `pip install fixieai` and run `fixie auth` to ensure successful authentication.
+1. Fork the [examples repo](https://github.com/fixie-ai/fixie-examples).
 
-Example of query using SDK:
+## Demo an agent
+1. Choose any example agent
+1. `cd` into the directory
+1. Run `fixie agent deploy`
 
-```py
-import fixieai
-response = fixieai.query("How many countries start with the letter R ?")
-print(response)
-```
+You can now test the agent through the following methods:
+* Run `fixie console -a username/agent_name` and input a test query.
+* Run `fixie console` and then @ your specific agent (e.g., `@username/agent_name this is the query`).
+* Talk to deployed agents directly at [app.fixie.ai](http://app.fixie.ai).
+* Interact with the agent programmatically:
+  ```py
+  import fixieai
+  response = fixieai.query("How many countries start with the letter R ?")
+  print(response)
+  ```
 
-# Agent Examples
+For local development and testing, run your agent locally with `fixie agent serve`. This is useful for debugging issues. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent via `fixie console`.
 
-Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. To get started you can scaffold out a default agent by running: `fixie init`. For more examples
-check out [Building Fixie Agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
+# agent Examples
+
+agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. Start by scaffolding a default agent with `fixie init`. For more examples, check out [Building Fixie agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
 
 # Documentation
 
-Check out the links below for more information on how to get started using Fixie.
+Explore the links below for more information on getting started with Fixie.
 
 ## Tutorials
 
 * [Fixie Architecture Overview](architecture.md)
-* [Agent Quickstart](agent-quickstart.md)
-* [Building Fixie Agents](agents.md)
-* [Agent Protocol](agent-protocol.md)
+* [agent Quickstart](agent-quickstart.md)
+* [Building Fixie agents](agents.md)
+* [agent Protocol](agent-protocol.md)
 
 ## Reference
 
 * [Fixie CLI Reference](cli.md)
 * [Python Client API](python-client-api.md)
-* [Python Agent API](python-agent-api.md)
+* [Python agent API](python-agent-api.md)
 * [Fixie GraphQL API Reference](https://app.fixie.ai/static/docs/index.html)

@@ -1,5 +1,7 @@
+import dataclasses
 import inspect
-from typing import Callable, List, Optional
+import json
+from typing import Callable, Generator, List, Optional
 
 import fastapi
 
@@ -31,7 +33,7 @@ class StandaloneAgent(agent_base.AgentBase):
 
         self._handle_message = handle_message
         self._sample_queries = sample_queries
-        utils.validate_registered_pyfunc(handle_message, self)
+        utils.validate_registered_pyfunc(handle_message, self, allow_generator=True)
 
     def metadata(self) -> metadata.Metadata:
         return metadata.StandaloneAgentMetadata(sample_queries=self._sample_queries)
@@ -50,9 +52,10 @@ class StandaloneAgent(agent_base.AgentBase):
         credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
             fastapi.security.HTTPBearer()
         ),
-    ) -> api.AgentResponse:
+    ) -> fastapi.responses.Response:
         """Verifies the request is a valid request from Fixie, and dispatches it to
-        the appropriate function.
+        the previously specified `handle_message` function. Depending on the return
+        value of that function, either a single or a streaming response is returned.
         """
         token_claims = self.validate_token_and_update_query_access_token(
             query, credentials
@@ -64,7 +67,18 @@ class StandaloneAgent(agent_base.AgentBase):
             inspect.signature(self._handle_message).parameters.keys(),
         )
         output = self._handle_message(**kwargs)
-        try:
-            return api.AgentResponse.from_value(output)
-        except TypeError:
-            raise TypeError(f"Query returned unexpected output of type {type(output)}.")
+        if not isinstance(output, Generator):
+            try:
+                response = api.AgentResponse.from_value(output)
+                return fastapi.responses.Response(
+                    json.dumps(dataclasses.asdict(response))
+                )
+            except TypeError:
+                raise TypeError(
+                    f"Query returned unexpected output of type {type(output)}."
+                )
+        else:
+            return fastapi.responses.StreamingResponse(
+                (json.dumps(dataclasses.asdict(resp)) + "\n" for resp in output),
+                media_type="application/json",
+            )
