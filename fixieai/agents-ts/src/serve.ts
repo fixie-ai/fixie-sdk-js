@@ -222,7 +222,7 @@ export default async function serve({
       }
 
       const body = req.body as SerializedMessageEnvelope;
-      const reqMessage = await messageOfSerializedMessage(body.message);
+      const reqMessage = messageOfSerializedMessage(body.message);
 
       function serializedMessageOfMessage(message: Message): SerializedMessage {
         const result: Partial<SerializedMessage> = _.pick(message, 'text');
@@ -230,13 +230,11 @@ export default async function serve({
         return result as SerializedMessage;
       }
 
-      async function messageOfSerializedMessage(serializedMessage: SerializedMessage): Promise<Message> {
-        const result: Partial<Message> = _.pick(serializedMessage, 'text');
-        const embedPromises = Object.entries(serializedMessage.embeds ?? {}).map(async (
-          [embedName, embed],
-        ) => [embedName, await Embed.fromUri(embed.content_type, embed.uri)]);
-        result.embeds = Object.fromEntries(await Promise.all(embedPromises));
-        return result as Message;
+      function messageOfSerializedMessage(serializedMessage: SerializedMessage): Message {
+        return {
+          ..._.pick(serializedMessage, 'text'),
+          embeds: _.mapValues(serializedMessage.embeds, (e) => new Embed(e.content_type, e.uri)),
+        };
       }
 
       try {

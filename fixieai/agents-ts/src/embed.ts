@@ -18,20 +18,17 @@ export function base64FromUri(uri: string): string {
   return base64Data;
 }
 
-export interface SerializedEmbed {
+export interface SerializedEmbed extends Pick<Embed, 'uri'> {
   content_type: string;
-  uri: string;
 }
 
 /**
- * A binary object attached to a Message.
- *
- * You can create an embed with from base64 data or from a URI.
- *
- * You can also always read either the base64 data or the URI; creating an Embed from one will populate the other.
+ * A data object attached to a Message. This is useful when you want to pass data between agents. For
+ * instance, you might want to generate and pass an image. Or, if you have text, and you want to pass that text
+ * atomically (so it doesn't get munged by other LLMs), you can pass it as an embed.
  */
 export class Embed {
-  private constructor(
+  public constructor(
     /**
      * The MIME content type of the object, e.g., "image/png" or "application/json".
      *
@@ -39,17 +36,12 @@ export class Embed {
      */
     public readonly contentType: string,
     /**
-     * The base64-encoded data for this embed.
-     */
-    private readonly base64Data: string,
-    /**
      * The URI for this embed.
      *
-     * If this embed was constructed from base64 data, then this URI will be a data URI. This URL is not guaranteed to point to an external resource.
+     * This URI could either point to an external resource, or be a base64-encoded data URI.
      */
     public readonly uri: string,
-  ) {
-  }
+  ) {}
 
   /**
    * Format this Embed for sending to the Fixie API.
@@ -57,22 +49,40 @@ export class Embed {
   serialize(): SerializedEmbed {
     return {
       content_type: this.contentType,
-      uri: uriFromBase64(this.base64Data),
+      uri: this.uri,
     };
   }
 
   /**
+   * Get the embed's contents as text. If the embed was created from a URI pointing to an external resource, this method will fetch the URI. If the embed was created from base64 data, this method will decode the base64 data.
+   *
    * @returns this embed's data as a UTF-8 string.
    */
-  getDataAsText() {
-    return this.getDataAsBinary().toString('utf-8');
+  async loadDataAsText() {
+    return (await this.getDataAsBinary()).toString('utf-8');
   }
 
   /**
+   * Get the embed's contents as text. If the embed was created from a URI pointing to an external resource, this method will fetch the URI. If the embed was created from base64 data, this method will decode the base64 data.
+   *
    * @returns this embed's data as a [Buffer](https://nodejs.org/docs/latest/api/buffer.html).
    */
-  getDataAsBinary() {
-    return Buffer.from(this.base64Data, 'base64');
+  async getDataAsBinary() {
+    if (this.uri.startsWith('data:base64,')) {
+      return Buffer.from(base64FromUri(this.uri), 'base64');
+    }
+
+    const response = await got(this.uri, {
+      responseType: 'buffer',
+    });
+
+    if (response.statusCode !== 200) {
+      throw new Error(
+        `Got status code ${response.statusCode} when fetching ${this.uri}`,
+      );
+    }
+
+    return response.body;
   }
 
   /**
@@ -81,7 +91,7 @@ export class Embed {
    * @param contentType The MIME content type of the object, e.g., "image/png" or "application/json" (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
    * @param textData The base64-encoded data for this embed.
    */
-  static fromText(contentType: string, textData: string): Embed {
+  static fromBase64(contentType: string, textData: string): Embed {
     // This won't catch every type of non-base64 string, but it will catch a common mistake.
     if (isURL(textData)) {
       throw new Error(
@@ -89,36 +99,13 @@ export class Embed {
       );
     }
 
-    // convert textData to base64
     const base64 = Buffer.from(textData, 'utf-8').toString('base64');
     const uri = uriFromBase64(base64);
 
-    return new Embed(contentType, base64, uri);
+    return new Embed(contentType, uri);
   }
 
   static fromBinary(contentType: string, binaryData: Buffer): Embed {
-    return Embed.fromText(contentType, binaryData.toString('base64'));
-  }
-
-  /**
-   * Create an embed from a URI of an external resource.
-   *
-   * @param contentType The MIME content type of the object, e.g., "image/png" or "application/json" (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
-   * @param uri
-   */
-  static async fromUri(contentType: string, uri: string): Promise<Embed> {
-    if (base64FromUri(uri)) {
-      return new Embed(contentType, base64FromUri(uri), uri);
-    }
-
-    const response = await got(uri, {
-      responseType: 'buffer',
-    });
-
-    if (response.statusCode !== 200) {
-      throw new Error(`Got status code ${response.statusCode} when fetching ${uri}`);
-    }
-
-    return new Embed(contentType, response.body.toString('base64'), uri);
+    return Embed.fromBase64(contentType, binaryData.toString('base64'));
   }
 }

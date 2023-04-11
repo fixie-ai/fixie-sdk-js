@@ -1,13 +1,13 @@
 import { Embed } from '../embed';
 
-it.only('returns binary data', () => {
-  const embed = Embed.fromText('text/plain', 'hello world');
-  expect(embed.getDataAsBinary().toString('utf-8')).toEqual('hello world');
-  expect(embed.getDataAsText()).toEqual('hello world');
+it.only('returns binary data', async () => {
+  const embed = Embed.fromBase64('text/plain', 'hello world');
+  expect((await embed.getDataAsBinary()).toString('utf-8')).toEqual('hello world');
+  expect(embed.loadDataAsText()).resolves.toEqual('hello world');
 });
 
-it('returns binary data when the input is binary', () => {
+it('returns binary data when the input is binary', async () => {
   const buffer = Buffer.from('hello world', 'utf-8');
   const embed = Embed.fromBinary('text/plain', buffer);
-  expect(embed.getDataAsBinary().toString('utf-8')).toEqual(buffer.toString('utf-8'));
+  expect((await embed.getDataAsBinary()).toString('utf-8')).toEqual(buffer.toString('utf-8'));
 });

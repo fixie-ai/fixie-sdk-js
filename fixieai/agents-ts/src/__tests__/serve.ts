@@ -138,13 +138,7 @@ describe('server starts', () => {
           embeds: {
             chart: {
               content_type: 'image/webp',
-              /**
-               * Oh my god.
-               *
-               * When I set the nock response above to be 'image-data', GH Copilot suggests the correct base64 encoded
-               * value in the assertion here.
-               */
-              uri: 'data:base64,aW1hZ2UtZGF0YQ==',
+              uri: 'https://sample-url-to-embed.com/image.webp',
             },
           },
         },

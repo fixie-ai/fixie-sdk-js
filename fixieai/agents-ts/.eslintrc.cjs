@@ -36,7 +36,8 @@ module.exports = {
 
     camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point', 'content_type'] }],
 
-    'no-use-before-define': ['error', { functions: false, variables: true }],
+    'no-use-before-define': 'off',
+    '@typescript-eslint/no-use-before-define': ['error', { functions: false, variables: true }],
 
     'no-trailing-spaces': 'warn',
 

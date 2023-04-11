@@ -57,15 +57,15 @@ export const chartFromBinary: AgentFunc = () => {
 export const chartFromText: AgentFunc = () => ({
   text: 'here is your chart #chart',
   embeds: {
-    chart: Embed.fromText('text/plain', 'my text data'),
+    chart: Embed.fromBase64('text/plain', 'my text data'),
   },
 });
 
-export const chartFromUri: AgentFunc = async () => ({
+export const chartFromUri: AgentFunc = () => ({
   text: 'here is your chart #chart',
   embeds: {
-    chart: await Embed.fromUri('image/webp', 'https://sample-url-to-embed.com/image.webp'),
+    chart: new Embed('image/webp', 'https://sample-url-to-embed.com/image.webp'),
   },
 });
 
-export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].getDataAsText();
+export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].loadDataAsText();
