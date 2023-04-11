@@ -7,6 +7,8 @@ import { Jsonifiable } from 'type-fest';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
+/* eslint-disable id-blacklist */
+
 const agentId = 'my-agent';
 const agentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'normal');
 let refreshMetadataAPIUrlCallCount = 0;
@@ -35,14 +37,12 @@ nock(new URL(userStorageApiUrl).origin, {
 }).persist()
   .get(new RegExp(`/user-storage/${agentId}/`)).reply(200, (uri) => {
     const key = uri.split('/').pop();
-    if (key === undefined || key === '') {
-      return JSON.stringify(Object.keys(mockDataStore));
-    }
-    return JSON.stringify(mockDataStore[key!]);
+    return {data: mockDataStore[key!]};
   })
+  .get(new RegExp(`/user-storage/${agentId}`)).reply(200, () => Object.keys(mockDataStore).map(key => ({key})))
   .post(new RegExp(`/user-storage/${agentId}/`)).reply(200, (uri, requestBody) => {
     const key = uri.split('/').pop();
-    mockDataStore[key!] = requestBody;
+    mockDataStore[key!] = (requestBody as Record<string, any>).data;
   })
   .head(new RegExp(`/user-storage/${agentId}/`)).reply((uri) => {
     const key = uri.split('/').pop();
