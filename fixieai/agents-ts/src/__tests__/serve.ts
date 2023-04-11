@@ -37,9 +37,9 @@ nock(new URL(userStorageApiUrl).origin, {
 }).persist()
   .get(new RegExp(`/user-storage/${agentId}/`)).reply(200, (uri) => {
     const key = uri.split('/').pop();
-    return {data: mockDataStore[key!]};
+    return { data: mockDataStore[key!] };
   })
-  .get(new RegExp(`/user-storage/${agentId}`)).reply(200, () => Object.keys(mockDataStore).map(key => ({key})))
+  .get(new RegExp(`/user-storage/${agentId}`)).reply(200, () => Object.keys(mockDataStore).map((key) => ({ key })))
   .post(new RegExp(`/user-storage/${agentId}/`)).reply(200, (uri, requestBody) => {
     const key = uri.split('/').pop();
     mockDataStore[key!] = (requestBody as Record<string, any>).data;
@@ -155,7 +155,7 @@ describe('server starts', () => {
       expect(hasItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'false' }) });
     });
 
-    it('set/get a key', async () => {
+    it('all key operations', async () => {
       const response = await gotClientForUserStorageTests.post(`http://localhost:${port}/saveItem`, {
         responseType: 'json',
         json: { message: { text: 'key:value' } },
