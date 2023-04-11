@@ -11,6 +11,7 @@ import _ from 'lodash';
 import path from 'path';
 import * as tsNode from 'ts-node';
 import { Promisable } from 'type-fest';
+import { Embed, SerializedEmbed } from './embed';
 
 /**
  * This file can be called in two environmentS:
@@ -36,16 +37,18 @@ interface AgentMetadata {
   base_prompt: string;
   few_shots: string[];
 }
-interface Message {
+
+export interface Message {
   text: string;
+  embeds: Record<string, Embed>;
 }
-interface AgentResponse {
-  message: Message;
+interface SerializedMessage extends Pick<Message, 'text'> {
+  embeds?: Record<string, SerializedEmbed>;
 }
-export interface FuncParam {
-  text: string;
+interface SerializedMessageEnvelope {
+  message: SerializedMessage;
 }
-export type AgentFunc = (funcParam: FuncParam) => Promisable<string>;
+export type AgentFunc = (funcParam: Message) => Promisable<string | Message>;
 
 interface Agent {
   basePrompt: string;
@@ -157,7 +160,13 @@ export default async function serve({
      * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
      * Nodemon works, and I think it's unlikely to be a problem in practice.
      */
-    watcher = chokidar.watch(absolutePackagePath).on('all', async () => {
+    watcher = chokidar.watch(absolutePackagePath, {
+      /**
+       * We may eventually want to change this to ignore all gitignores.
+       */
+      ignored: /node_modules/,
+      ignoreInitial: true,
+    }).on('all', async (ev, filePath) => {
       const previousAgent = funcHost.getAgentMetadata();
 
       clearModule(absolutePackagePath);
@@ -166,11 +175,7 @@ export default async function serve({
       if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
         await postToRefreshMetadataUrl();
       }
-      /**
-       * Normally, I'd want to log something here indicating a refresh has occurred. However, chokidar will fire events
-       * on initial startup (for which a refresh is unnecessary), and it doesn't give us a good way to distinguish
-       * those from the actual change events. So if we were to log, it would look really spammy on startup.
-       */
+      console.log(`Reloading agent because "${filePath}" changed`);
     });
     console.log(`Watching ${absolutePackagePath} for changes...`);
   }
@@ -200,6 +205,8 @@ export default async function serve({
     asyncHandler(async (req, res) => {
       const funcName = req.params.funcName;
 
+      logger.debug(_.pick(req, 'body', 'params'), 'Handling request');
+
       if (typeof req.body.message?.text !== 'string') {
         res
           .status(400)
@@ -214,34 +221,38 @@ export default async function serve({
         return;
       }
 
-      const body = req.body as AgentResponse;
+      const body = req.body as SerializedMessageEnvelope;
+      const reqMessage = messageOfSerializedMessage(body.message);
+
+      function serializedMessageOfMessage(message: Message): SerializedMessage {
+        const result: Partial<SerializedMessage> = _.pick(message, 'text');
+        result.embeds = _.mapValues(message.embeds, (e) => e.serialize());
+        return result as SerializedMessage;
+      }
+
+      function messageOfSerializedMessage(serializedMessage: SerializedMessage): Message {
+        return {
+          ..._.pick(serializedMessage, 'text'),
+          embeds: _.mapValues(serializedMessage.embeds, (e) => new Embed(e.content_type, e.uri)),
+        };
+      }
 
       try {
-        const result = await funcHost.runFunction(funcName, body.message);
-        const response: AgentResponse = { message: { text: result } };
-        res.send(response);
+        const result = await funcHost.runFunction(funcName, reqMessage);
+        const resMessage = typeof result === 'string' ? { text: result, embeds: {} } : result;
+        const agentResponse: SerializedMessageEnvelope = { message: serializedMessageOfMessage(resMessage) };
+        res.send(agentResponse);
       } catch (e: any) {
         if (e.name === 'FunctionNotFoundError') {
           res.status(404).send(e.message);
           return;
         }
-
-        try {
-          const result = await funcHost.runFunction(funcName, body.message);
-          const response: AgentResponse = { message: { text: result } };
-          res.send(response);
-        } catch (e: any) {
-          if (e.name === 'FunctionNotFoundError') {
-            res.status(404).send(e.message);
-            return;
-          }
-          const errorForLogging = _.pick(e, 'message', 'stack');
-          logger.error(
-            { error: errorForLogging, functionName: funcName },
-            'Error running agent function',
-          );
-          res.status(500).send(errorForLogging);
-        }
+        const errorForLogging = _.pick(e, 'message', 'stack');
+        logger.error(
+          { error: errorForLogging, functionName: funcName },
+          'Error running agent function',
+        );
+        res.status(500).send(errorForLogging);
       }
     }),
   );

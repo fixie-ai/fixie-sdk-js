@@ -6,7 +6,7 @@ import tempy from 'tempy';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
-const agentPackagePath = path.resolve(__dirname, '..', 'fixtures');
+const agentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'normal');
 let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
 
@@ -17,7 +17,7 @@ nock(new URL(refreshMetadataAPIUrl).origin).post('/refresh-metadata').times(Infi
   },
 );
 
-it('throws an error if the entry point does not exist', async () => {
+test('throws an error if the entry point does not exist', async () => {
   await expect(async () => {
     const close = await serve({
       packagePath: 'does-not-exist',
@@ -26,12 +26,12 @@ it('throws an error if the entry point does not exist', async () => {
       refreshMetadataAPIUrl,
     });
     close();
-  }).rejects.toThrowError(
+  }).rejects.toThrow(
     /Could not find package at path: .*does-not-exist. Does this path exist\? If it does, did you specify a "main" field in your package.json\?/,
   );
 });
 
-it('relative path to agent', async () => {
+test('relative path to agent', async () => {
   const close = await serve({
     packagePath: path.relative(process.cwd(), agentPackagePath),
     port: 3000,
@@ -56,7 +56,11 @@ describe('server starts', () => {
     });
   });
 
-  it('Request body is not in the expected format', async () => {
+  afterEach(() => {
+    close?.();
+  });
+
+  it('request body is not in the expected format', async () => {
     const response = await got.post(`http://localhost:${port}/roll`, {
       json: { message: { unrecognizedKey: 'invalid' } },
       throwHttpErrors: false,
@@ -68,7 +72,7 @@ describe('server starts', () => {
     );
   });
 
-  it('Function being called does not exist', async () => {
+  it('function being called does not exist', async () => {
     const response = await got.post(`http://localhost:${port}/function-does-not-exist`, {
       json: { message: { text: 'input' } },
       throwHttpErrors: false,
@@ -76,8 +80,98 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartFromBinary, chartFromText, chartFromUri, getTextOfEmbed',
     );
+  });
+
+  describe('embeds', () => {
+    it('fromBinary', async () => {
+      const response = await got.post(`http://localhost:${port}/chartFromBinary`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toStrictEqual(expect.objectContaining(
+        {
+          message: {
+            text: 'here is your chart #chart',
+            embeds: {
+              chart: {
+                content_type: 'image/webp',
+                uri: expect.stringMatching(/^data:base64,/),
+              },
+            },
+          },
+        },
+      ));
+    });
+
+    it('fromText', async () => {
+      const response = await got.post(`http://localhost:${port}/chartFromText`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toStrictEqual(expect.objectContaining(
+        {
+          message: {
+            text: 'here is your chart #chart',
+            embeds: {
+              chart: {
+                content_type: 'text/plain',
+                uri: 'data:base64,bXkgdGV4dCBkYXRh',
+              },
+            },
+          },
+        },
+      ));
+    });
+
+    it('fromUri', async () => {
+      const embedUrl = new URL('https://sample-url-to-embed.com/image.webp');
+      nock(embedUrl.origin).get(embedUrl.pathname).reply(200, 'image-data');
+
+      const response = await got.post(`http://localhost:${port}/chartFromUri`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toStrictEqual(expect.objectContaining({
+        message: {
+          text: 'here is your chart #chart',
+          embeds: {
+            chart: {
+              content_type: 'image/webp',
+              uri: 'https://sample-url-to-embed.com/image.webp',
+            },
+          },
+        },
+      }));
+    });
+
+    it('func is able to access an inbound embed', async () => {
+      const response = await got.post(`http://localhost:${port}/getTextOfEmbed`, {
+        responseType: 'json',
+        json: {
+          message: {
+            text: 'chart',
+            embeds: {
+              chart: {
+                content_type: 'image/webp',
+                uri: 'data:base64,aW1hZ2UtZGF0YQ==',
+              },
+            },
+          },
+        },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toStrictEqual(expect.objectContaining({
+        message: {
+          text: 'image-data',
+          embeds: {},
+        },
+      }));
+    });
   });
 
   describe('sync functions', () => {
@@ -93,7 +187,7 @@ describe('server starts', () => {
       expect(diceResult).toBeLessThanOrEqual(20);
     });
 
-    it('Function being called throws an error', async () => {
+    it('function being called throws an error', async () => {
       const response = await got.post(`http://localhost:${port}/willThrowError`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
@@ -117,7 +211,7 @@ describe('server starts', () => {
       expect(diceResult).toBeLessThanOrEqual(10);
     });
 
-    it('Function being called throws an error', async () => {
+    it('function being called throws an error', async () => {
       const response = await got.post(`http://localhost:${port}/willThrowErrorAsync`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
@@ -128,11 +222,11 @@ describe('server starts', () => {
     });
   });
 
-  it('Agent metadata', async () => {
+  it('agent metadata', async () => {
     const response = await got(`http://localhost:${port}`);
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toEqual(JSON.stringify({
+    expect(response.body).toBe(JSON.stringify({
       base_prompt: "I'm an agent that rolls virtual dice!",
       few_shots: [
         `
@@ -152,17 +246,14 @@ A: You rolled 5, 3, and 8, for a total of 16.
       ],
     }));
   });
-
-  afterEach(() => {
-    close?.();
-  });
 });
 
-it('watch mode', async () => {
+test('watch mode', async () => {
   const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
   const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
+  const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch');
 
-  const originalfixtureAgentTSPath = path.resolve(agentPackagePath, 'index.ts');
+  const originalfixtureAgentTSPath = path.resolve(originalAgentPackagePath, 'index.ts');
   await fs.copyFile(originalfixtureAgentTSPath, temporaryAgentTSPath);
 
   let close;
@@ -177,7 +268,7 @@ it('watch mode', async () => {
     });
 
     const response = await got(`http://localhost:${port}`);
-    expect(JSON.parse(response.body)).toEqual(
+    expect(JSON.parse(response.body)).toStrictEqual(
       expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }),
     );
 
@@ -204,7 +295,7 @@ it('watch mode', async () => {
     expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
 
     const responseAfterWatch = await got(`http://localhost:${port}`);
-    expect(JSON.parse(responseAfterWatch.body)).toEqual(
+    expect(JSON.parse(responseAfterWatch.body)).toStrictEqual(
       expect.objectContaining({ base_prompt: "I'm a modified agent!" }),
     );
 
@@ -225,7 +316,7 @@ it('watch mode', async () => {
     });
 
     expect(newFuncResponse.statusCode).toBe(200);
-    expect(newFuncResponse.body).toEqual({ message: { text: 'newFuncResponse' } });
+    expect(newFuncResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'newFuncResponse' }) });
   } finally {
     await close?.();
   }
