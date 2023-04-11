@@ -44,24 +44,31 @@ export const willThrowErrorAsync: AgentFunc = () => Promise.reject(new Error('Th
 
 export const rollAsync: AgentFunc = (query) => Promise.resolve(roll(query));
 
-export const chartAsBase64: AgentFunc = () => {
-  const chartData = fs.readFileSync(path.join(__dirname, 'chart-data.txt'), 'utf8');
+export const chartFromBinary: AgentFunc = () => {
+  const chartData = fs.readFileSync(path.join(__dirname, 'chart.webp'));
   return {
     text: 'here is your chart #chart',
     embeds: {
-      chart: Embed.fromBase64('image/webp', chartData),
+      chart: Embed.fromBinary('image/webp', chartData),
     },
   };
 };
 
-export const chartAsUri: AgentFunc = async () => ({
+export const chartFromText: AgentFunc = () => ({
   text: 'here is your chart #chart',
   embeds: {
-    chart: await Embed.fromUri('image/webp', 'https://sample-url-to-embed.com/image.webp'),
+    chart: Embed.fromBase64('text/plain', 'my text data'),
   },
 });
 
-export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].getDataAsText();
+export const chartFromUri: AgentFunc = () => ({
+  text: 'here is your chart #chart',
+  embeds: {
+    chart: new Embed('image/webp', 'https://sample-url-to-embed.com/image.webp'),
+  },
+});
+
+export const getTextOfEmbed: AgentFunc = (query) => query.embeds[query.text].loadDataAsText();
 
 export const saveItem: AgentFunc = async (query, userStorage) => {
   const [key, value] = query.text.split(':');
