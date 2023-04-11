@@ -106,6 +106,8 @@ export class Embed {
   }
 
   static fromBinary(contentType: string, binaryData: Buffer): Embed {
-    return Embed.fromBase64(contentType, binaryData.toString('base64'));
+    const base64 = binaryData.toString('base64');
+    const uri = uriFromBase64(base64);
+    return new Embed(contentType, uri);
   }
 }

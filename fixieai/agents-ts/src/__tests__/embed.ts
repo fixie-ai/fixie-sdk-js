@@ -1,6 +1,6 @@
 import { Embed } from '../embed';
 
-it.only('returns binary data', async () => {
+it('returns binary data', async () => {
   const embed = Embed.fromBase64('text/plain', 'hello world');
   expect((await embed.getDataAsBinary()).toString('utf-8')).toEqual('hello world');
   expect(embed.loadDataAsText()).resolves.toEqual('hello world');
