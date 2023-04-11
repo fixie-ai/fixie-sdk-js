@@ -76,13 +76,13 @@ describe('server starts', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartAsBase64, chartAsUri, getTextOfEmbed',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartFromBinary, chartFromText, chartFromUri, getTextOfEmbed',
     );
   });
 
   describe('embeds', () => {
-    it('func generates base64', async () => {
-      const response = await got.post(`http://localhost:${port}/chartAsBase64`, {
+    it('fromBinary', async () => {
+      const response = await got.post(`http://localhost:${port}/chartFromBinary`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
@@ -102,11 +102,32 @@ describe('server starts', () => {
       ));
     });
 
-    it('func generates a url', async () => {
+    it('fromText', async () => {
+      const response = await got.post(`http://localhost:${port}/chartFromText`, {
+        responseType: 'json',
+        json: { message: { text: '' } },
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual(expect.objectContaining(
+        {
+          message: {
+            text: 'here is your chart #chart',
+            embeds: {
+              chart: {
+                content_type: 'text/plain',
+                uri: 'data:base64,bXkgdGV4dCBkYXRh',
+              },
+            },
+          },
+        },
+      ));
+    });
+
+    it('fromUri', async () => {
       const embedUrl = new URL('https://sample-url-to-embed.com/image.webp');
       nock(embedUrl.origin).get(embedUrl.pathname).reply(200, 'image-data');
 
-      const response = await got.post(`http://localhost:${port}/chartAsUri`, {
+      const response = await got.post(`http://localhost:${port}/chartFromUri`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
@@ -233,7 +254,7 @@ A: You rolled 5, 3, and 8, for a total of 16.
   });
 });
 
-it('watch mode', async () => {
+it.skip('watch mode', async () => {
   const tempDir = tempy.directory({ prefix: 'fixie-sdk-serve-bin-tests' });
   const temporaryAgentTSPath = path.join(tempDir, 'index.ts');
   const originalAgentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'watch');

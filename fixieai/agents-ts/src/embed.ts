@@ -79,19 +79,25 @@ export class Embed {
    * Create an embed from base64 data.
    *
    * @param contentType The MIME content type of the object, e.g., "image/png" or "application/json" (https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types)
-   * @param base64Data The base64-encoded data for this embed.
+   * @param textData The base64-encoded data for this embed.
    */
-  static fromBase64(contentType: string, base64Data: string): Embed {
+  static fromText(contentType: string, textData: string): Embed {
     // This won't catch every type of non-base64 string, but it will catch a common mistake.
-    if (isURL(base64Data)) {
+    if (isURL(textData)) {
       throw new Error(
-        `Invalid base64 data: "${base64Data}". If you're trying to pass a URI, use Embed.fromUri() instead.`,
+        `Invalid base64 data: "${textData}". If you're trying to pass a URI, use Embed.fromUri() instead.`,
       );
     }
 
-    const uri = uriFromBase64(base64Data);
+    // convert textData to base64
+    const base64 = Buffer.from(textData, 'utf-8').toString('base64');
+    const uri = uriFromBase64(base64);
 
-    return new Embed(contentType, base64Data, uri);
+    return new Embed(contentType, base64, uri);
+  }
+
+  static fromBinary(contentType: string, binaryData: Buffer): Embed {
+    return Embed.fromText(contentType, binaryData.toString('base64'));
   }
 
   /**
