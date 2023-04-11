@@ -70,7 +70,9 @@ class ErrorWrapper extends Error {
 class FuncHost {
   private readonly agent: Agent;
 
-  constructor(absolutePackagePath: string, private readonly userStorage: UserStorage) {
+  constructor(
+    absolutePackagePath: string,
+  ) {
     try {
       const requiredAgent = require(absolutePackagePath);
       const allExports = Object.keys(requiredAgent).join(', ');
@@ -103,13 +105,23 @@ class FuncHost {
     }
   }
 
-  runFunction(funcName: string, message: Parameters<AgentFunc>[0]): ReturnType<AgentFunc> {
+  runFunction(
+    funcName: string,
+    message: Parameters<AgentFunc>[0],
+    userStorage: UserStorage,
+  ): ReturnType<AgentFunc> {
     if (!(funcName in this.agent.funcs)) {
       throw new FunctionNotFoundError(
-        `Function not found: ${funcName}. Functions available: ${Object.keys(this.agent.funcs).sort().join(', ')}`,
+        `Function not found: ${funcName}. Functions available: ${
+          Object.keys(
+            this.agent.funcs,
+          )
+            .sort()
+            .join(', ')
+        }`,
       );
     }
-    return this.agent.funcs[funcName](message, this.userStorage);
+    return this.agent.funcs[funcName](message, userStorage);
   }
 
   getAgentMetadata(): AgentMetadata {
@@ -147,8 +159,7 @@ export default async function serve({
   humanReadableLogs?: boolean;
 }) {
   const absolutePackagePath = path.resolve(packagePath);
-  const userStorage = new UserStorage(userStorageApiUrl, agentId);
-  let funcHost = new FuncHost(absolutePackagePath, userStorage);
+  let funcHost = new FuncHost(absolutePackagePath);
 
   async function postToRefreshMetadataUrl() {
     if (refreshMetadataAPIUrl !== undefined) {
@@ -165,23 +176,25 @@ export default async function serve({
      * outside its directory, the watcher won't watch them. This is a potential rough edge but it's also the way
      * Nodemon works, and I think it's unlikely to be a problem in practice.
      */
-    watcher = chokidar.watch(absolutePackagePath, {
-      /**
-       * We may eventually want to change this to ignore all gitignores.
-       */
-      ignored: /node_modules/,
-      ignoreInitial: true,
-    }).on('all', async (_ev, filePath) => {
-      const previousAgent = funcHost.getAgentMetadata();
+    watcher = chokidar
+      .watch(absolutePackagePath, {
+        /**
+         * We may eventually want to change this to ignore all gitignores.
+         */
+        ignored: /node_modules/,
+        ignoreInitial: true,
+      })
+      .on('all', async (_ev, filePath) => {
+        const previousAgent = funcHost.getAgentMetadata();
 
-      clearModule(absolutePackagePath);
-      funcHost = new FuncHost(absolutePackagePath, userStorage);
+        clearModule(absolutePackagePath);
+        funcHost = new FuncHost(absolutePackagePath);
 
-      if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
-        await postToRefreshMetadataUrl();
-      }
-      console.log(`Reloading agent because "${filePath}" changed`);
-    });
+        if (!_.isEqual(previousAgent, funcHost.getAgentMetadata())) {
+          await postToRefreshMetadataUrl();
+        }
+        console.log(`Reloading agent because "${filePath}" changed`);
+      });
     console.log(`Watching ${absolutePackagePath} for changes...`);
   }
 
@@ -200,6 +213,7 @@ export default async function serve({
     name: 'fixie-serve',
     streams: getLogStream(),
   });
+
   app.use(bunyanMiddleware(logger));
 
   app.use(bodyParser.json());
@@ -226,6 +240,22 @@ export default async function serve({
         return;
       }
 
+      function getAuthToken(headers: typeof req.headers): string | undefined {
+        const authorizationHeader = headers.authorization;
+        if (authorizationHeader === undefined) {
+          return undefined;
+        }
+        const match = authorizationHeader.match(/^Bearer (.*)$/);
+        if (match === null) {
+          logger.debug(
+            { authHeader: authorizationHeader },
+            'Authorization header did not match expected format, so no auth header will be passed to the UserStorage client.',
+          );
+          return undefined;
+        }
+        return match[1];
+      }
+
       const body = req.body as SerializedMessageEnvelope;
       const reqMessage = messageOfSerializedMessage(body.message);
 
@@ -243,7 +273,20 @@ export default async function serve({
       }
 
       try {
-        const result = await funcHost.runFunction(funcName, reqMessage);
+        const userStorage = new UserStorage(
+          userStorageApiUrl,
+          agentId,
+          /**
+           * We'll assert that auth token is defined. If it isn't, the client will throw errors, but that's fine for
+           * now. We don't have any sort of better fallback.
+           */
+          getAuthToken(req.headers)!,
+        );
+        const result = await funcHost.runFunction(
+          funcName,
+          reqMessage,
+          userStorage,
+        );
         const resMessage = typeof result === 'string' ? { text: result, embeds: {} } : result;
         const agentResponse: SerializedMessageEnvelope = { message: serializedMessageOfMessage(resMessage) };
         res.send(agentResponse);

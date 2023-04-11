@@ -11,16 +11,18 @@ class GotError extends Error {
  * https://docs.fixie.ai/agents/#user-storage
  *
  * A client for Fixie's user storage API.
+ *
+ * This TS is the analogue of this Python: fixieai/agents/user_storage.py.
  */
 export class UserStorage {
   private readonly gotClient: Got;
 
-  constructor(apiUrl: string, agentId: string) {
+  constructor(apiUrl: string, agentId: string, authToken: string) {
     this.gotClient = got.extend({
       prefixUrl: `${apiUrl}/${agentId}/`,
       responseType: 'json',
       headers: {
-        Authorization: 'Bearer TODO',
+        Authorization: `Bearer ${authToken}`,
       },
     });
   }

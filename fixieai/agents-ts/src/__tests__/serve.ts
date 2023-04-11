@@ -28,7 +28,11 @@ const gotClient = got.extend({
 });
 
 const mockDataStore: Record<string, Jsonifiable> = {};
-nock(new URL(userStorageApiUrl).origin).persist()
+nock(new URL(userStorageApiUrl).origin, {
+  reqheaders: {
+    authorization: 'Bearer auth-token',
+  },
+}).persist()
   .get(new RegExp(`/user-storage/${agentId}/`)).reply(200, (uri) => {
     const key = uri.split('/').pop();
     if (key === undefined || key === '') {
@@ -131,14 +135,20 @@ describe('server starts', () => {
   });
 
   describe('user storage', () => {
+    const gotClientForUserStorageTests = gotClient.extend({
+      headers: {
+        authorization: 'Bearer auth-token'
+      }
+    })
+
     it('has no keys when there are no items', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/getItems`, {
+      const response = await gotClientForUserStorageTests.post(`http://localhost:${port}/getItems`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
       expect(response.body).toStrictEqual({ message: expect.objectContaining({ text: '[]' }) });
 
-      const hasItemResponse = await gotClient.post(`http://localhost:${port}/hasItem`, {
+      const hasItemResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/hasItem`, {
         responseType: 'json',
         json: { message: { text: 'key' } },
       });
@@ -146,37 +156,37 @@ describe('server starts', () => {
     });
 
     it('set/get a key', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/saveItem`, {
+      const response = await gotClientForUserStorageTests.post(`http://localhost:${port}/saveItem`, {
         responseType: 'json',
         json: { message: { text: 'key:value' } },
       });
       expect(response.body).toStrictEqual({ message: expect.objectContaining({ text: 'Set value' }) });
 
-      const getResponse = await gotClient.post(`http://localhost:${port}/getItem`, {
+      const getResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/getItem`, {
         responseType: 'json',
         json: { message: { text: 'key' } },
       });
       expect(getResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'value' }) });
 
-      const getKeysResponse = await gotClient.post(`http://localhost:${port}/getItems`, {
+      const getKeysResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/getItems`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
       expect(getKeysResponse.body).toStrictEqual({ message: expect.objectContaining({ text: '["key"]' }) });
 
-      const hasItemResponse = await gotClient.post(`http://localhost:${port}/hasItem`, {
+      const hasItemResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/hasItem`, {
         responseType: 'json',
         json: { message: { text: 'key' } },
       });
       expect(hasItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'true' }) });
 
-      const deleteItemResponse = await gotClient.post(`http://localhost:${port}/deleteItem`, {
+      const deleteItemResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/deleteItem`, {
         responseType: 'json',
         json: { message: { text: 'key' } },
       });
       expect(deleteItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'Deleted value' }) });
 
-      const finalGetItemsResponse = await gotClient.post(`http://localhost:${port}/getItems`, {
+      const finalGetItemsResponse = await gotClientForUserStorageTests.post(`http://localhost:${port}/getItems`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
