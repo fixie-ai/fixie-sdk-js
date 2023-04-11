@@ -7,7 +7,6 @@ import { Jsonifiable } from 'type-fest';
 import type { PromiseType } from 'utility-types';
 import serve from '../serve';
 
-const agentId = 'my-agent';
 const agentPackagePath = path.resolve(__dirname, '..', 'fixtures', 'normal');
 let refreshMetadataAPIUrlCallCount = 0;
 const refreshMetadataAPIUrl = 'http://fake:3000/refresh-metadata';
@@ -107,7 +106,7 @@ describe('server starts', () => {
   });
 
   it('request body is not in the expected format', async () => {
-    const response = await gotClient.post(`http://localhost:${port}/roll`, {
+    const response = await got.post(`http://localhost:${port}/roll`, {
       json: { message: { unrecognizedKey: 'invalid' } },
       throwHttpErrors: false,
     });
@@ -118,75 +117,21 @@ describe('server starts', () => {
     );
   });
 
-  it('Function being called does not exist', async () => {
-    const response = await gotClient.post(`http://localhost:${port}/function-does-not-exist`, {
+  it('function being called does not exist', async () => {
+    const response = await got.post(`http://localhost:${port}/function-does-not-exist`, {
       json: { message: { text: 'input' } },
       throwHttpErrors: false,
     });
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toBe(
-      'Function not found: function-does-not-exist. Functions available: chartFromBinary, chartFromText, chartFromUri, deleteItem, getItem, getItems, getTextOfEmbed, hasItem, roll, rollAsync, saveItem, willThrowError, willThrowErrorAsync',
+      'Function not found: function-does-not-exist. Functions available: roll, willThrowError, willThrowErrorAsync, rollAsync, chartFromBinary, chartFromText, chartFromUri, getTextOfEmbed',
     );
-  });
-
-  describe('user storage', () => {
-    it('has no keys when there are no items', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/getItems`, {
-        responseType: 'json',
-        json: { message: { text: '' } },
-      });
-      expect(response.body).toStrictEqual({ message: expect.objectContaining({ text: '[]' }) });
-
-      const hasItemResponse = await gotClient.post(`http://localhost:${port}/hasItem`, {
-        responseType: 'json',
-        json: { message: { text: 'key' } },
-      });
-      expect(hasItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'false' }) });
-    });
-
-    it('set/get a key', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/saveItem`, {
-        responseType: 'json',
-        json: { message: { text: 'key:value' } },
-      });
-      expect(response.body).toStrictEqual({ message: expect.objectContaining({ text: 'Set value' }) });
-
-      const getResponse = await gotClient.post(`http://localhost:${port}/getItem`, {
-        responseType: 'json',
-        json: { message: { text: 'key' } },
-      });
-      expect(getResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'value' }) });
-
-      const getKeysResponse = await gotClient.post(`http://localhost:${port}/getItems`, {
-        responseType: 'json',
-        json: { message: { text: '' } },
-      });
-      expect(getKeysResponse.body).toStrictEqual({ message: expect.objectContaining({ text: '["key"]' }) });
-
-      const hasItemResponse = await gotClient.post(`http://localhost:${port}/hasItem`, {
-        responseType: 'json',
-        json: { message: { text: 'key' } },
-      });
-      expect(hasItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'true' }) });
-
-      const deleteItemResponse = await gotClient.post(`http://localhost:${port}/deleteItem`, {
-        responseType: 'json',
-        json: { message: { text: 'key' } },
-      });
-      expect(deleteItemResponse.body).toStrictEqual({ message: expect.objectContaining({ text: 'Deleted value' }) });
-
-      const finalGetItemsResponse = await gotClient.post(`http://localhost:${port}/getItems`, {
-        responseType: 'json',
-        json: { message: { text: '' } },
-      });
-      expect(finalGetItemsResponse.body).toStrictEqual({ message: expect.objectContaining({ text: '[]' }) });
-    });
   });
 
   describe('embeds', () => {
     it('fromBinary', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/chartFromBinary`, {
+      const response = await got.post(`http://localhost:${port}/chartFromBinary`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
@@ -231,7 +176,7 @@ describe('server starts', () => {
       const embedUrl = new URL('https://sample-url-to-embed.com/image.webp');
       nock(embedUrl.origin).get(embedUrl.pathname).reply(200, 'image-data');
 
-      const response = await gotClient.post(`http://localhost:${port}/chartFromUri`, {
+      const response = await got.post(`http://localhost:${port}/chartFromUri`, {
         responseType: 'json',
         json: { message: { text: '' } },
       });
@@ -250,7 +195,7 @@ describe('server starts', () => {
     });
 
     it('func is able to access an inbound embed', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/getTextOfEmbed`, {
+      const response = await got.post(`http://localhost:${port}/getTextOfEmbed`, {
         responseType: 'json',
         json: {
           message: {
@@ -288,7 +233,7 @@ describe('server starts', () => {
     });
 
     it('function being called throws an error', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/willThrowError`, {
+      const response = await got.post(`http://localhost:${port}/willThrowError`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
       });
@@ -312,7 +257,7 @@ describe('server starts', () => {
     });
 
     it('function being called throws an error', async () => {
-      const response = await gotClient.post(`http://localhost:${port}/willThrowErrorAsync`, {
+      const response = await got.post(`http://localhost:${port}/willThrowErrorAsync`, {
         json: { message: { text: 'input' } },
         throwHttpErrors: false,
       });
@@ -323,7 +268,7 @@ describe('server starts', () => {
   });
 
   it('agent metadata', async () => {
-    const response = await gotClient(`http://localhost:${port}`);
+    const response = await got(`http://localhost:${port}`);
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toBe(JSON.stringify({
@@ -369,7 +314,7 @@ test('watch mode', async () => {
       userStorageApiUrl,
     });
 
-    const response = await gotClient(`http://localhost:${port}`);
+    const response = await got(`http://localhost:${port}`);
     expect(JSON.parse(response.body)).toStrictEqual(
       expect.objectContaining({ base_prompt: "I'm an agent that rolls virtual dice!" }),
     );
@@ -396,8 +341,8 @@ test('watch mode', async () => {
 
     expect(refreshMetadataAPIUrlCallCount).toBe(originalRefreshMetadataCallCount + 1);
 
-    const responseAfterWatch = await gotClient(`http://localhost:${port}`);
-    expect(JSON.parse(responseAfterWatch.body)).toEqual(
+    const responseAfterWatch = await got(`http://localhost:${port}`);
+    expect(JSON.parse(responseAfterWatch.body)).toStrictEqual(
       expect.objectContaining({ base_prompt: "I'm a modified agent!" }),
     );
 
