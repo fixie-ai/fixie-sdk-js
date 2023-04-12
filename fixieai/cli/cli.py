@@ -57,20 +57,22 @@ fixie.add_command(session_commands.new_session, "console")
 fixie.add_command(session_commands.query, "query")
 
 
-def get_installed_version(package_name):
+def get_installed_version(package_name: str) -> Optional[str]:
     try:
         # Get the distribution object for the specified package
         distribution = pkg_resources.get_distribution(package_name)
         # Get the version of the installed package
         installed_version = distribution.version
-        return installed_version
+        return str(installed_version)
     except pkg_resources.DistributionNotFound:
         # Handle the case where the package is not found
         return None
 
 
-def check_for_update(package_name):
+def check_for_update(package_name: str):
     installed_version = get_installed_version(package_name)
+    if not installed_version:
+        return
     try:
         response = requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=3)
         response.raise_for_status()
