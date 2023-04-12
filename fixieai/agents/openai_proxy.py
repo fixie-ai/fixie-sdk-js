@@ -1,12 +1,11 @@
 import contextvars
+import functools
 import logging
 import os
 import sys
 
-from starlette.middleware.base import BaseHTTPMiddleware
-
-import functools
 import wrapt
+from starlette.middleware.base import BaseHTTPMiddleware
 
 import fixieai.constants
 

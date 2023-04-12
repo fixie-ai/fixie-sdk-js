@@ -11,8 +11,8 @@ import dotenv
 
 import fixieai
 from fixieai import agents
-from fixieai.cli.agent import agent_config
 from fixieai.agents import openai_proxy
+from fixieai.cli.agent import agent_config
 
 
 @contextlib.contextmanager
