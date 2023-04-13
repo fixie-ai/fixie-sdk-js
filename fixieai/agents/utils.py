@@ -1,19 +1,11 @@
 from __future__ import annotations
 
 import enum
-import inspect
 import re
-from typing import TYPE_CHECKING, Callable, Optional, Set, get_type_hints
-from unittest import mock
-
-from fixieai.agents import agent_base
+from typing import TYPE_CHECKING, Callable, Optional, Set
 
 if TYPE_CHECKING:
-    from fixieai.agents import api
     from fixieai.agents import code_shot
-else:
-    api = mock.MagicMock()
-    code_shot = mock.MagicMock()
 
 ODD_NUM_POUNDS = re.compile(r"(?<!#)(##)*#(?!#)")
 EMBED_REF = re.compile(ODD_NUM_POUNDS.pattern + r"(?P<embed_key>\w+)(?!\w)")
@@ -33,81 +25,6 @@ def validate_code_shot_agent(agent: code_shot.CodeShotAgent):
         _validate_few_shot_prompt(
             fewshot, agent.conversational, agent.is_valid_func_name
         )
-
-
-def validate_registered_pyfunc(
-    func: Callable, agent: agent_base.AgentBase, allow_generator: bool = False
-):
-    """Validates `func`'s signature to be a valid CodeShot Func.
-
-    Args:
-        func: The function to be validated.
-        agent: The CodeShotAgent that this func is going to be registered for.
-    """
-    # Delayed import to avoid circular dependency
-    from fixieai.agents import api
-    from fixieai.agents import oauth
-    from fixieai.agents import user_storage
-
-    ALLOWED_FUNC_PARAMS = {
-        "query": api.Message,
-        "user_storage": user_storage.UserStorage,
-        "oauth_handler": oauth.OAuthHandler,
-    }
-
-    # Validate that func is a function type.
-    if not inspect.isfunction(func):
-        raise TypeError(
-            f"Registered function {func!r} is not a function, but a {type(func)!r}."
-        )
-    signature = inspect.signature(func)
-    func_name = func.__name__
-    params = signature.parameters
-
-    # Validate that there are not var args (*args or **kwargs).
-    if any(
-        param.kind in (param.VAR_KEYWORD, param.VAR_POSITIONAL)
-        for param in params.values()
-    ):
-        raise TypeError(
-            f"Registered function {func_name} cannot accept variable args: {params!r}."
-        )
-
-    # Validate that all argument names are known.
-    unknown_params = set(params.keys()) - set(ALLOWED_FUNC_PARAMS.keys())
-    if unknown_params:
-        raise TypeError(
-            f"Registered function {func_name} gets unknown arguments {unknown_params}. "
-            f"List of allowed Func arguments are {list(ALLOWED_FUNC_PARAMS.keys())}."
-        )
-
-    # Check the type annotations match what's expected, if func is type annotated.
-    type_hints = get_type_hints(func)
-    for arg_name, arg_type in ALLOWED_FUNC_PARAMS.items():
-        if arg_name in type_hints and type_hints[arg_name] != arg_type:
-            raise TypeError(
-                f"Expected argument {arg_name!r} to be of type {arg_type!r}, but it's "
-                f"typed as {type_hints[arg_name]!r}."
-            )
-
-    valid_return_types = [api.AgentResponse, api.Message, str]
-    if allow_generator:
-        valid_return_types.append(api.AgentResponseGenerator)
-    if "return" in type_hints and type_hints["return"] not in valid_return_types:
-        raise TypeError(
-            f"Expected registered function to return an AgentResponse, a Message, "
-            f"or str but it returns {type_hints['return']}."
-        )
-
-    # Some custom checks.
-    if "oauth_handler" in params and agent.oauth_params is None:
-        raise TypeError(
-            f"Function {func_name} who accepts 'oauth_handler' as an argument cannot "
-            f"be registered with agent {agent!r} who hasn't set 'oauth_params' in its "
-            "constructor."
-        )
-
-    return func
 
 
 def _strip_all_lines(prompt: str) -> str:

@@ -1,6 +1,7 @@
 import contextlib
 import functools
 import importlib
+import inspect
 import os
 import sys
 import threading
@@ -11,6 +12,7 @@ import dotenv
 
 import fixieai
 from fixieai import agents
+from fixieai.agents import agent_func
 from fixieai.cli.agent import agent_config
 
 
@@ -52,10 +54,20 @@ def load_agent_from_path(
 
     with _ensure_serving_disabled():
         module = importlib.import_module(module_name)
-    agent_impl = getattr(module, attr)
-    assert isinstance(
-        agent_impl, agents.AgentBase
-    ), "Entrypoint must refer to an agent instance"
+    impl = getattr(module, attr)
+
+    if isinstance(impl, agents.AgentBase):
+        agent_impl = impl
+    elif isinstance(impl, agent_func.AgentFunc):
+        agent_impl = agents.StandaloneAgent(impl)
+    elif inspect.isfunction(impl):
+        func = agent_func.AgentFunc.create(
+            impl, oauth_params=None, default_message_type=str, allow_generator=True
+        )
+        agent_impl = agents.StandaloneAgent(func)
+    else:
+        raise ValueError("Entrypoint must refer to an agent instance or function.")
+
     agent_impl.validate()
     return config, agent_impl
 
