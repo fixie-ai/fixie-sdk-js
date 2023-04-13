@@ -473,9 +473,10 @@ if __name__ == "__main__":
     os.chdir("agent")
 
     # N.B. Load the .dotenv file before loading the Fixie SDK
+    import uvicorn
+
     from fixieai.cli.agent import loader
-    config, agent = loader.load_agent_from_path(".")
-    agent.serve(port=int(os.getenv("PORT", "8080")))
+    uvicorn.run(loader.uvicorn_app_factory(), host="0.0.0.0", port=os.getenv("PORT", "8080"))
 """
 
 

@@ -83,6 +83,7 @@ def uvicorn_app_factory():
     """
     config, impl = load_agent_from_path(".")
     fastapi_app = impl.app()
+    fastapi_app.add_middleware(openai_proxy.OpenAIProxyRequestTokenForwarderMiddleware)
 
     if os.getenv("FIXIE_REFRESH_ON_STARTUP") == "true":
         fastapi_app.add_event_handler(

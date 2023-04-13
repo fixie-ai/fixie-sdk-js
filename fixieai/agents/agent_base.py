@@ -23,7 +23,6 @@ from fixieai import constants
 from fixieai.agents import api
 from fixieai.agents import metadata as agent_metadata
 from fixieai.agents import oauth
-from fixieai.agents import openai_proxy
 from fixieai.agents import user_storage
 from fixieai.agents import utils
 
@@ -80,7 +79,6 @@ class AgentBase(abc.ABC):
         """Returns a fastapi.FastAPI application that serves the agent."""
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
-        fast_api.add_middleware(openai_proxy.AuthTokenForwarderMiddleware)
 
         return fast_api
 

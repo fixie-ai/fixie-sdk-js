@@ -1,18 +1,25 @@
+import contextlib
 import contextvars
 import functools
 import logging
 import os
 import sys
+from typing import Iterable, Optional, Tuple
 
-import wrapt
-from starlette.middleware.base import BaseHTTPMiddleware
+import starlette.types
+import wrapt  # type: ignore
 
 import fixieai.constants
 
 FAKE_OPENAI_KEY = "sk-fixie-openai-key"
 
 logger = logging.getLogger(__name__)
-_auth_token = contextvars.ContextVar("openai_proxy.auth_token_ctx")
+
+# A ContextVar that allows the current request token to be used for proxied OpenAI requests.
+_current_request_token: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
+    "openai_proxy.current_request_token",
+    default=None,
+)
 
 
 def enable_openai_proxy() -> bool:
@@ -33,13 +40,24 @@ def enable_openai_proxy() -> bool:
         def patched_init(self, *args, **kwargs):
             original_init(self, *args, **kwargs)
 
-            if (
-                self.api_base == fixieai.constants.FIXIE_OPENAI_PROXY_URL
-                and self.api_key == FAKE_OPENAI_KEY
-            ):
-                self.api_key = _auth_token.get()
+            if self.api_base == fixieai.constants.FIXIE_OPENAI_PROXY_URL:
+                if self.api_key != FAKE_OPENAI_KEY:
+                    logger.warning(
+                        "An OpenAI key was provided for the Fixie OpenAI proxy. "
+                        "Ignoring it in favor of the current Fixie request token."
+                    )
+
+                self.api_key = _current_request_token.get()
                 if self.api_key is None:
-                    raise ValueError("The Fixie auth token contextvar was not set.")
+                    raise ValueError(
+                        "The Fixie request token was not set. "
+                        "The Fixie OpenAI proxy can only be used in the context of an agent request."
+                    )
+            elif self.api_key == FAKE_OPENAI_KEY:
+                raise ValueError(
+                    "The OpenAI base URL was changed but the key was not. "
+                    "Leave the OpenAI base URL unspecified to use the Fixie OpenAI proxy or provide an OpenAI api key."
+                )
 
         module.APIRequestor.__init__ = patched_init
 
@@ -50,16 +68,34 @@ def enable_openai_proxy() -> bool:
     return True
 
 
-class AuthTokenForwarderMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        BEARER_PREFIX = "Bearer "
+class OpenAIProxyRequestTokenForwarderMiddleware:
+    """Middleware that allows the current request token to be used for proxied OpenAI requests."""
 
-        authorization = request.headers.get("Authorization")
-        if authorization and authorization.startswith(BEARER_PREFIX):
-            reset_token = _auth_token.set(authorization[len(BEARER_PREFIX) :])
-            try:
-                return await call_next(request)
-            finally:
-                _auth_token.reset(reset_token)
-        else:
-            return await call_next(request)
+    def __init__(self, app: starlette.types.ASGIApp):
+        self.app = app
+
+    async def __call__(
+        self,
+        scope: starlette.types.Scope,
+        receive: starlette.types.Receive,
+        send: starlette.types.Send,
+    ):
+        BEARER_PREFIX = b"Bearer "
+
+        with contextlib.ExitStack() as stack:
+            http_headers: Iterable[Tuple[bytes, bytes]] = (
+                scope["headers"] if scope["type"] in ("http", "websocket") else {}
+            )
+
+            # If there's a Bearer token in the headers, put it in the context var.
+            for header, value in http_headers:
+                if header.lower() == b"authorization" and value.startswith(
+                    BEARER_PREFIX
+                ):
+                    reset_token = _current_request_token.set(
+                        value[len(BEARER_PREFIX) :].decode()
+                    )
+                    stack.callback(lambda: _current_request_token.reset(reset_token))
+                    break
+
+            await self.app(scope, receive, send)
