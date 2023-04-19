@@ -23,9 +23,17 @@ _current_request_token: contextvars.ContextVar[Optional[str]] = contextvars.Cont
 
 
 def enable_openai_proxy() -> bool:
+    """Enables the Fixie OpenAI proxy for outbound OpenAI requests made in the context of an agent request.
+
+    Returns a value that indicates whether or not proxy is enabled. If either OPENAI_API_BASE or
+    OPENAI_API_KEY is already set, the proxy will not be enabled.
+
+    The OpenAIProxyRequestTokenForwarderMiddleware must be used for the proxy to use valid auth tokens.
+    """
+
     if "OPENAI_API_BASE" in os.environ or "OPENAI_API_KEY" in os.environ:
         logger.warning(
-            "OpenAI proxy is not enabled; leave OPEN_API_BASE and OPENAI_API_KEY unset to use the Fixie OpenAI proxy."
+            "OpenAI proxy is not enabled; leave OPENAI_API_BASE and OPENAI_API_KEY unset to use the Fixie OpenAI proxy."
         )
         return False
 
