@@ -13,6 +13,7 @@ import dotenv
 import fixieai
 from fixieai import agents
 from fixieai.agents import agent_func
+from fixieai.agents import openai_proxy
 from fixieai.cli.agent import agent_config
 
 
@@ -44,6 +45,8 @@ def load_agent_from_path(
     dotenv_path = os.path.join(agent_dir, ".env")
     if os.path.exists(dotenv_path):
         dotenv.load_dotenv(dotenv_path)
+
+    openai_proxy.enable_openai_proxy()
 
     # Inject the agent directory into PYTHONPATH
     sys.path.insert(0, agent_dir)
@@ -92,6 +95,7 @@ def uvicorn_app_factory():
     """
     config, impl = load_agent_from_path(".")
     fastapi_app = impl.app()
+    fastapi_app.add_middleware(openai_proxy.OpenAIProxyRequestTokenForwarderMiddleware)
 
     if os.getenv("FIXIE_REFRESH_ON_STARTUP") == "true":
         fastapi_app.add_event_handler(

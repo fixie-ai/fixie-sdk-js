@@ -24,6 +24,8 @@ FIXIE_OAUTH_REDIRECT_URL = f"{FIXIE_API_URL}/oauth"
 FIXIE_DEPLOYMENT_URL = f"{FIXIE_API_URL}/api/deployments"
 # Fixie's JWKS URL.
 FIXIE_JWKS_URL = f"{FIXIE_API_URL}/.well-known/jwks.json"
+# Fixie's OpenAI Proxy URL.
+FIXIE_OPENAI_PROXY_URL = f"{FIXIE_API_URL}/api/openai-proxy/v1"
 # Valid audiences for Fixie's query JWTs.
 FIXIE_AGENT_API_AUDIENCES = ["https://app.fixie.ai/api", "https://app.dev.fixie.ai/api"]
 
