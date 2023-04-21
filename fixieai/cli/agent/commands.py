@@ -353,7 +353,7 @@ def _validate_agent_loads_or_exit(
 ):
     """Validates that an agent can successfully load and exits the current process if it can't."""
     loader_process = subprocess.run(
-        [python_exe, "-m", "fixieai.cli.agent.loader"],
+        [os.path.abspath(python_exe), "-m", "fixieai.cli.agent.loader"],
         env=agent_env,
         cwd=agent_dir or None,
     )
@@ -447,7 +447,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
         subprocess.run(
             [
-                python_exe,
+                os.path.abspath(python_exe),
                 "-m",
                 "uvicorn",
                 "fixieai.cli.agent.loader:uvicorn_app_factory",
