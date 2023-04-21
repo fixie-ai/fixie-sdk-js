@@ -1,15 +1,14 @@
 import dataclasses
-import inspect
 import json
-from typing import Callable, Generator, List, Optional
+from typing import Callable, List, Optional
 
 import fastapi
 
 from fixieai.agents import agent_base
+from fixieai.agents import agent_func
 from fixieai.agents import api
 from fixieai.agents import metadata
 from fixieai.agents import oauth
-from fixieai.agents import utils
 
 
 class StandaloneAgent(agent_base.AgentBase):
@@ -31,9 +30,16 @@ class StandaloneAgent(agent_base.AgentBase):
     ):
         super().__init__(oauth_params)
 
-        self._handle_message = handle_message
+        if isinstance(handle_message, agent_func.AgentFunc):
+            self._handle_message: agent_func.AgentFunc = handle_message
+        else:
+            self._handle_message = agent_func.AgentFunc.create(
+                handle_message,
+                oauth_params,
+                default_message_type=api.Message,
+                allow_generator=True,
+            )
         self._sample_queries = sample_queries
-        utils.validate_registered_pyfunc(handle_message, self, allow_generator=True)
 
     def metadata(self) -> metadata.Metadata:
         return metadata.StandaloneAgentMetadata(sample_queries=self._sample_queries)
@@ -61,24 +67,8 @@ class StandaloneAgent(agent_base.AgentBase):
             query, credentials
         )
 
-        kwargs = self.get_func_kwargs(
-            query,
-            token_claims,
-            inspect.signature(self._handle_message).parameters.keys(),
+        output = self._handle_message(query, token_claims.agent_id)
+        return fastapi.responses.StreamingResponse(
+            (json.dumps(dataclasses.asdict(resp)) + "\n" for resp in output),
+            media_type="application/json",
         )
-        output = self._handle_message(**kwargs)
-        if not isinstance(output, Generator):
-            try:
-                response = api.AgentResponse.from_value(output)
-                return fastapi.responses.Response(
-                    json.dumps(dataclasses.asdict(response))
-                )
-            except TypeError:
-                raise TypeError(
-                    f"Query returned unexpected output of type {type(output)}."
-                )
-        else:
-            return fastapi.responses.StreamingResponse(
-                (json.dumps(dataclasses.asdict(resp)) + "\n" for resp in output),
-                media_type="application/json",
-            )

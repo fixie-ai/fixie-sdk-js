@@ -19,12 +19,12 @@ def mock_token_verifier(mocker):
     )
 
 
-def mock_handle_message_single(query) -> api.AgentResponse:
-    return api.AgentResponse.from_value(query.text.upper())
+def mock_handle_message_single(query):
+    return query.text.upper()
 
 
 def mock_handle_message_stream(query) -> api.AgentResponseGenerator:
-    yield api.AgentResponse.from_value(query.text.upper())
+    yield api.AgentResponse(api.Message(query.text.upper()))
 
 
 @pytest.fixture

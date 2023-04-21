@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import base64
 import dataclasses
-from typing import Dict, Generator, Optional, Union
+from typing import Dict, Generator, Optional
 
 import requests
 from pydantic import dataclasses as pydantic_dataclasses
@@ -75,17 +75,6 @@ class AgentResponse:
 
     # The text of the response message.
     message: Message
-
-    @classmethod
-    def from_value(cls, value: Union[str, Message, AgentResponse]) -> AgentResponse:
-        if isinstance(value, str):
-            return cls(Message(value))
-        elif isinstance(value, Message):
-            return cls(value)
-        elif isinstance(value, cls):
-            return value
-        else:
-            raise TypeError(f"Unexpected type to wrap: {type(value)}")
 
 
 AgentResponseGenerator = Generator[AgentResponse, None, None]

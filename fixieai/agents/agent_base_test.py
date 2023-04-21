@@ -134,109 +134,20 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     assert response.status_code == 403
 
 
-def good_duck_typed_func1(query):
-    return "test"
-
-
-def good_duck_typed_func2(query, user_storage):
-    return "test"
-
-
-def good_duck_typed_func3(user_storage, oauth_handler, query):
-    return "test"
-
-
-def bad_duck_typed_func1(*query):
-    return "test"
-
-
-def bad_duck_typed_func2(**user_storage):
-    return "test"
-
-
-def bad_duck_typed_func3(query, *user_storage):
-    return "test"
-
-
-def good_typed_func1(query: fixieai.Message) -> fixieai.AgentResponse:
-    return fixieai.AgentResponse(fixieai.Message("test"))
-
-
-def good_typed_func2(query: fixieai.Message) -> fixieai.Message:
-    return fixieai.Message("test")
-
-
-def good_typed_func3(user_storage: fixieai.UserStorage) -> str:
-    return "test"
-
-
-def good_typed_func4(
-    user_storage: fixieai.UserStorage, oauth_handler: fixieai.OAuthHandler
-) -> fixieai.Message:
-    return fixieai.Message("test")
-
-
-def good_semi_typed_func1(query: fixieai.Message):
-    ...
-
-
-def good_semi_typed_func2(query) -> str:
-    return "test"
-
-
-def good_semi_typed_func3(user_storage, query: fixieai.Message):
-    ...
-
-
-def good_semi_typed_func4(user_storage, oauth_handler) -> str:
-    return "test"
-
-
-def bad_typed_func1(query: str) -> str:
-    return "test"
-
-
-def bad_typed_func2(query: int) -> str:
-    return "test"
-
-
-def test_registering_good_and_bad_typed_funcs(dummy_agent):
-    good_funcs = [
-        good_typed_func1,
-        good_typed_func2,
-        good_typed_func3,
-        good_typed_func4,
-        good_duck_typed_func1,
-        good_duck_typed_func2,
-        good_duck_typed_func3,
-        good_semi_typed_func1,
-        good_semi_typed_func2,
-        good_semi_typed_func3,
-        good_semi_typed_func4,
-    ]
-    bad_funcs = [
-        bad_typed_func1,
-        bad_typed_func2,
-        bad_duck_typed_func1,
-        bad_duck_typed_func2,
-        bad_duck_typed_func3,
-    ]
-    for good_func in good_funcs:
-        dummy_agent.register_func(good_func)
-        assert dummy_agent._funcs[good_func.__name__] == good_func
-
-    for bad_func in bad_funcs:
-        with pytest.raises(TypeError):
-            dummy_agent.register_func(bad_func)
-
-
 def test_registering_func_with_custom_name(dummy_agent):
-    dummy_agent.register_func(good_typed_func1, func_name="name1")
-    dummy_agent.register_func(good_typed_func2, func_name="name2")
-    dummy_agent.register_func(good_typed_func3, func_name="name3")
-    assert dummy_agent._funcs["name1"] == good_typed_func1
-    assert dummy_agent._funcs["name2"] == good_typed_func2
-    assert dummy_agent._funcs["name3"] == good_typed_func3
+    dummy_agent.register_func(lambda query: "1", func_name="name1")
+    dummy_agent.register_func(lambda query: "2", func_name="name2")
+    dummy_agent.register_func(lambda query: "3", func_name="name3")
+
+    def invoke_func(name: str):
+        responses = dummy_agent._funcs[name](
+            fixieai.AgentQuery(fixieai.Message("test")), "agent-id"
+        )
+        return next(iter(responses)).message.text
+
+    assert invoke_func("name1") == "1"
+    assert invoke_func("name2") == "2"
+    assert invoke_func("name3") == "3"
 
 
 def test_invalid_token(dummy_agent, mock_token_verifier):
