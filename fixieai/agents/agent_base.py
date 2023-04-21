@@ -3,13 +3,12 @@ from __future__ import annotations
 import abc
 import dataclasses
 import functools
-import inspect
 import json
 import logging
 import os
 import re
 import warnings
-from typing import Any, Callable, Dict, Iterable, Optional
+from typing import Callable, Dict, Optional
 
 import fastapi
 import fastapi.security
@@ -20,11 +19,10 @@ import yaml
 from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
+from fixieai.agents import agent_func
 from fixieai.agents import api
 from fixieai.agents import metadata as agent_metadata
 from fixieai.agents import oauth
-from fixieai.agents import user_storage
-from fixieai.agents import utils
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
@@ -45,7 +43,7 @@ class AgentBase(abc.ABC):
         oauth_params: Optional[oauth.OAuthParams] = None,
     ):
         self.oauth_params = oauth_params
-        self._funcs: Dict[str, Callable] = {}
+        self._funcs: Dict[str, agent_func.AgentFunc] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
         self._allowed_agent_id = os.getenv("FIXIE_ALLOWED_AGENT_ID")
         if self._allowed_agent_id is None:
@@ -125,12 +123,18 @@ class AgentBase(abc.ABC):
                 raise ValueError(
                     f"Function names may only be alphanumerics, got {func_name!r}."
                 )
+        else:
+            func_name = func.__name__
 
-        utils.validate_registered_pyfunc(func, self)
-        name = func_name or func.__name__
-        if name in self._funcs:
-            raise ValueError(f"Func[{name}] is already registered with agent.")
-        self._funcs[name] = func
+        if func_name in self._funcs:
+            raise ValueError(f"Func[{func_name}] is already registered with agent.")
+
+        self._funcs[func_name] = agent_func.AgentFunc.create(
+            func,
+            self.oauth_params,
+            default_message_type=api.Message,
+            allow_generator=False,
+        )
         return func
 
     def _handshake(
@@ -200,39 +204,11 @@ class AgentBase(abc.ABC):
             raise fastapi.HTTPException(
                 status_code=404, detail=f"Func[{func_name}] doesn't exist"
             )
-        kwargs = self.get_func_kwargs(
-            query, token_claims, inspect.signature(pyfunc).parameters.keys()
-        )
-        output = pyfunc(**kwargs)
-        try:
-            return api.AgentResponse.from_value(output)
-        except TypeError:
-            raise TypeError(
-                f"Func[{func_name}] returned unexpected output of type {type(output)}."
-            )
 
-    def get_func_kwargs(
-        self,
-        query: api.AgentQuery,
-        token_claims: VerifiedTokenClaims,
-        arg_names: Iterable[str],
-    ) -> Dict[str, Any]:
-        kwargs: Dict[str, Any] = {}
-        for arg_name in arg_names:
-            if arg_name == "query":
-                kwargs[arg_name] = query.message
-            elif arg_name == "user_storage":
-                kwargs[arg_name] = user_storage.UserStorage(
-                    query, token_claims.agent_id
-                )
-            elif arg_name == "oauth_handler":
-                assert self.oauth_params, "oauth_params is not set"
-                kwargs[arg_name] = oauth.OAuthHandler(
-                    self.oauth_params, query, token_claims.agent_id
-                )
-            else:
-                raise ValueError(f"Found unknown argument {arg_name!r}.")
-        return kwargs
+        output = pyfunc(query, token_claims.agent_id)
+
+        # Streaming not allowed for funcs (yet).
+        return next(iter(output))
 
 
 @pydantic_dataclasses.dataclass
