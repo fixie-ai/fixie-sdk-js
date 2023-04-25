@@ -443,7 +443,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
         console.print(
-            f"You can access your agent via [green]https://app.fixie.ai/agents[/]"
+            f"You can access your agent via [cyan]{client.get_agent_page_url(agent_api.agent_id)}[/]"
             f" or `[green]fixie console --agent {agent_api.agent_id}[/]`."
         )
 

@@ -65,17 +65,17 @@ In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the functi
 ## Test Your Agent
 
 To test your agent, you have two options: 
-1. Run it on your local machine using the `fixie agent serve` command
+1. Run it on your local machine using the `fixie agent serve` command. This allows you to see the debugging logs of your agent directly in your console.
 1. Deploy it to the Fixie platform using the `fixie agent deploy` command.
 
-Note that with either option you still need to use the Fixie Platform (e.g. https://app.fixie.ai/agents) to access your agent, but with `serve` you can
-also see the debugging logs of your agent directly in your console.
+Whichever option you choose, you can still use the Fixie Platform
+(e.g. REST API, GraphQL API, or [app.fixie.ai](https://app.fixie.ai) web app) to access your agent.
 
 ```bash
 $ fixie agent serve
 Opening tunnel to 0.0.0.0:8181 via localhost.run.
 🦊 Agent mdw/myagent running locally on 0.0.0.0:8181, served via https://a94073298907cd.lhr.life
-You can access your agent via https://app.fixie.ai/agents or `fixie console --agent mdw/myagent`.
+You can access your agent via https://app.fixie.ai/agents/mdw/myagent or `fixie console --agent mdw/myagent`.
 ```
 
 When running `fixie agent serve`, a tunnel is set up that allows the agent, running on your local machine, to be accessed from the [Fixie Platform](https://app.fixie.ai). The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
