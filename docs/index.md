@@ -34,11 +34,11 @@ You can now test the agent through the following methods:
   print(response)
   ```
 
-For local development and testing, run your agent locally with `fixie agent serve`. This is useful for debugging issues. This will create a tunnel to your local machine. After running serve, open a new terminal window and talk to the agent via `fixie console`.
+For local development and testing, run your agent locally with `fixie agent serve`. This will create a tunnel to your local machine so that the Fixie platform can communicate with your agent. After running serve, open a new terminal window and talk to the agent via `fixie console`.
 
-# agent Examples
+# Agent Examples
 
-agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. Start by scaffolding a default agent with `fixie init`. For more examples, check out [Building Fixie agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
+Agents are at the heart of the Fixie ecosystem, and we make it easy to build and contribute your own. Start by scaffolding a default agent with `fixie init`. For more examples, check out [Building Fixie agents](agents.md) and our [examples repo](https://github.com/fixie-ai/fixie-examples).
 
 # Documentation
 
