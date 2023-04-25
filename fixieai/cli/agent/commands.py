@@ -442,6 +442,10 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
         console.print(
             f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
         )
+        console.print(
+            f"You can access your agent via [green]https://app.fixie.ai/agents[/]"
+            f" or `[green]fixie console --agent {agent_api.agent_id}[/]`."
+        )
 
         # Trigger an agent refresh each time it reloads.
         agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
