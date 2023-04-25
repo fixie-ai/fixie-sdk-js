@@ -112,6 +112,29 @@ $ fixie agent deploy
 
 This process takes about a minute to complete. Once deployed, you can use your agent via the [Fixie Web UI](http://app.fixie.ai) or the `fixie console` tool.
 
+## Agent REST API
+
+Once deployed (via `fixie agent serve` or `fixie agent deploy`), your agent can also be invoked
+via a REST API, using a `POST` request to the endpoint `/api/agent/<username>/<agent_handle>`.
+For example, the `fixie/calc` agent can be invoked as follows:
+
+```bash
+$ export FIXIE_API_KEY=<Your Fixie API key>
+$ curl https://app.fixie.ai/api/agents/fixie/calc \
+  -H "Authorization: Bearer ${FIXIE_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{ "message": {"text": "What is 999 + 222?" }}'
+```
+
+Your Fixie API key can be obtained from your user profile page.
+
+## Fixie GraphQL API
+
+Apart from the Agent REST API described above, the Fixie GraphQL API is a more rich and
+powerful API surface for interacting with Fixie, including creating Agents, sending
+messages, and more. For more information, see the
+[Fixie GraphQL API documentation](https://app.fixie.ai/static/docs/index.html).
+
 ## Implementing Agents without Python
 
 Refer to the [Agent Protocol](agent-protocol.md) documentation for details on implementing an agent in a language other than Python. For complete information on the Fixie Agent API, see [Agent API](agents.md).
