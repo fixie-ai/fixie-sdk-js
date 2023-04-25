@@ -117,7 +117,7 @@ For example, the `fixie/calc` agent can be invoked as follows:
 ```bash
 $ export FIXIE_API_KEY=<Your Fixie API key>
 $ curl https://app.fixie.ai/api/agents/fixie/calc \
-  -H "Authorization: Bearer ${FIXIE_API_TOKEN}" \
+  -H "Authorization: Bearer ${FIXIE_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{ "message": {"text": "What is 999 + 222?" }}'
 ```
