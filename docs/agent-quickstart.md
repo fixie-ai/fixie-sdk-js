@@ -127,7 +127,7 @@ Your Fixie API key can be obtained from your user profile page.
 ## Fixie GraphQL API
 
 Apart from the Agent REST API described above, the Fixie GraphQL API is a more rich and
-powerful API surface for interacting with Fixie, including creating Agents, sending
+powerful API surface for interacting with Fixie, including creating agents, sending
 messages, and more. For more information, see the
 [Fixie GraphQL API documentation](https://app.fixie.ai/static/docs/index.html).
 
