@@ -111,7 +111,7 @@ This process takes about a minute to complete. Once deployed, you can use your a
 ## Agent REST API
 
 Once deployed (via `fixie agent serve` or `fixie agent deploy`), your agent can also be invoked
-via a REST API, using a `POST` request to the endpoint `/api/agent/<username>/<agent_handle>`.
+via a REST API, using a `POST` request to the endpoint `/api/agents/<username>/<agent_handle>`.
 For example, the `fixie/calc` agent can be invoked as follows:
 
 ```bash
