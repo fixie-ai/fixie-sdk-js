@@ -1,3 +1,9 @@
+import random
+import string
+
+import pytest
+import validators
+
 from . import commands
 
 
@@ -28,3 +34,13 @@ def test_update_agent_requirements_combines():
         commands.CURRENT_FIXIE_REQUIREMENT,
         "package3",
     ]
+
+
+@pytest.mark.parametrize("seed", range(100))
+def test_slugify(seed):
+    random.seed(seed)
+
+    text = "".join(random.choices(string.ascii_letters, k=40))
+    slugified = commands._slugify(text)
+    assert len(slugified) <= len(text)
+    assert validators.slug(slugified)

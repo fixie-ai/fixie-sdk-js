@@ -2,6 +2,7 @@ import contextlib
 import functools
 import io
 import os
+import pathlib
 import random
 import re
 import shlex
@@ -46,33 +47,12 @@ def agent():
     pass
 
 
-def _validate_slug(ctx, param, value):
-    while True:
-        if not validators.slug(value):
-            click.secho(
-                f"{param.name} can be alpha numerics, underscores and dashes only."
-            )
-            value = click.prompt(param.prompt, default=param.default())
-        else:
-            return value
-
-
-def _validate_url(ctx, param, value):
-    while True:
-        if value and not validators.url(value):
-            click.echo(f"{param.name} must be a valid url.")
-            value = click.prompt(param.prompt, default=param.default())
-        else:
-            return value
-
-
-def _validate_entry_point(ctx, param, value):
-    while True:
-        if value and not ENTRY_POINT_PATTERN.match(value):
-            click.echo(f"{param.name} must be in module:obj format (e.g. 'main:agent')")
-            value = click.prompt(param.prompt, default=param.default())
-        else:
-            return value
+def _slugify(s: str) -> str:
+    s = s.lower().strip()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_-]+", "-", s)
+    s = s.strip("-")
+    return s
 
 
 def _update_agent_requirements(
@@ -109,48 +89,63 @@ def _update_agent_requirements(
 
 
 @agent.command("init", help="Creates an agent.yaml file.")
-@click.option(
-    "--handle",
-    prompt=True,
-    default=lambda: _current_config().handle,
-    callback=_validate_slug,
-)
-@click.option(
-    "--description",
-    prompt=True,
-    default=lambda: _current_config().description,
-)
-@click.option(
-    "--entry-point",
-    prompt="Entry point (module:object)",
-    default=lambda: _current_config().entry_point,
-    callback=_validate_entry_point,
-)
-@click.option(
-    "--more-info-url",
-    prompt=True,
-    default=lambda: _current_config().more_info_url,
-    callback=_validate_url,
-)
+@click.option("--handle")
+@click.option("--description")
+@click.option("--entry-point")
+@click.option("--more-info-url")
 @click.option(
     "--requirement",
     multiple=True,
     type=str,
     help="Additional requirements for requirements.txt. Can be specified multiple times.",
 )
-def init_agent(handle, description, entry_point, more_info_url, requirement):
+@click.argument("path", required=False)
+def init_agent(path, handle, description, entry_point, more_info_url, requirement):
+    # Create the directory if necessary.
+    path = pathlib.Path(path or ".")
+    path.mkdir(parents=True, exist_ok=True)
+
     try:
-        current_config = agent_config.load_config()
+        current_config = agent_config.load_config(path)
     except FileNotFoundError:
-        current_config = agent_config.AgentConfig()
+        current_config = agent_config.AgentConfig(handle=_slugify(path.resolve().name))
+
+    while handle is None:
+        handle = click.prompt("Handle", default=current_config.handle)
+        if not validators.slug(handle):
+            click.secho("Handle can be alpha numerics, underscores and dashes only.")
+            handle = None
+
+    if description is None:
+        description = click.prompt("Description", default=current_config.description)
+
+    while entry_point is None:
+        entry_point = click.prompt(
+            "Python Entrypoint (module:object)", default=current_config.entry_point
+        )
+        if not ENTRY_POINT_PATTERN.match(entry_point):
+            click.echo("Entrypoint must be in module:obj format (e.g. 'main:agent')")
+            entry_point = None
+
+    while more_info_url is None:
+        more_info_url = click.prompt(
+            "More info URL", default=current_config.more_info_url
+        )
+        if not more_info_url:
+            break
+
+        if not validators.url(more_info_url):
+            click.echo("More info URL must be a valid URL.")
+            more_info_url = None
+
     current_config.handle = handle
     current_config.description = description
     current_config.entry_point = entry_point
     current_config.more_info_url = more_info_url
-    agent_config.save_config(current_config)
+    agent_config.save_config(current_config, path)
 
     entry_module, _ = entry_point.split(":")
-    expected_main_path = entry_module.replace(".", "/") + ".py"
+    expected_main_path = path / (entry_module.replace(".", "/") + ".py")
     if not os.path.exists(expected_main_path):
         urllib.request.urlretrieve(AGENT_TEMPLATE_URL, expected_main_path)
         click.secho(
@@ -161,7 +156,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement):
         click.secho(f"Initialized agent.yaml.", fg="green")
 
     try:
-        with open(REQUIREMENTS_TXT, "rt") as requirements_txt:
+        with open(path / REQUIREMENTS_TXT, "rt") as requirements_txt:
             existing_requirements = list(
                 r.strip() for r in requirements_txt.readlines()
             )
@@ -183,7 +178,7 @@ def init_agent(handle, description, entry_point, more_info_url, requirement):
 
         if new_requirements or removed_requirements:
             click.secho(
-                f"{REQUIREMENTS_TXT} already exists.",
+                f"{path / REQUIREMENTS_TXT} already exists.",
                 fg="yellow",
             )
             if new_requirements:
@@ -201,16 +196,8 @@ def init_agent(handle, description, entry_point, more_info_url, requirement):
             write_requirements = False
 
     if write_requirements:
-        with open(REQUIREMENTS_TXT, "wt") as requirements_txt:
+        with open(path / REQUIREMENTS_TXT, "wt") as requirements_txt:
             requirements_txt.writelines(r + "\n" for r in resolved_requirements)
-
-
-def _current_config() -> agent_config.AgentConfig:
-    """Loads current agent config, or a default if not initialized."""
-    try:
-        return agent_config.load_config()
-    except FileNotFoundError:
-        return agent_config.AgentConfig()
 
 
 @agent.command("list", help="List agents.")
@@ -273,7 +260,14 @@ def delete_agent(ctx, handle: str):
 def _validate_agent_path(ctx, param, value):
     normalized = agent_config.normalize_path(value)
     if not os.path.exists(normalized):
-        raise click.BadParameter(f"{normalized} does not exist")
+        if not click.confirm(
+            f"{normalized} does not exist. Would you like to create a new agent?",
+            default=True,
+        ):
+            raise click.BadParameter(f"{normalized} does not exist")
+
+        ctx.invoke(init_agent, path=value)
+
     return normalized
 
 
