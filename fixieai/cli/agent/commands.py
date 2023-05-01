@@ -110,33 +110,33 @@ def init_agent(path, handle, description, entry_point, more_info_url, requiremen
     except FileNotFoundError:
         current_config = agent_config.AgentConfig(handle=_slugify(path.resolve().name))
 
-    while handle is None:
-        handle = click.prompt("Handle", default=current_config.handle)
-        if not validators.slug(handle):
+    while handle is None or not validators.slug(handle):
+        if handle is not None:
             click.secho("Handle can be alpha numerics, underscores and dashes only.")
-            handle = None
+        handle = click.prompt("Handle", default=current_config.handle)
 
     if description is None:
         description = click.prompt("Description", default=current_config.description)
 
-    while entry_point is None:
-        entry_point = click.prompt(
-            "Python Entrypoint (module:object)", default=current_config.entry_point
-        )
-        if not ENTRY_POINT_PATTERN.match(entry_point):
-            click.echo("Entrypoint must be in module:obj format (e.g. 'main:agent')")
-            entry_point = None
+    while entry_point is None or not ENTRY_POINT_PATTERN.match(entry_point):
+        if entry_point is not None:
+            click.echo(
+                "Entrypoint must be in module:attribute format (e.g. 'main:agent', 'main:run')"
+            )
 
-    while more_info_url is None:
+        entry_point = click.prompt(
+            "Python Entrypoint (module:attribute)", default=current_config.entry_point
+        )
+
+    while more_info_url is None or not validators.url(more_info_url):
+        if more_info_url is not None:
+            click.echo("More info URL must be a valid URL.")
+
         more_info_url = click.prompt(
             "More info URL", default=current_config.more_info_url
         )
         if not more_info_url:
             break
-
-        if not validators.url(more_info_url):
-            click.echo("More info URL must be a valid URL.")
-            more_info_url = None
 
     current_config.handle = handle
     current_config.description = description
@@ -267,6 +267,9 @@ def _validate_agent_path(ctx, param, value):
             raise click.BadParameter(f"{normalized} does not exist")
 
         ctx.invoke(init_agent, path=value)
+
+        # Re-normalize it after running init.
+        normalized = agent_config.normalize_path(value)
 
     return normalized
 
