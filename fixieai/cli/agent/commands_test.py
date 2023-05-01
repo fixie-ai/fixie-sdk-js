@@ -10,8 +10,8 @@ import gql.client
 import pytest
 import validators
 
-from fixieai import constants
 import fixieai
+from fixieai import constants
 from fixieai.cli import cli
 from fixieai.cli.agent import agent_config
 from fixieai.client.client import FixieClient
