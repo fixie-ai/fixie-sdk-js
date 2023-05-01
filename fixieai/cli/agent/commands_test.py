@@ -1,4 +1,5 @@
 import os
+import pathlib
 import random
 import string
 import subprocess
@@ -10,6 +11,7 @@ import pytest
 import validators
 
 from fixieai import constants
+import fixieai
 from fixieai.cli import cli
 from fixieai.cli.agent import agent_config
 from fixieai.client.client import FixieClient
@@ -199,6 +201,13 @@ def test_implicit_init(mocker, command):
             return subprocess_run(cmd_args, *args, **kwargs)
 
         mocker.patch.object(subprocess, "run", side_effect=mock_subprocess)
+
+        # Use the current version of fixieai as the fixie dependency.
+        mocker.patch.object(
+            commands,
+            "CURRENT_FIXIE_REQUIREMENT",
+            str(pathlib.Path(fixieai.__file__).parent.parent),
+        )
 
         # Mock out deployment API calls.
         mocker.patch.object(FixieClient, "deploy_agent", return_value=None)
