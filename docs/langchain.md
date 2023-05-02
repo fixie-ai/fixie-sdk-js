@@ -60,7 +60,7 @@ Now we need to tell Fixie about our Chain. To do this, run `fixie init`. Fixie w
 
 The **most important part** is the `Entry Point`. This is where you tell Fixie where to find your function. The format is `name_of_your_python_file:name_of_your_function`.
 
-In our case, our file is `main.py`, so we'll put `main.py:invoke_chain`.
+In our case, our file is `main.py`, so we'll put `main:invoke_chain`.
 
 Once you've done this, Fixie will create an `agent.yaml` file in the same directory. You can edit this any time.
 
