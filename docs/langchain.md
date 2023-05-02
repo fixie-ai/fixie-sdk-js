@@ -76,6 +76,17 @@ Now we're ready to deploy! Run `fixie deploy` and Fixie takes care of the rest. 
 
 When you're ready to make your agent Public (so others can access it) simply change `published` to `true` in your `agent.yaml` file and run `fixie deploy` again.
 
+## Calling your Agent via API
+
+Once your agent is deployed, Fixie automatically provides you with a REST API:
+
+```console
+curl "https://app.fixie.ai/api/agents/{username}/{agent_name}" \
+  -d "{ 'message': {'text': 'colorful socks' }}" \
+  -H "Authorization: Bearer {your_token}" \
+  -H "Content-Type: application/json"
+```
+
 ## Testing your agent locally
 
 Before deploying you can test your agent locally by running `fixie serve`. This will create a tunnel between your machine and Fixie.
