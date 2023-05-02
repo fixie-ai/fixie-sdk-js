@@ -29,11 +29,11 @@ Fixie also supports indexing individual pages, but the `*` can be useful when yo
 
 > Note: By default, Fixie will crawl up to 1,000 documents for each wildcard URL. If you need more, [get in touch](mailto:hello@fixie.ai).
 
-Once we have our `URLS`, we instantiate a new `CodeShotAgent` with our `BASE_PROMPT`, an empty Few Shot array, a set of `DOCUMENTS` that point to our URLs, and whether we want a `conversational` Agent (conversational agents keep previus questions in memory, so we recommend it for Q/A Agents).
+Once we have our `URLS`, we instantiate a new `CodeShotAgent` with our `BASE_PROMPT`, an empty Few Shot array, a set of `DOCUMENTS` that point to our URLs, and whether we want a `conversational` Agent (conversational agents keep previus questions and answers in memory, so we recommend it for Q/A Agents).
 
 When a `DocumentCorpus` is provided, FewShots are optional (hence the empty array that we passed in). If you need FewShots, see [Using Fewshots with Docs](#using-fewshots-with-docs).
 
-Once ready, you can deploy your agent using `fixie deploy`. Note that depending on the size and number of documents, indexing can take some time. While indexing is in progress, your agent will deploy but will always return `I'm still starting up. Please try again in a few minutes.` See [Monitoring Indexing Status](#monitoring-indexing-status) for more.
+Once ready, you can deploy your agent using `fixie deploy`. Note that depending on the size and number of documents, indexing can take some time. While indexing is in progress, your agent will deploy but will always return, `I'm still starting up. Please try again in a few minutes.` See [Monitoring Indexing Status](#monitoring-indexing-status) for more.
 
 ## Accessing Private URLs
 
@@ -111,4 +111,6 @@ agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
 
 ## Monitoring Indexing Status
 
-This feature is coming soon!
+For right now, you can check the indexing status of your Agent by asking it a question. Your agent will return `I'm still starting up. Please try again in a few minutes` if it's still indexing.
+
+Coming soon is the ability to see and manage your indexing directly on the Fixie app.
