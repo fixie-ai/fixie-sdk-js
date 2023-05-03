@@ -14,7 +14,10 @@ Deploying on Fixie gives you three major advantages:
 
 ## Getting Started
 
-First, you'll need to make sure you have `fixie` installed on your machine with `pip install fixieai`. This will install the Fixie CLI, which you'll need for deploying to Fixie. You'll also need a Fixie account and to authorize the Fixie CLI. You can do both by running `fixie auth`.
+First, you'll make to make sure you have installed the Fixie CLI and have authenticated to Fixie (these are necessary for deploying to Fixie):
+
+1. Install Fixie on your machine: `pip install fixieai`
+1. Create an account and link your command line to it: `fixie auth`
 
 Next, you'll need to tell Fixie what function to call to invoke your app. As an example, let's imagine something as simple as a [PromptTemplate](https://python.langchain.com/en/latest/getting_started/getting_started.html):
 
@@ -56,7 +59,7 @@ def invoke_chain(input):
 
 Instead of calling `chain.run()` directly, we've instead wrapped it inside of a function called `invoke_chain` that takes a single `str` as an input variable. We then pass that string directly to our `chain.run()`.
 
-Now we need to tell Fixie about our Chain. To do this, run `fixie init`. Fixie will ask you a few questions about your agent like its handle (its "name" inside of Fixie) and description (this helps others understand how to use your creation).
+Now we need to tell Fixie about our Chain. To do this, run `fixie init`. Fixie will ask you a few questions about your agent like its handle (its name inside of Fixie) and description (this helps others understand how to use your creation).
 
 The **most important part** is the `Entry Point`. This is where you tell Fixie where to find your function. The format is `name_of_your_python_file:name_of_your_function`.
 

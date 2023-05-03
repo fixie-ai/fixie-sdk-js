@@ -2,11 +2,11 @@
 
 ## Overview
 
-One of the most popular use cases for LLMs is doing Q/A over a large corpus of unstructured data.
+One of the most popular use cases for LLMs is doing question answering (Q/A) over a large corpus of unstructured data.
 
 Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval.
 
-To understand how to get started, let's look at a quick example of a [CodeShotAgent](/agents.md/#codeshotagent) that is designed to answer questions about Fixie:
+To get started, let's look at a simple [CodeShotAgent](/agents.md/#codeshotagent) that answers questions about Fixie:
 
 ```python
 import fixieai
@@ -29,7 +29,7 @@ Fixie also supports indexing individual pages, but the `*` can be useful when yo
 
 > Note: By default, Fixie will crawl up to 1,000 documents for each wildcard URL. If you need more, [get in touch](mailto:hello@fixie.ai).
 
-Once we have our `URLS`, we instantiate a new `CodeShotAgent` with our `BASE_PROMPT`, an empty Few Shot array, a set of `DOCUMENTS` that point to our URLs, and whether we want a `conversational` Agent (conversational agents keep previus questions and answers in memory, so we recommend it for Q/A Agents).
+Once we have our `URLS`, we instantiate a new `CodeShotAgent` with our `BASE_PROMPT`, an empty Few Shot array, a set of `DOCUMENTS` that point to our URLs, and whether we want a `conversational` Agent (conversational agents keep previous questions and answers in memory, so we recommend it for Q/A Agents).
 
 When a `DocumentCorpus` is provided, FewShots are optional (hence the empty array that we passed in). If you need FewShots, see [Using Fewshots with Docs](#using-fewshots-with-docs).
 
@@ -39,7 +39,7 @@ Once ready, you can deploy your agent using `fixie deploy`. Note that depending 
 
 In many cases, the set of documents that you want to access will be behind authentication. Fixie supports passing in a `Bearer` token with each request.
 
-To enable this, you'll define a new function that returns a token that will be passed in to the `Authorization` header as follows: `Authorization: Bearer {your_token}`.
+To enable this, you'll define a new function that returns a token that will be passed in to the `Authorization` HTTP header as follows: `Authorization: Bearer {your_token}`.
 
 Here's an example:
 
@@ -52,20 +52,21 @@ URLS = [
     "https://private.myamazingsite.com/*"
 ]
 
-def Auth():
-    return "12345"
-
-CORPORA = [fixieai.DocumentCorpus(urls=URLS, auth_token_func="Auth")]
+CORPORA = [fixieai.DocumentCorpus(urls=URLS, auth_token_func="auth")]
 agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
+
+@agent.register_func
+def auth():
+    return "12345"
 ```
 
 ## Using Fewshots with Docs
 
-In most cases, we recommend not using FewShots for Q/A use cases, as Fixie will take care of things for you. That said, in some cases (e.g., combining with other functions, exerting more control, etc) you may wish to use FewShots.
+By default, you don't need to use FewShots with Docs. Fixie's automatic behavior will produce a Q/A agent that meets the general need.
 
 If using FewShots, you'll need to manually tell Fixie to query the corpus using the built-in `fixie_query_corpus` function.
 
-Here's an example for an Agent that was trained on the primary plot points from HBO's Silicon Valley:
+Here's an example for an Agent that has access to docs about the primary plot points from HBO's Silicon Valley:
 
 ```python
 FEW_SHOTS = """
@@ -111,6 +112,6 @@ agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
 
 ## Monitoring Indexing Status
 
-For right now, you can check the indexing status of your Agent by asking it a question. Your agent will return `I'm still starting up. Please try again in a few minutes` if it's still indexing.
+For right now, you can check the indexing status of your Agent by asking it any question. Your agent will return `I'm still starting up. Please try again in a few minutes` if it's still indexing. Indexing can take upwards of a few hours for very large data sets (smaller sets can be done in just a few minutes).
 
 Coming soon is the ability to see and manage your indexing directly on the Fixie app.
