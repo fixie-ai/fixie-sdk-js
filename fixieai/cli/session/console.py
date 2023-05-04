@@ -80,19 +80,18 @@ class Console:
         sender_handle = (
             message["sentBy"]["handle"] if message["sentBy"] else "<unknown>"
         )
-        # escaped_message = markup.escape(message["text"])
-        escaped_message = message["text"]
+        message_text = message["text"]
 
         if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
-                textconsole.print(Markdown(PROMPT + escaped_message))
+                textconsole.print(Markdown(PROMPT + message_text))
         elif message["type"] != "response":
             textconsole.print(
-                Markdown(f"   @{sender_handle}: " + escaped_message, style="dim")
+                Markdown(f"   @{sender_handle}: " + message_text, style="dim")
             )
         else:
             self._response_index += 1
-            textconsole.print(Markdown(f"{self._response_index}❯ " + escaped_message))
+            textconsole.print(Markdown(f"{self._response_index}❯ " + message_text))
             self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
