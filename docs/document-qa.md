@@ -32,21 +32,24 @@ When a `DocumentCorpus` is provided, FewShots are optional (hence the empty arra
 Once ready, you can deploy your agent using `fixie deploy`. The agent will deploy immediately, but will not answer questions until indexing is complete. See [Monitoring Indexing Status](#monitoring-indexing-status) for more.
 
 ## Specifying URLs
+
 You can specify URLs in two forms: static or wildcard.
 
-| Kind | Example | Use-case |
-| --- | --- | --- |
-| Static | `https://docs.python.org/3.11/tutorial/introduction.html` | Index only the specified URL. |
-| Wildcard | `https://docs.python.org/3.11/*` | Index the specified URL and all of its subpages. |
+| Kind     | Example                                                   | Use-case                                         |
+| -------- | --------------------------------------------------------- | ------------------------------------------------ |
+| Static   | `https://docs.python.org/3.11/tutorial/introduction.html` | Index only the specified URL.                    |
+| Wildcard | `https://docs.python.org/3.11/*`                          | Index the specified URL and all of its subpages. |
+
 When you specify a wildcard, Fixie will:
-* Crawl the site, respecting a [sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview#:~:text=A%20sitemap%20is%20a%20file,crawl%20your%20site%20more%20efficiently.) if it exists.
-* Limit the crawl to pages that start with the specified pattern. For example:
+
+- Crawl the site, respecting a [sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview#:~:text=A%20sitemap%20is%20a%20file,crawl%20your%20site%20more%20efficiently.) if it exists.
+- Limit the crawl to pages that start with the specified pattern. For example:
 
 ```
 # Wildcard pattern: https://foo.com/bar/*
 
 https://foo.com/bar/index.html
-    
+
     Links to -> https://foo.com/bar/nested/index.html
     Links to -> https://foo.com/bar/deep/nested/index.html
         These pages will be indexed.
@@ -56,31 +59,6 @@ https://foo.com/bar/index.html
 
     Links to -> https://different-domain.com
         This page will not be indexed, because it doesn't start with the wildcard pattern.
-```
-
-## Accessing Private URLs
-
-In many cases, the set of documents that you want to access will be behind authentication. Fixie supports passing in a `Bearer` token with each request.
-
-To enable this, you'll define a new function that returns a token that will be passed in to the `Authorization` HTTP header as follows: `Authorization: Bearer {your_token}`.
-
-Here's an example:
-
-```python
-import fixieai
-
-BASE_PROMPT = """I can answer questions from secret, non-public docs."""
-
-URLS = [
-    "https://private.myamazingsite.com/*"
-]
-
-CORPORA = [fixieai.DocumentCorpus(urls=URLS, auth_token_func="auth")]
-agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
-
-@agent.register_func
-def auth():
-    return "12345"
 ```
 
 ## Using Fewshots with Docs
