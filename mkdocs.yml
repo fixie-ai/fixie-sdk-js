@@ -54,6 +54,9 @@ nav:
       - Agent QuickStart: "agent-quickstart.md"
       - Fixie Agent API: "agents.md"
       - Agent Protocol: "agent-protocol.md"
+  - Common Use Cases:
+      - Document Question and Answering: "document-qa.md"
+      - Using Langchain: "langchain.md"
   - Python SDK:
       - Python Client API: "python-client-api.md"
       - Python Agent API: "python-agent-api.md"
