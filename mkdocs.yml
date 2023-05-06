@@ -24,6 +24,7 @@ theme:
   name: readthedocs
   logo: assets/fixie-logo-docs.png
   favicon: assets/docs-logo.png
+  custom_dir: theme
   palette:
     - scheme: "default"
       media: "(prefers-color-scheme: light)"
@@ -54,6 +55,9 @@ nav:
       - Agent QuickStart: "agent-quickstart.md"
       - Fixie Agent API: "agents.md"
       - Agent Protocol: "agent-protocol.md"
+  - Common Use Cases:
+      - Document Question and Answering: "document-qa.md"
+      - Using Langchain: "langchain.md"
   - Python SDK:
       - Python Client API: "python-client-api.md"
       - Python Agent API: "python-agent-api.md"

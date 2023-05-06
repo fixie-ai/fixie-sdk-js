@@ -8,7 +8,7 @@ import prompt_toolkit.history
 import requests
 from PIL import Image
 from rich import console as rich_console
-from rich import markup
+from rich.markdown import Markdown
 
 from fixieai import FixieClient
 from fixieai.client.client import Session
@@ -80,18 +80,18 @@ class Console:
         sender_handle = (
             message["sentBy"]["handle"] if message["sentBy"] else "<unknown>"
         )
+        message_text = message["text"]
+
         if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
-                textconsole.print(f"{PROMPT}{markup.escape(message['text'])}")
+                textconsole.print(Markdown(PROMPT + message_text))
         elif message["type"] != "response":
             textconsole.print(
-                f"   [dim]@{sender_handle}: {markup.escape(message['text'])}[/]"
+                Markdown(f"   @{sender_handle}: " + message_text, style="dim")
             )
         else:
             self._response_index += 1
-            textconsole.print(
-                f"{self._response_index}❯ {markup.escape(message['text'])}"
-            )
+            textconsole.print(Markdown(f"{self._response_index}❯ " + message_text))
             self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
