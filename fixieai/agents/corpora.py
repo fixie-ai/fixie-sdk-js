@@ -14,7 +14,10 @@ class DocumentLoader:
 class DocumentCorpus:
     """Document corpus for a Fixie CodeShot Agent."""
 
+    """URLs to load documents from. A trailing wildcard (e.g., https://example.com/*),
+    can be used to load all documents from a site."""
     urls: List[str]
+    """A list of wildcard patterns to exclude from crawled URLs (e.g., */no_crawl/*)."""
     exclude_patterns: Optional[List[str]] = None
     auth_token_func: Optional[str] = None
     loader: Optional[DocumentLoader] = None
