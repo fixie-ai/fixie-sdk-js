@@ -115,7 +115,7 @@ This process takes about a minute to complete. Once deployed, you can use your a
 ## Agent REST API
 
 Once deployed (via `fixie agent serve` or `fixie agent deploy`), your agent can also be invoked
-via a REST API, using a `POST` request to the endpoint `/api/agent/<username>/<agent_handle>`.
+via a REST API, using a `POST` request to the endpoint `/api/agents/<username>/<agent_handle>`.
 For example, the `fixie/calc` agent can be invoked as follows:
 
 ```bash
@@ -131,7 +131,7 @@ Your Fixie API key can be obtained from your user profile page.
 ## Fixie GraphQL API
 
 Apart from the Agent REST API described above, the Fixie GraphQL API is a more rich and
-powerful API surface for interacting with Fixie, including creating Agents, sending
+powerful API surface for interacting with Fixie, including creating agents, sending
 messages, and more. For more information, see the
 [Fixie GraphQL API documentation](https://app.fixie.ai/static/docs/index.html).
 

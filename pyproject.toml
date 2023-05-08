@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixieai"
-version = "0.2.17"
+version = "0.2.21"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
@@ -34,6 +34,7 @@ Pillow = "*"
 python-dotenv = "^1.0.0"
 packaging = "^23.0"
 wrapt = "^1.15.0"
+urllib3 = ">=1,<2" # gql requires requests_toolbelt < 1 which requires urllib3 < 2.0
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"

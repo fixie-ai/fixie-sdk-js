@@ -15,4 +15,6 @@ class DocumentCorpus:
     """Document corpus for a Fixie CodeShot Agent."""
 
     urls: List[str]
+    exclude_patterns: Optional[List[str]] = None
+    auth_token_func: Optional[str] = None
     loader: Optional[DocumentLoader] = None

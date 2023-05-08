@@ -1,21 +1,15 @@
 import dataclasses
 import os
-import re
 from typing import Optional
 
 from fixieai.cli import utils
-
-
-def _current_dirname() -> str:
-    """Returns current directory name."""
-    return _slugify(os.path.basename(os.getcwd()))
 
 
 @dataclasses.dataclass
 class AgentConfig(utils.DataClassYamlMixin):
     """Represents an agent.yaml config file."""
 
-    handle: str = dataclasses.field(default_factory=_current_dirname)
+    handle: str
     name: Optional[str] = None
     description: str = ""
     more_info_url: str = ""
@@ -62,11 +56,3 @@ def save_config(agent_config: AgentConfig, path: Optional[str] = None):
     path = normalize_path(path)
     with open(path, "w") as fp:
         fp.write(agent_config.to_yaml())
-
-
-def _slugify(s: str) -> str:
-    s = s.lower().strip()
-    s = re.sub(r"[^\w\s-]", "", s)
-    s = re.sub(r"[\s_-]+", "-", s)
-    s = s.strip("-")
-    return s
