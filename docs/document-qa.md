@@ -6,7 +6,7 @@ One of the most popular use cases for LLMs is doing question answering (Q/A) ove
 
 Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval.
 
-To get started, let's look at a simple [CodeShotAgent](/agents.md/#codeshotagent) that answers questions about Python:
+To get started, let's look at a simple [CodeShotAgent](/agents.md/#CodeShotAgent) that answers questions about Python:
 
 ```python
 import fixieai
