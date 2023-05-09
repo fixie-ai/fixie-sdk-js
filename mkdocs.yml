@@ -24,6 +24,7 @@ theme:
   name: readthedocs
   logo: assets/fixie-logo-docs.png
   favicon: assets/docs-logo.png
+  custom_dir: theme
   palette:
     - scheme: "default"
       media: "(prefers-color-scheme: light)"
