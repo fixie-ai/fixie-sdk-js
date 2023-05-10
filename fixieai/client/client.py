@@ -116,6 +116,10 @@ class FixieClient:
         """Return an existing Agent object."""
         return Agent(self, agent_id)
 
+    def get_agent_page_url(self, agent_id: str) -> str:
+        """Return the URL of the Agent page on the Fixie Platform."""
+        return f"{constants.FIXIE_AGENT_URL}/{agent_id}"
+
     def create_agent(
         self,
         handle: str,

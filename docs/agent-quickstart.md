@@ -68,25 +68,29 @@ In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the functi
 
 To test your agent, you have two options:
 
-1. Run it on your local machine using the `fixie agent serve` command
+1. Run it on your local machine using the `fixie agent serve` command. This allows you to see the debugging logs of your agent directly in your console.
 1. Deploy it to the Fixie platform using the `fixie agent deploy` command.
 
+Whichever option you choose, you can still use the Fixie Platform
+(e.g. REST API, GraphQL API, or [app.fixie.ai](https://app.fixie.ai) web app) to access your agent.
+
 ```bash
-$ fixie serve
-Opening tunnel to 0.0.0.0:8181...
-Tunneling 0.0.0.0:8181 via https://df03e6d61a9f11.lhr.life
+$ fixie agent serve
+Opening tunnel to 0.0.0.0:8181 via localhost.run.
+🦊 Agent mdw/myagent running locally on 0.0.0.0:8181, served via https://a94073298907cd.lhr.life
+You can access your agent via https://app.fixie.ai/agents/mdw/myagent or `fixie console --agent mdw/myagent`.
 ```
 
-When running `fixie agent serve`, a tunnel is set up that allows the agent, running on your local machine, to be accessed from the Fixie Platform. The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
+When running `fixie agent serve`, a tunnel is set up that allows the agent, running on your local machine, to be accessed from the [Fixie Platform](https://app.fixie.ai). The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
 tunnel is torn down and your agent is no longer accessible.
 
-You can now use `fixie console` to send a message to your agent directly:
+You can now use `fixie console` or `fixie console --agent <username>/<agent_name>` to send a message to your agent directly:
 
 ```bash
 $ fixie console
 Welcome to Fixie!
 Connected to: https://app.fixie.ai/sessions/stormy-luxuriant-ferryboat
-fixie 🦊❯ @myagent Generate a random number between 10 and 50
+fixie 🦊❯ @mdw/myagent Generate a random number between 10 and 50
    @user: @mdw/myagent Generate a random number between 10 and 50
    @myagent: Generate a random number between 10 and 50
    @myagent: Ask Func: 10, 50
