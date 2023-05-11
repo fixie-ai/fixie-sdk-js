@@ -28,6 +28,8 @@ FIXIE_JWKS_URL = f"{FIXIE_API_URL}/.well-known/jwks.json"
 FIXIE_OPENAI_PROXY_URL = f"{FIXIE_API_URL}/api/openai-proxy/v1"
 # Valid audiences for Fixie's query JWTs.
 FIXIE_AGENT_API_AUDIENCES = ["https://app.fixie.ai/api", "https://app.dev.fixie.ai/api"]
+# Fixie Agents' URL
+FIXIE_AGENT_URL = f"{FIXIE_API_URL}/agents"
 
 
 def fixie_api_key() -> str:

@@ -6,7 +6,7 @@ One of the most popular use cases for LLMs is doing question answering (Q/A) ove
 
 Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval.
 
-To get started, let's look at a simple [CodeShotAgent](/agents.md/#codeshotagent) that answers questions about Python:
+To get started, let's look at a simple [CodeShotAgent](/agents/#CodeShotAgent) that answers questions about Python:
 
 ```python
 import fixieai
@@ -59,6 +59,30 @@ https://foo.com/bar/index.html
 
     Links to -> https://different-domain.com
         This page will not be indexed, because it doesn't start with the wildcard pattern.
+```
+
+## Accessing Private URLs with Bearer Token
+
+In many cases, the set of documents that you want to access will be behind authentication. Fixie supports passing in a `Bearer` token with each request. To enable this, you'll define a new function that returns a token that will be passed in to the `Authorization` HTTP header as follows: `Authorization: Bearer {your_token}`.
+
+Here's an example:
+
+```python
+import fixieai
+
+BASE_PROMPT = """I can answer questions from secret, non-public docs."""
+
+URLS = [
+    "https://private.myamazingsite.com/*"
+]
+
+CORPORA = [fixieai.DocumentCorpus(urls=URLS, auth_token_func="auth")]
+agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
+
+# Don't forget to call @agent.register_func on your auth function
+@agent.register_func
+def auth():
+    return "12345"
 ```
 
 ## Using Fewshots with Docs

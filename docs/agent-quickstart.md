@@ -12,17 +12,19 @@ The first step is to create a new agent directory using the `fixie init` command
 $ mkdir myagent
 $ cd myagent
 $ fixie init
-Handle [myagent]: 
+Handle [myagent]:
 Description []: A simple test agent.
-Entry point [main:agent]: 
-More info url []: 
+Entry point [main:agent]:
+More info url []:
 ```
 
 `fixie init` will prompt you to enter some information about your agent.
-* **Handle**: the unique identifier used to identify the agent in the Fixie Platform. 
-* **Description**: an optional plain-text description of the agent's abilities.
-* **Entry point**: the name of the Python module that contains the agent code, which we will create in the next step below.
-* **More info url**: an optional URL that you can provide, which offers more information about the agent. This can point to any website. * **Public**: flag indicates whether the agent should be publicly visible in the Fixie Platform for other users. If you set this to `True`, anyone can use your agent in their own applications.
+
+- **Handle**: the unique identifier used to identify the agent in the Fixie Platform.
+- **Description**: an optional plain-text description of the agent's abilities.
+- **Entry point**: the name of the Python module that contains the agent code, which we will create in the next step below.
+- **More info url**: an optional URL that you can provide, which offers more information about the agent. This can point to any website.
+- **Public**: flag indicates whether the agent should be publicly visible in the Fixie Platform for other users. If you set this to `True`, anyone can use your agent in their own applications.
 
 Running `fixie init` will create the file `agent.yaml` in the current directory, containing metadata on the agent.
 
@@ -57,33 +59,38 @@ def genrand(query: fixieai.Message) -> str:
 
 The code consists of two main parts:
 
-* **`BASE_PROMPT`** and **`FEW_SHOTS`**: These are the few-shot examples that define the agent's purpose and behavior. The few-shots are used to provide examples to the underlying Large Language Model, such as GPT-4, as well as to provide the Fixie Platform information on what kinds of queries this agent can support.
-* **Code snippets**: These are the functions that are invoked by the Code Shots. The code snippets are registered with the agent using the `register_func` decorator.
+- **`BASE_PROMPT`** and **`FEW_SHOTS`**: These are the few-shot examples that define the agent's purpose and behavior. The few-shots are used to provide examples to the underlying Large Language Model, such as GPT-4, as well as to provide the Fixie Platform information on what kinds of queries this agent can support.
+- **Code snippets**: These are the functions that are invoked by the Code Shots. The code snippets are registered with the agent using the `register_func` decorator.
 
 In the `FEW_SHOTS` string, the `Func[genrand]` keyword indicates that the function `genrand` should be invoked when the output of the underlying LLM starts with this string. The values following `Ask Func[genrand]:` are passed to the function as the `query.text` parameter. In this case, the function parses out the values and returns a random number between those two values.
 
 ## Test Your Agent
 
-To test your agent, you have two options: 
-1. Run it on your local machine using the `fixie agent serve` command
+To test your agent, you have two options:
+
+1. Run it on your local machine using the `fixie agent serve` command. This allows you to see the debugging logs of your agent directly in your console.
 1. Deploy it to the Fixie platform using the `fixie agent deploy` command.
 
+Whichever option you choose, you can still use the Fixie Platform
+(e.g. REST API, GraphQL API, or [app.fixie.ai](https://app.fixie.ai) web app) to access your agent.
+
 ```bash
-$ fixie serve
-Opening tunnel to 0.0.0.0:8181...
-Tunneling 0.0.0.0:8181 via https://df03e6d61a9f11.lhr.life
+$ fixie agent serve
+Opening tunnel to 0.0.0.0:8181 via localhost.run.
+🦊 Agent mdw/myagent running locally on 0.0.0.0:8181, served via https://a94073298907cd.lhr.life
+You can access your agent via https://app.fixie.ai/agents/mdw/myagent or `fixie console --agent mdw/myagent`.
 ```
 
-When running `fixie agent serve`, a tunnel is set up that allows the agent, running on your local machine, to be accessed from the Fixie Platform. The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
+When running `fixie agent serve`, a tunnel is set up that allows the agent, running on your local machine, to be accessed from the [Fixie Platform](https://app.fixie.ai). The URL of the tunnel is printed on the console. If you quit the `fixie agent serve` process (e.g., by pressing Ctrl-C), the
 tunnel is torn down and your agent is no longer accessible.
 
-You can now use `fixie console` to send a message to your agent directly:
+You can now use `fixie console` or `fixie console --agent <username>/<agent_name>` to send a message to your agent directly:
 
 ```bash
 $ fixie console
 Welcome to Fixie!
 Connected to: https://app.fixie.ai/sessions/stormy-luxuriant-ferryboat
-fixie 🦊❯ @myagent Generate a random number between 10 and 50
+fixie 🦊❯ @mdw/myagent Generate a random number between 10 and 50
    @user: @mdw/myagent Generate a random number between 10 and 50
    @myagent: Generate a random number between 10 and 50
    @myagent: Ask Func: 10, 50
