@@ -1,13 +1,12 @@
 import base64
 import json
-from typing import TYPE_CHECKING, Dict, List, MutableMapping, Union
+from typing import Dict, List, MutableMapping, Union
 
 import requests
 
 from fixieai import constants
 from fixieai.agents import exceptions
 from fixieai.agents import token
-
 
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
