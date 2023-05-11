@@ -55,11 +55,11 @@ class AgentFunc:
     def __call__(
         self, agent_query: api.AgentQuery, claims: token.VerifiedTokenClaims
     ) -> Iterable[api.AgentResponse]:
-        kwargs = {}
-        for name, mapper in self._argument_mappers:
-            kwargs[name] = mapper(agent_query, claims)
-
         with exceptions.AgentException.exception_remapper():
+            kwargs = {}
+            for name, mapper in self._argument_mappers:
+                kwargs[name] = mapper(agent_query, claims)
+
             result = self._impl(**kwargs)
 
         def _gen() -> Iterable[api.AgentResponse]:
