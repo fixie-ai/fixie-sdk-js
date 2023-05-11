@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Dict, List, MutableMapping, Union
 import requests
 
 from fixieai import constants
+from fixieai.agents import exceptions
+from fixieai.agents import token
 
-if TYPE_CHECKING:
-    from fixieai.agents.api import AgentQuery
 
 UserStoragePrimitives = Union[bool, int, float, str, bytes, None]
 UserStorageType = Union[
@@ -21,12 +21,8 @@ class UserStorage(MutableMapping[str, UserStorageType]):
     """UserStorage provides a dict-like interface to a user-specific storage.
 
     Usage:
-    >>> from fixieai import AgentQuery, Message
-    >>> query = AgentQuery(
-    ...   Message("incoming query"),
-    ...   access_token="fake-access-token"
-    ... )
-    >>> storage = UserStorage(query, "fake-agent")
+    >>> from fixieai.agents import token
+    >>> storage = UserStorage(token.VerifiedTokenClaims("fake-agent", False, "fake-access-token"))
     >>> storage["key"] = "value"
     >>> storage["complex-key"] = {"key1": {"key2": [12, False, None, b"binary"]}}
     >>> assert len(storage) == 2
@@ -35,16 +31,21 @@ class UserStorage(MutableMapping[str, UserStorageType]):
 
     def __init__(
         self,
-        query: "AgentQuery",
-        agent_id: str,
+        token_claims: token.VerifiedTokenClaims,
         userstorage_url: str = constants.FIXIE_USER_STORAGE_URL,
     ):
-        # TODO(hessam): Remove agent_id from args once access_token includes agent_id
-        #  as well.
-        self._agent_id = agent_id
+        if token_claims.is_anonymous:
+            raise exceptions.AgentException(
+                response_message="I'm sorry, you must login to use this agent.",
+                error_code="ERR_USERSTORAGE_REQUIRES_USER",
+                error_message="This agent requires user storage, which is not available to anonymous users. Please login or create an account.",
+                http_status_code=400,
+            )
+
+        self._agent_id = token_claims.agent_id
         self._userstorage_url = userstorage_url
         self._session = requests.Session()
-        self._session.headers.update({"Authorization": f"Bearer {query.access_token}"})
+        self._session.headers.update({"Authorization": f"Bearer {token_claims.token}"})
 
     def __setitem__(self, key: str, value: UserStorageType):
         url = f"{self._userstorage_url}/{self._agent_id}/{key}"

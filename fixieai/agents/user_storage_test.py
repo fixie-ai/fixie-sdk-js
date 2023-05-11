@@ -4,7 +4,8 @@ import re
 import pytest
 
 from fixieai import constants
-from fixieai.agents import api
+from fixieai.agents import exceptions
+from fixieai.agents import token
 from fixieai.agents import user_storage
 
 FAKE_AGENT_ID = "fake-agent"
@@ -81,10 +82,11 @@ VALUES_TO_TEST = [
 
 @pytest.mark.parametrize("test_value", VALUES_TO_TEST)
 def test_user_storage(mock_user_storage_urls, test_value):
-    query = api.AgentQuery(
-        message=api.Message("sample query"), access_token=FAKE_ACCESS_TOKEN
+    storage = user_storage.UserStorage(
+        token.VerifiedTokenClaims(
+            FAKE_AGENT_ID, is_anonymous=False, token=FAKE_ACCESS_TOKEN
+        )
     )
-    storage = user_storage.UserStorage(query, agent_id=FAKE_AGENT_ID)
 
     # Add the value and test its existence
     storage["key"] = test_value
@@ -105,3 +107,12 @@ def test_user_storage(mock_user_storage_urls, test_value):
 
 def test_doctest(mock_user_storage_urls):
     doctest.testmod(user_storage, raise_on_error=True)
+
+
+def test_userstorage_fails_for_anonymous_users():
+    with pytest.raises(exceptions.AgentException):
+        user_storage.UserStorage(
+            token.VerifiedTokenClaims(
+                FAKE_AGENT_ID, is_anonymous=True, token=FAKE_ACCESS_TOKEN
+            )
+        )

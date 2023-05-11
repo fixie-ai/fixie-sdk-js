@@ -70,11 +70,29 @@ class AgentQuery:
 
 
 @pydantic_dataclasses.dataclass
+class AgentError:
+    """An error that occurred in the process of generating a response."""
+
+    # A code representing the error.
+    code: str
+
+    # A message describing the error that will be displayed to the user.
+    message: str
+
+    # Additional debugging context from the error.
+    details: Optional[Dict]
+
+
+@pydantic_dataclasses.dataclass
 class AgentResponse:
     """A response message from an Agent."""
 
     # The text of the response message.
     message: Message
+
+    # Error details, if an error occurred generating the response. Note that `message` should still be included,
+    # but may indicate that an error occurred that prevented the agent from fully handling the request.
+    error: Optional[AgentError] = None
 
 
 AgentResponseGenerator = Generator[AgentResponse, None, None]

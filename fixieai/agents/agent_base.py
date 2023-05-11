@@ -4,7 +4,6 @@ import abc
 import dataclasses
 import functools
 import json
-import logging
 import os
 import re
 import warnings
@@ -16,23 +15,19 @@ import jwt
 import starlette.responses
 import uvicorn
 import yaml
-from pydantic import dataclasses as pydantic_dataclasses
 
 from fixieai import constants
 from fixieai.agents import agent_func
 from fixieai.agents import api
+from fixieai.agents import exceptions
 from fixieai.agents import metadata as agent_metadata
 from fixieai.agents import oauth
+from fixieai.agents import token
 
 # Regex that controls what Func names are allowed.
 ACCEPTED_FUNC_NAMES = re.compile(r"^\w+$")
 
-# The JWT claim containing the agent ID
-_AGENT_ID_JWT_CLAIM = "aid"
-
 _RESPONSE_CHUNK_SIZE = 1024
-
-logger = logging.getLogger(__file__)
 
 
 class AgentBase(abc.ABC):
@@ -77,6 +72,9 @@ class AgentBase(abc.ABC):
         """Returns a fastapi.FastAPI application that serves the agent."""
         fast_api = fastapi.FastAPI()
         fast_api.include_router(self.api_router())
+        fast_api.add_exception_handler(
+            exceptions.AgentException, exceptions.AgentException.fastapi_handler
+        )
 
         return fast_api
 
@@ -144,7 +142,7 @@ class AgentBase(abc.ABC):
         ),
     ) -> fastapi.Response:
         """Returns the agent's metadata in YAML format."""
-        token_claims = VerifiedTokenClaims.from_token(
+        token_claims = token.VerifiedTokenClaims.from_token(
             credentials.credentials, self._jwks_client, self._allowed_agent_id
         )
         if token_claims is None:
@@ -163,26 +161,6 @@ class AgentBase(abc.ABC):
             media_type="application/yaml",
         )
 
-    def validate_token_and_update_query_access_token(
-        self,
-        query: api.AgentQuery,
-        credentials: fastapi.security.HTTPAuthorizationCredentials,
-    ):
-        token_claims = VerifiedTokenClaims.from_token(
-            credentials.credentials, self._jwks_client, self._allowed_agent_id
-        )
-        if token_claims is None:
-            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
-        elif (
-            query.access_token is not None
-            and query.access_token != credentials.credentials
-        ):
-            raise fastapi.HTTPException(status_code=403, detail="Mismatched tokens")
-        else:
-            query.access_token = credentials.credentials
-
-        return token_claims
-
     def _serve_func(
         self,
         func_name: str,
@@ -194,60 +172,28 @@ class AgentBase(abc.ABC):
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        token_claims = self.validate_token_and_update_query_access_token(
-            query, credentials
+        token_claims = token.VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client, self._allowed_agent_id
         )
+        if token_claims is None:
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
 
         try:
             pyfunc = self._funcs[func_name]
         except KeyError:
-            raise fastapi.HTTPException(
-                status_code=404, detail=f"Func[{func_name}] doesn't exist"
+            raise exceptions.AgentException(
+                response_message=f"I'm sorry, Func[{func_name}] is not defined.",
+                error_code="ERR_FUNC_NOT_DEFINED",
+                error_message="The function was not defined.",
+                http_status_code=404,
+                func_name=func_name,
+                available_funcs=list(self._funcs.keys()),
             )
 
-        output = pyfunc(query, token_claims.agent_id)
+        output = pyfunc(query, token_claims)
 
         # Streaming not allowed for funcs (yet).
         return next(iter(output))
-
-
-@pydantic_dataclasses.dataclass
-class VerifiedTokenClaims:
-    """Verified claims from an agent token."""
-
-    agent_id: str
-
-    @staticmethod
-    def from_token(
-        token: str,
-        jwks_client: jwt.PyJWKClient,
-        expected_agent_id: Optional[str],
-    ) -> Optional[VerifiedTokenClaims]:
-        try:
-            public_key = jwks_client.get_signing_key_from_jwt(token)
-            claims = jwt.decode(
-                token,
-                public_key.key,
-                algorithms=["EdDSA"],
-                audience=constants.FIXIE_AGENT_API_AUDIENCES,
-            )
-        except jwt.DecodeError:
-            return None
-
-        token_agent_id = claims.get(_AGENT_ID_JWT_CLAIM)
-        if not isinstance(token_agent_id, str):
-            # Agent id claim is required
-            logger.warning("Rejecting valid JWT without any agent ID claim")
-            return None
-
-        if expected_agent_id is not None and token_agent_id != expected_agent_id:
-            # The agent ID in the token did not match the allowed value.
-            logger.warning(
-                f"Rejecting valid JWT because agent ID in token ({token_agent_id!r}) did not match {expected_agent_id!r}"
-            )
-            return None
-
-        return VerifiedTokenClaims(agent_id=token_agent_id)
 
 
 def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:
