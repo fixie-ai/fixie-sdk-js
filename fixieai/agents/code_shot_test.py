@@ -8,8 +8,8 @@ from fastapi import testclient
 
 import fixieai
 from fixieai import agents
-from fixieai.agents import agent_base
 from fixieai.agents import code_shot
+from fixieai.agents import token
 
 agent_id = "dummy"
 BASE_PROMPT = "I am a simple dummy agent."
@@ -34,9 +34,11 @@ CORPORA = [
 @pytest.fixture(autouse=True)
 def mock_token_verifier(mocker):
     return mocker.patch.object(
-        agent_base.VerifiedTokenClaims,
+        token.VerifiedTokenClaims,
         "from_token",
-        return_value=agent_base.VerifiedTokenClaims(agent_id="fake agent id"),
+        return_value=token.VerifiedTokenClaims(
+            agent_id="fake agent id", is_anonymous=False, token="fake token"
+        ),
     )
 
 

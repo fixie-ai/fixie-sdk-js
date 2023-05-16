@@ -3,12 +3,14 @@ import json
 from typing import Callable, List, Optional
 
 import fastapi
+import fastapi.security
 
 from fixieai.agents import agent_base
 from fixieai.agents import agent_func
 from fixieai.agents import api
 from fixieai.agents import metadata
 from fixieai.agents import oauth
+from fixieai.agents import token
 
 
 class StandaloneAgent(agent_base.AgentBase):
@@ -63,11 +65,13 @@ class StandaloneAgent(agent_base.AgentBase):
         the previously specified `handle_message` function. Depending on the return
         value of that function, either a single or a streaming response is returned.
         """
-        token_claims = self.validate_token_and_update_query_access_token(
-            query, credentials
+        token_claims = token.VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client, self._allowed_agent_id
         )
+        if token_claims is None:
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
 
-        output = self._handle_message(query, token_claims.agent_id)
+        output = self._handle_message(query, token_claims)
         return fastapi.responses.StreamingResponse(
             (json.dumps(dataclasses.asdict(resp)) + "\n" for resp in output),
             media_type="application/json",

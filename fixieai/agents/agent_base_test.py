@@ -1,6 +1,5 @@
 import os
 
-import fastapi
 import pytest
 import yaml
 from fastapi import testclient
@@ -9,6 +8,8 @@ from pydantic import dataclasses as pydantic_dataclasses
 import fixieai
 from fixieai import agents
 from fixieai.agents import agent_base
+from fixieai.agents import exceptions
+from fixieai.agents import token
 
 agent_id = "dummy"
 
@@ -16,9 +17,11 @@ agent_id = "dummy"
 @pytest.fixture(autouse=True)
 def mock_token_verifier(mocker):
     return mocker.patch.object(
-        agent_base.VerifiedTokenClaims,
+        token.VerifiedTokenClaims,
         "from_token",
-        return_value=agent_base.VerifiedTokenClaims(agent_id="fake agent id"),
+        return_value=token.VerifiedTokenClaims(
+            agent_id="fake agent id", is_anonymous=False, token="fake token"
+        ),
     )
 
 
@@ -59,14 +62,25 @@ def dummy_agent(mocker):
     def simple3(query):
         return "Simple response custom"
 
+    @agent.register_func()
+    def unhandled_exception(query):
+        raise ValueError("Func failed!")
+
+    @agent.register_func()
+    def agent_exception(query):
+        raise exceptions.AgentException(
+            response_message="Agent exception!",
+            error_message="My exception occurred.",
+            error_code="ERR_MY_ERROR_CODE",
+            http_status_code=400,
+            detail=1,
+        )
+
     return agent
 
 
 def test_simple_agent_handshake(dummy_agent, mocker):
-    fast_api = fastapi.FastAPI()
-    fast_api.include_router(dummy_agent.api_router())
-
-    client = testclient.TestClient(fast_api)
+    client = testclient.TestClient(dummy_agent.app())
 
     # Use a small chunk size to exercise chunking logic
     mocker.patch.object(agent_base, "_RESPONSE_CHUNK_SIZE", 2)
@@ -78,10 +92,7 @@ def test_simple_agent_handshake(dummy_agent, mocker):
 
 
 def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
-    fast_api = fastapi.FastAPI()
-    fast_api.include_router(dummy_agent.api_router())
-
-    client = testclient.TestClient(fast_api, raise_server_exceptions=False)
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
     headers = {"Authorization": "Bearer fixie-test-token"}
 
     # Test Func[simple1]
@@ -90,7 +101,10 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     )
     assert response.status_code == 200
     json = response.json()
-    assert json == {"message": {"text": "Simple response 1", "embeds": {}}}
+    assert json == {
+        "message": {"text": "Simple response 1", "embeds": {}},
+        "error": None,
+    }
     mock_token_verifier.assert_called_once_with(
         "fixie-test-token", dummy_agent._jwks_client, dummy_agent._allowed_agent_id
     )
@@ -101,7 +115,10 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     )
     assert response.status_code == 200
     json = response.json()
-    assert json == {"message": {"text": "Simple response 2", "embeds": {}}}
+    assert json == {
+        "message": {"text": "Simple response 2", "embeds": {}},
+        "error": None,
+    }
 
     # Test Func[custom]
     response = client.post(
@@ -109,7 +126,10 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     )
     assert response.status_code == 200
     json = response.json()
-    assert json == {"message": {"text": "Simple response custom", "embeds": {}}}
+    assert json == {
+        "message": {"text": "Simple response custom", "embeds": {}},
+        "error": None,
+    }
 
     # Test non-existing Func[] returns 404: Not Found
     response = client.post(
@@ -134,6 +154,34 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
     assert response.status_code == 403
 
 
+def test_simple_agent_func_failure(dummy_agent, mock_token_verifier):
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+
+    # Test Func[unhandled_exception]
+    response = client.post(
+        "/unhandled_exception", json={"message": {"text": "Howdy"}}, headers=headers
+    )
+    assert response.status_code == 500
+    json = response.json()
+    assert json["message"]["text"] == exceptions.UNHANDLED_EXCEPTION_RESPONSE_TEXT
+    assert "ValueError: Func failed!\n" in json["error"]["details"]["traceback"]
+
+
+def test_simple_agent_func_custom_failure(dummy_agent, mock_token_verifier):
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+
+    # Test Func[unhandled_exception]
+    response = client.post(
+        "/agent_exception", json={"message": {"text": "Howdy"}}, headers=headers
+    )
+    assert response.status_code == 400
+    json = response.json()
+    assert json["message"]["text"] == "Agent exception!"
+    assert json["error"]["details"]["detail"] == 1
+
+
 def test_registering_func_with_custom_name(dummy_agent):
     dummy_agent.register_func(lambda query: "1", func_name="name1")
     dummy_agent.register_func(lambda query: "2", func_name="name2")
@@ -153,9 +201,7 @@ def test_registering_func_with_custom_name(dummy_agent):
 def test_invalid_token(dummy_agent, mock_token_verifier):
     mock_token_verifier.return_value = None
 
-    fast_api = fastapi.FastAPI()
-    fast_api.include_router(dummy_agent.api_router())
-    client = testclient.TestClient(fast_api, raise_server_exceptions=False)
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
     headers = {"Authorization": "Bearer fixie-test-token"}
     response = client.post(
         "/simple1", json={"message": {"text": "Howdy"}}, headers=headers

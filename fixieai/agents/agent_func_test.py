@@ -6,6 +6,7 @@ import fixieai
 from fixieai.agents import agent_func
 from fixieai.agents import api
 from fixieai.agents import oauth
+from fixieai.agents import token
 
 
 @pytest.fixture
@@ -32,7 +33,8 @@ def test_create_from_python_type_coercion(oauth_params):
             )
             query_text = "Test query"
             result = normalized(
-                api.AgentQuery(api.Message(text=query_text)), "test-agent-id"
+                api.AgentQuery(api.Message(text=query_text)),
+                token.VerifiedTokenClaims("test-agent-id", False, "FAKE_TOKEN"),
             )
 
             expected_results = (

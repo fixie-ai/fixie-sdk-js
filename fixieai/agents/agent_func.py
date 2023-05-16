@@ -16,11 +16,13 @@ from typing import (
 )
 
 from fixieai.agents import api
+from fixieai.agents import exceptions
 from fixieai.agents import oauth
+from fixieai.agents import token
 from fixieai.agents import user_storage
 
-# An ArgumentMapper converts a query+agent ID into a supported func argument (e.g. "query" or "user_storage")
-ArgumentMapper = Callable[[api.AgentQuery, str], Any]
+# An ArgumentMapper converts a query + token claims into a supported func argument (e.g. "query" or "user_storage")
+ArgumentMapper = Callable[[api.AgentQuery, token.VerifiedTokenClaims], Any]
 
 # BoundArgumentMapper is an ArgumentMapper that has been bound to a named parameter.
 BoundArgumentMapper = Tuple[str, ArgumentMapper]
@@ -51,14 +53,26 @@ class AgentFunc:
         self._allow_multiple_responses = allow_multiple_responses
 
     def __call__(
-        self, agent_query: api.AgentQuery, agent_id: str
+        self, agent_query: api.AgentQuery, claims: token.VerifiedTokenClaims
     ) -> Iterable[api.AgentResponse]:
-        kwargs = {}
-        for name, mapper in self._argument_mappers:
-            kwargs[name] = mapper(agent_query, agent_id)
+        with exceptions.AgentException.exception_remapper():
+            kwargs = {}
+            for name, mapper in self._argument_mappers:
+                kwargs[name] = mapper(agent_query, claims)
 
-        result = self._impl(**kwargs)
-        return _adapt_func_result(result, self._allow_multiple_responses)
+            result = self._impl(**kwargs)
+
+        def _gen() -> Iterable[api.AgentResponse]:
+            # Within a generator we need to catch exceptions and convert them to responses.
+            try:
+                with exceptions.AgentException.exception_remapper():
+                    yield from _adapt_func_result(
+                        result, self._allow_multiple_responses
+                    )
+            except exceptions.AgentException as e:
+                yield e.to_response()
+
+        return _gen()
 
     @classmethod
     def create(
@@ -109,9 +123,9 @@ class AgentFunc:
 
         # Try to bind a query/message mapper.
         typed_message_mappers = {
-            api.AgentQuery: lambda query, agent_id: query,
-            api.Message: lambda query, agent_id: query.message,
-            str: lambda query, agent_id: query.message.text,
+            api.AgentQuery: lambda query, claims: query,
+            api.Message: lambda query, claims: query.message,
+            str: lambda query, claims: query.message.text,
         }
         bound_message_mapper = _bind_argument_mapper(
             func,
@@ -124,9 +138,7 @@ class AgentFunc:
         )
 
         # Try to bind a UserStorage mapper.
-        user_storage_mapper = lambda query, agent_id: user_storage.UserStorage(
-            query, agent_id
-        )
+        user_storage_mapper = lambda query, claims: user_storage.UserStorage(claims)
         bound_user_storage_mapper = _bind_argument_mapper(
             func,
             unbound_parameter_names=unbound_parameter_names,
@@ -137,8 +149,8 @@ class AgentFunc:
         )
 
         # Try to bind an OAuthHandler mapper.
-        oauth_mapper = lambda query, agent_id: oauth_params and oauth.OAuthHandler(
-            oauth_params, query, agent_id
+        oauth_mapper = lambda query, claims: oauth_params and oauth.OAuthHandler(
+            oauth_params, claims
         )
         bound_oauth_mapper = _bind_argument_mapper(
             func,

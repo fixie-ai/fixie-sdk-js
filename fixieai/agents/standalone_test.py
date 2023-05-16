@@ -1,3 +1,4 @@
+import json
 import os
 
 import fastapi
@@ -5,17 +6,20 @@ import pytest
 import yaml
 from fastapi import testclient
 
-from fixieai.agents import agent_base
 from fixieai.agents import api
+from fixieai.agents import exceptions
 from fixieai.agents import standalone
+from fixieai.agents import token
 
 
 @pytest.fixture(autouse=True)
 def mock_token_verifier(mocker):
     return mocker.patch.object(
-        agent_base.VerifiedTokenClaims,
+        token.VerifiedTokenClaims,
         "from_token",
-        return_value=agent_base.VerifiedTokenClaims(agent_id="fake agent id"),
+        return_value=token.VerifiedTokenClaims(
+            agent_id="fake agent id", is_anonymous=False, token="fake token"
+        ),
     )
 
 
@@ -25,6 +29,11 @@ def mock_handle_message_single(query):
 
 def mock_handle_message_stream(query) -> api.AgentResponseGenerator:
     yield api.AgentResponse(api.Message(query.text.upper()))
+
+
+def mock_handle_message_stream_exception(query) -> api.AgentResponseGenerator:
+    yield api.AgentResponse(api.Message(query.text.upper()))
+    raise ValueError("Fail!")
 
 
 @pytest.fixture
@@ -44,9 +53,7 @@ def standalone_agent_stream(mocker):
 
 
 def test_standalone_handshake(standalone_agent_single):
-    fast_api = fastapi.FastAPI()
-    fast_api.include_router(standalone_agent_single.api_router())
-    client = testclient.TestClient(fast_api)
+    client = testclient.TestClient(standalone_agent_single.app())
 
     response = client.get("/", headers={"Authorization": "Bearer fixie-test-token"})
     assert response.status_code == 200
@@ -60,14 +67,44 @@ def test_standalone_query_single(standalone_agent_single):
     _standalone_query(standalone_agent_single)
 
 
-def test_standalone_query_stream(standalone_agent_stream):
-    _standalone_query(standalone_agent_stream)
+def test_standalone_query_stream_exception(mocker):
+    def _gen(query):
+        yield api.AgentResponse(api.Message(query.text.upper()))
+        raise ValueError("Fail!")
+
+    mocker.patch.dict(os.environ, {"FIXIE_ALLOWED_AGENT_ID": "fake agent id"})
+    agent = standalone.StandaloneAgent(
+        handle_message=_gen, sample_queries=["sample query"]
+    )
+    client = testclient.TestClient(agent.app(), raise_server_exceptions=False)
+
+    with client.stream(
+        "POST",
+        "/",
+        headers={"Authorization": "Bearer fixie-test-token"},
+        json={"message": {"text": "sample text", "embeds": {}}},
+    ) as response:
+        assert response.status_code == 200
+        [response1, response2] = response.iter_lines()
+        assert json.loads(response1) == {
+            "message": {"text": "SAMPLE TEXT", "embeds": {}},
+            "error": None,
+        }
+        response2_dict = json.loads(response2)
+        assert (
+            response2_dict["message"]["text"]
+            == exceptions.UNHANDLED_EXCEPTION_RESPONSE_TEXT
+        )
+        assert response2_dict["error"]["code"] == "ERR_AGENT_UNHANDLED_EXCEPTION"
+        assert (
+            response2_dict["error"]["message"]
+            == "An unhandled exception occurred while processing the request."
+        )
+        assert "ValueError: Fail!\n" in response2_dict["error"]["details"]["traceback"]
 
 
 def _standalone_query(agent: standalone.StandaloneAgent):
-    fast_api = fastapi.FastAPI()
-    fast_api.include_router(agent.api_router())
-    client = testclient.TestClient(fast_api)
+    client = testclient.TestClient(agent.app())
 
     response = client.post(
         "/",
@@ -76,7 +113,10 @@ def _standalone_query(agent: standalone.StandaloneAgent):
     )
     assert response.status_code == 200
     json = response.json()
-    assert json == {"message": {"text": "SAMPLE TEXT", "embeds": {}}}
+    assert json == {
+        "message": {"text": "SAMPLE TEXT", "embeds": {}},
+        "error": None,
+    }
 
 
 def test_invalid_token(standalone_agent_single, mock_token_verifier):
