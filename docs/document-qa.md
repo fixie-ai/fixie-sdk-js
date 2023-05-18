@@ -104,7 +104,7 @@ A: Gilfoyle was played by Martin Starr.
 
 ## Excluding documents during crawl
 
-There are some cases where you don't want Fixie to crawl certain wepages or types of webpages when using the `*` wildcard pattern. In order to do this, you can supply a set of `exclude_patterns`, which are an array of regular expressions:
+There are some cases where you don't want Fixie to crawl certain webpages or types of webpages when using the `*` wildcard pattern. In order to do this, you can supply a set of `exclude_patterns`, which are an array of regular expressions:
 
 ```python
 import fixieai
