@@ -14,7 +14,7 @@ Deploying on Fixie gives you three major advantages:
 
 ## Getting Started
 
-First, you'll make to make sure you have installed the Fixie CLI and have authenticated to Fixie (these are necessary for deploying to Fixie):
+First, you'll make sure you have installed the Fixie CLI and have authenticated to Fixie (these are necessary for deploying to Fixie):
 
 1. Install Fixie on your machine: `pip install fixieai`
 1. Create an account and link your command line to it: `fixie auth`
