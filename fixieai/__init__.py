@@ -3,14 +3,19 @@ import importlib.metadata
 from fixieai.agents import AgentQuery
 from fixieai.agents import AgentResponse
 from fixieai.agents import CodeShotAgent
+from fixieai.agents import CorpusDocument
+from fixieai.agents import CorpusPage
+from fixieai.agents import CorpusPartition
+from fixieai.agents import CorpusRequest
+from fixieai.agents import CorpusResponse
 from fixieai.agents import DocumentCorpus
-from fixieai.agents import DocumentLoader
 from fixieai.agents import Embed
 from fixieai.agents import LlmSettings
 from fixieai.agents import Message
 from fixieai.agents import OAuthHandler
 from fixieai.agents import OAuthParams
 from fixieai.agents import StandaloneAgent
+from fixieai.agents import UrlDocumentCorpus
 from fixieai.agents import UserStorage
 from fixieai.client import FixieClient
 from fixieai.client import get_agents
@@ -24,12 +29,17 @@ __all__ = [
     "Embed",
     "Message",
     "CodeShotAgent",
-    "StandaloneAgent",
+    "CorpusDocument",
+    "CorpusPage",
+    "CorpusPartition",
+    "CorpusRequest",
+    "CorpusResponse",
     "DocumentCorpus",
-    "DocumentLoader",
+    "StandaloneAgent",
     "LlmSettings",
     "OAuthParams",
     "OAuthHandler",
+    "UrlDocumentCorpus",
     "UserStorage",
     "FixieClient",
     "get_agents",

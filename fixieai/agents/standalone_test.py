@@ -89,6 +89,7 @@ def test_standalone_query_stream_exception(mocker):
         assert json.loads(response1) == {
             "message": {"text": "SAMPLE TEXT", "embeds": {}},
             "error": None,
+            "corpus_response": None,
         }
         response2_dict = json.loads(response2)
         assert (
@@ -116,6 +117,7 @@ def _standalone_query(agent: standalone.StandaloneAgent):
     assert json == {
         "message": {"text": "SAMPLE TEXT", "embeds": {}},
         "error": None,
+        "corpus_response": None,
     }
 
 

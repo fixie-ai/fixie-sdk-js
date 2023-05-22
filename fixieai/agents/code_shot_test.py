@@ -25,9 +25,7 @@ Func[simple2] says: Simple response
 A: Simple final response
 """
 CORPORA = [
-    agents.DocumentCorpus(
-        urls=["http://example.com/doc1.txt"], loader=agents.DocumentLoader("text")
-    ),
+    agents.DocumentCorpus(urls=["http://example.com/doc1.txt"]),
 ]
 
 

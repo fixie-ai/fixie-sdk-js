@@ -10,6 +10,8 @@ from typing import Dict, Generator, Optional
 import requests
 from pydantic import dataclasses as pydantic_dataclasses
 
+from fixieai.agents import corpora
+
 
 @pydantic_dataclasses.dataclass
 class Embed:
@@ -68,6 +70,9 @@ class AgentQuery:
     # can be tied back to the original user.
     access_token: Optional[str] = None
 
+    # Request details for queries related to corpus loading.
+    corpus_request: Optional[corpora.CorpusRequest] = None
+
 
 @pydantic_dataclasses.dataclass
 class AgentError:
@@ -93,6 +98,9 @@ class AgentResponse:
     # Error details, if an error occurred generating the response. Note that `message` should still be included,
     # but may indicate that an error occurred that prevented the agent from fully handling the request.
     error: Optional[AgentError] = None
+
+    # Response for queries related to corpus loading.
+    corpus_response: Optional[corpora.CorpusResponse] = None
 
 
 AgentResponseGenerator = Generator[AgentResponse, None, None]
