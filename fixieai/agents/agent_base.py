@@ -38,7 +38,7 @@ class AgentBase(abc.ABC):
         oauth_params: Optional[oauth.OAuthParams] = None,
     ):
         self.oauth_params = oauth_params
-        self._funcs: Dict[str, agent_func.AgentFunc] = {}
+        self._funcs: Dict[str, agent_func.AgentQueryFunc] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
         self._allowed_agent_id = os.getenv("FIXIE_ALLOWED_AGENT_ID")
         if self._allowed_agent_id is None:
@@ -127,7 +127,7 @@ class AgentBase(abc.ABC):
         if func_name in self._funcs:
             raise ValueError(f"Func[{func_name}] is already registered with agent.")
 
-        self._funcs[func_name] = agent_func.AgentFunc.create(
+        self._funcs[func_name] = agent_func.AgentQueryFunc.create(
             func,
             self.oauth_params,
             default_message_type=api.Message,

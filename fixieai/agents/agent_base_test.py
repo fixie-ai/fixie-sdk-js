@@ -62,6 +62,15 @@ def dummy_agent(mocker):
     def simple3(query):
         return "Simple response custom"
 
+    # @agent.register_func
+    # def load_corpus(query: agents.AgentQuery):
+    #     return agents.AgentResponse(
+    #         agents.Message(""),
+    #         corpus_response=agents.CorpusResponse(
+    #             partitions=[agents.CorpusPartition("partition")]
+    #         ),
+    #     )
+
     @agent.register_func()
     def unhandled_exception(query):
         raise ValueError("Func failed!")
@@ -130,6 +139,26 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
         "message": {"text": "Simple response custom", "embeds": {}},
         "error": None,
     }
+
+    # # Test Func[custom]
+    # response = client.post(
+    #     "/load_corpus",
+    #     json={
+    #         "message": {"text": ""},
+    #         "corpus_request": {"partition": None, "continuation_token": None},
+    #     },
+    #     headers=headers,
+    # )
+    # assert response.status_code == 200
+    # json = response.json()
+    # assert json == {
+    #     "message": {"text": "", "embeds": {}},
+    #     "error": None,
+    #     "corpus_response": {
+    #         "page": None,
+    #         "partitions": [{"partition": "partition", "continuation_token": None}],
+    #     },
+    # }
 
     # Test non-existing Func[] returns 404: Not Found
     response = client.post(

@@ -35,7 +35,7 @@ class StandaloneAgent(agent_base.AgentBase):
         if isinstance(handle_message, agent_func.AgentFunc):
             self._handle_message: agent_func.AgentFunc = handle_message
         else:
-            self._handle_message = agent_func.AgentFunc.create(
+            self._handle_message = agent_func.AgentQueryFunc.create(
                 handle_message,
                 oauth_params,
                 default_message_type=api.Message,
