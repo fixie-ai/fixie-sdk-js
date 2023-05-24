@@ -7,7 +7,7 @@ import json
 import os
 import re
 import warnings
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, TypeVar
 
 import fastapi
 import fastapi.security
@@ -120,23 +120,18 @@ class AgentBase(abc.ABC):
         if func is None:
             # Func is not passed in. It's the decorator being created.
             return functools.partial(self.register_func, func_name=func_name)
+        non_null_func: Callable = func
 
-        if func_name is not None:
-            if not ACCEPTED_FUNC_NAMES.fullmatch(func_name):
-                raise ValueError(
-                    f"Function names may only be alphanumerics, got {func_name!r}."
-                )
-        else:
-            func_name = func.__name__
-
-        if func_name in self._funcs:
-            raise ValueError(f"Func[{func_name}] is already registered with agent.")
-
-        self._funcs[func_name] = agent_func.AgentQueryFunc.create(
+        AgentBase._register_func_internal(
             func,
-            self.oauth_params,
-            default_message_type=api.Message,
-            allow_generator=False,
+            func_name,
+            self._funcs,
+            lambda: agent_func.AgentQueryFunc.create(
+                non_null_func,
+                self.oauth_params,
+                default_message_type=api.Message,
+                allow_generator=False,
+            ),
         )
         return func
 
@@ -168,7 +163,25 @@ class AgentBase(abc.ABC):
         if func is None:
             # Func is not passed in. It's the decorator being created.
             return functools.partial(self.register_corpus_func, func_name=func_name)
+        non_null_func: Callable[[corpora.CorpusRequest], corpora.CorpusResponse] = func
 
+        AgentBase._register_func_internal(
+            func,
+            func_name,
+            self._corpus_funcs,
+            lambda: agent_func.AgentCorpusFunc.create(non_null_func),
+        )
+        return func
+
+    T = TypeVar("T")
+
+    @staticmethod
+    def _register_func_internal(
+        func: Callable,
+        func_name: Optional[str],
+        registry: Dict[str, T],
+        create: Callable[[], T],
+    ):
         if func_name is not None:
             if not ACCEPTED_FUNC_NAMES.fullmatch(func_name):
                 raise ValueError(
@@ -177,13 +190,10 @@ class AgentBase(abc.ABC):
         else:
             func_name = func.__name__
 
-        if func_name in self._corpus_funcs:
-            raise ValueError(
-                f"Func[{func_name}] is already registered as a corpus function with agent."
-            )
+        if func_name in registry:
+            raise ValueError(f"Func[{func_name}] is already registered with agent.")
 
-        self._corpus_funcs[func_name] = agent_func.AgentCorpusFunc.create(func)
-        return func
+        registry[func_name] = create()
 
     def _handshake(
         self,
