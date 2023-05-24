@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import collections.abc
 import inspect
-import logging
 import typing
 from typing import (
     Any,
@@ -331,8 +330,7 @@ class AgentCorpusFunc(
             )
 
     def adapt_exception(self, e: exceptions.AgentException) -> CorpusResponse:
-        logging.warn(f"Corpus loading threw an exception: {e}", stack_info=True)
-        return corpora.CorpusResponse()
+        raise e
 
     @classmethod
     def create(
@@ -366,7 +364,7 @@ class AgentCorpusFunc(
             raise TypeError(
                 f"Registered function {func_name} must have one or zero arguments."
             )
-        param = next(iter(params.keys())) if params else None
+        param = next(iter(params.keys()), None)
         bound_request_mapper = (
             _bind_argument_mapper(
                 func,
