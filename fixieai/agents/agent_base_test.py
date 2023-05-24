@@ -12,6 +12,33 @@ from fixieai.agents import exceptions
 from fixieai.agents import token
 
 agent_id = "dummy"
+CORPUS_RESPONSE = agents.CorpusResponse(
+    partitions=[agents.CorpusPartition("newPartition")],
+    page=agents.CorpusPage([agents.CorpusDocument("doc1", "doc1Content".encode())]),
+)
+CORPUS_RESPONSE_JSON = {
+    "partitions": [
+        {
+            "partition": "newPartition",
+            "continuation_token": None,
+        }
+    ],
+    "page": {
+        "documents": [
+            {
+                "source_name": "doc1",
+                "content": "doc1Content",
+                "mime_type": "text/plain",
+                "encoding": "UTF-8",
+            }
+        ],
+        "continuation_token": None,
+    },
+}
+CORPUS_REQUEST_JSON = {
+    "partition": "defaultPartition",
+    "continuation_token": "token",
+}
 
 
 @pytest.fixture(autouse=True)
@@ -62,15 +89,6 @@ def dummy_agent(mocker):
     def simple3(query):
         return "Simple response custom"
 
-    # @agent.register_func
-    # def load_corpus(query: agents.AgentQuery):
-    #     return agents.AgentResponse(
-    #         agents.Message(""),
-    #         corpus_response=agents.CorpusResponse(
-    #             partitions=[agents.CorpusPartition("partition")]
-    #         ),
-    #     )
-
     @agent.register_func()
     def unhandled_exception(query):
         raise ValueError("Func failed!")
@@ -79,6 +97,36 @@ def dummy_agent(mocker):
     def agent_exception(query):
         raise exceptions.AgentException(
             response_message="Agent exception!",
+            error_message="My exception occurred.",
+            error_code="ERR_MY_ERROR_CODE",
+            http_status_code=400,
+            detail=1,
+        )
+
+    @agent.register_func(func_name="corpus")
+    def check_api_routing(query):
+        return "Success"
+
+    @agent.register_corpus_func
+    def load_corpus(request: agents.CorpusRequest) -> agents.CorpusResponse:
+        return CORPUS_RESPONSE
+
+    @agent.register_corpus_func(func_name="custom_name_corpus_load")
+    def load_corpus_custom_name(request: agents.CorpusRequest):
+        return CORPUS_RESPONSE
+
+    @agent.register_corpus_func(func_name="simple1")
+    def load_corpus_existing_fn_name(request):
+        return CORPUS_RESPONSE
+
+    @agent.register_corpus_func()
+    def unhandled_corpus_exception(query):
+        raise ValueError("Corpus func failed!")
+
+    @agent.register_corpus_func()
+    def corpus_agent_exception(query):
+        raise exceptions.AgentException(
+            response_message="Corpus agent exception!",
             error_message="My exception occurred.",
             error_code="ERR_MY_ERROR_CODE",
             http_status_code=400,
@@ -140,25 +188,16 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
         "error": None,
     }
 
-    # # Test Func[custom]
-    # response = client.post(
-    #     "/load_corpus",
-    #     json={
-    #         "message": {"text": ""},
-    #         "corpus_request": {"partition": None, "continuation_token": None},
-    #     },
-    #     headers=headers,
-    # )
-    # assert response.status_code == 200
-    # json = response.json()
-    # assert json == {
-    #     "message": {"text": "", "embeds": {}},
-    #     "error": None,
-    #     "corpus_response": {
-    #         "page": None,
-    #         "partitions": [{"partition": "partition", "continuation_token": None}],
-    #     },
-    # }
+    # Test Func[corpus]
+    response = client.post(
+        "/corpus", json={"message": {"text": "Howdy"}}, headers=headers
+    )
+    assert response.status_code == 200
+    json = response.json()
+    assert json == {
+        "message": {"text": "Success", "embeds": {}},
+        "error": None,
+    }
 
     # Test non-existing Func[] returns 404: Not Found
     response = client.post(
@@ -180,6 +219,50 @@ def test_simple_agent_func_calls(dummy_agent, mock_token_verifier):
 
     # Test Func without auth header returns 401: Unauthorized
     response = client.post("/simple1", json={"message": {"text": "Howdy"}})
+    assert response.status_code == 403
+
+
+def test_agent_corpus_func_calls(dummy_agent, mock_token_verifier):
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+    request_body = CORPUS_REQUEST_JSON
+
+    # Test load_corpus
+    response = client.post("/corpus/load_corpus", json=request_body, headers=headers)
+    assert response.status_code == 200
+    json = response.json()
+    assert json == CORPUS_RESPONSE_JSON
+    mock_token_verifier.assert_called_once_with(
+        "fixie-test-token", dummy_agent._jwks_client, dummy_agent._allowed_agent_id
+    )
+
+    # Test load_corpus_custom_name
+    response = client.post(
+        "/corpus/custom_name_corpus_load", json=request_body, headers=headers
+    )
+    assert response.status_code == 200
+    json = response.json()
+    assert json == CORPUS_RESPONSE_JSON
+
+    # Test load_corpus_existing_fn_name
+    response = client.post("/corpus/simple1", json=request_body, headers=headers)
+    assert response.status_code == 200
+    json = response.json()
+    assert json == CORPUS_RESPONSE_JSON
+
+    # Test non-existing corpus func returns 404: Not Found
+    response = client.post("/corpus/non-existing", json=request_body, headers=headers)
+    assert response.status_code == 404
+
+    # Note: corpus functions will never return a 422 since there are no
+    # required fields.
+
+    # Test Func[__init__] as corpus function returns 404: Not Found
+    response = client.post("/corpus/__init__", json=request_body, headers=headers)
+    assert response.status_code == 404
+
+    # Test load_corpus without auth header returns 401: Unauthorized
+    response = client.post("/corpus/load_corpus", json=request_body)
     assert response.status_code == 403
 
 
@@ -211,6 +294,34 @@ def test_simple_agent_func_custom_failure(dummy_agent, mock_token_verifier):
     assert json["error"]["details"]["detail"] == 1
 
 
+def test_corpus_func_failure(dummy_agent, mock_token_verifier):
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+
+    # Test unhandled_corpus_exception
+    response = client.post(
+        "/corpus/unhandled_corpus_exception", json=CORPUS_REQUEST_JSON, headers=headers
+    )
+    assert response.status_code == 500
+    json = response.json()
+    assert json["message"]["text"] == exceptions.UNHANDLED_EXCEPTION_RESPONSE_TEXT
+    assert "ValueError: Corpus func failed!\n" in json["error"]["details"]["traceback"]
+
+
+def test_corpus_agent_exception(dummy_agent, mock_token_verifier):
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+
+    # Test corpus_agent_exception
+    response = client.post(
+        "/corpus/corpus_agent_exception", json=CORPUS_REQUEST_JSON, headers=headers
+    )
+    assert response.status_code == 400
+    json = response.json()
+    assert json["message"]["text"] == "Corpus agent exception!"
+    assert json["error"]["details"]["detail"] == 1
+
+
 def test_registering_func_with_custom_name(dummy_agent):
     dummy_agent.register_func(lambda query: "1", func_name="name1")
     dummy_agent.register_func(lambda query: "2", func_name="name2")
@@ -234,5 +345,16 @@ def test_invalid_token(dummy_agent, mock_token_verifier):
     headers = {"Authorization": "Bearer fixie-test-token"}
     response = client.post(
         "/simple1", json={"message": {"text": "Howdy"}}, headers=headers
+    )
+    assert response.status_code == 403
+
+
+def test_invalid_token_corpus_request(dummy_agent, mock_token_verifier):
+    mock_token_verifier.return_value = None
+
+    client = testclient.TestClient(dummy_agent.app(), raise_server_exceptions=False)
+    headers = {"Authorization": "Bearer fixie-test-token"}
+    response = client.post(
+        "/corpus/load_corpus", json=CORPUS_REQUEST_JSON, headers=headers
     )
     assert response.status_code == 403

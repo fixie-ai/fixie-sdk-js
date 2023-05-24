@@ -19,6 +19,7 @@ import yaml
 from fixieai import constants
 from fixieai.agents import agent_func
 from fixieai.agents import api
+from fixieai.agents import corpora
 from fixieai.agents import exceptions
 from fixieai.agents import metadata as agent_metadata
 from fixieai.agents import oauth
@@ -39,6 +40,7 @@ class AgentBase(abc.ABC):
     ):
         self.oauth_params = oauth_params
         self._funcs: Dict[str, agent_func.AgentQueryFunc] = {}
+        self._corpus_funcs: Dict[str, agent_func.AgentCorpusFunc] = {}
         self._jwks_client = jwt.PyJWKClient(constants.FIXIE_JWKS_URL)
         self._allowed_agent_id = os.getenv("FIXIE_ALLOWED_AGENT_ID")
         if self._allowed_agent_id is None:
@@ -83,6 +85,9 @@ class AgentBase(abc.ABC):
         router = fastapi.APIRouter()
         router.add_api_route("/", self._handshake, methods=["GET"])
         router.add_api_route("/{func_name}", self._serve_func, methods=["POST"])
+        router.add_api_route(
+            "/corpus/{corpus_func_name}", self._serve_corpus_func, methods=["POST"]
+        )
         return router
 
     def is_valid_func_name(self, func_name: str) -> bool:
@@ -135,6 +140,51 @@ class AgentBase(abc.ABC):
         )
         return func
 
+    def register_corpus_func(
+        self,
+        func: Optional[
+            Callable[[corpora.CorpusRequest], corpora.CorpusResponse]
+        ] = None,
+        *,
+        func_name: Optional[str] = None,
+    ) -> Callable:
+        """A function decorator to register `Func`s used for loading a custom
+        corpus with this agent.
+
+        This decorator will not change the callable itself.
+
+        Usage:
+
+            agent = CodeShotAgent(base_prompt, few_shots)
+
+            @agent.register_corpus_func
+            def func(request: CorpusRequest) -> CorpusResponse:
+                ...
+
+        Optional Decorator Args:
+            func_name: Optional function name to register this function by. If unset,
+                the function name will be used.
+        """
+        if func is None:
+            # Func is not passed in. It's the decorator being created.
+            return functools.partial(self.register_corpus_func, func_name=func_name)
+
+        if func_name is not None:
+            if not ACCEPTED_FUNC_NAMES.fullmatch(func_name):
+                raise ValueError(
+                    f"Function names may only be alphanumerics, got {func_name!r}."
+                )
+        else:
+            func_name = func.__name__
+
+        if func_name in self._corpus_funcs:
+            raise ValueError(
+                f"Func[{func_name}] is already registered as a corpus function with agent."
+            )
+
+        self._corpus_funcs[func_name] = agent_func.AgentCorpusFunc.create(func)
+        return func
+
     def _handshake(
         self,
         credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
@@ -172,11 +222,7 @@ class AgentBase(abc.ABC):
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate function.
         """
-        token_claims = token.VerifiedTokenClaims.from_token(
-            credentials.credentials, self._jwks_client, self._allowed_agent_id
-        )
-        if token_claims is None:
-            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        token_claims = self._check_credentials(credentials)
 
         try:
             pyfunc = self._funcs[func_name]
@@ -194,6 +240,45 @@ class AgentBase(abc.ABC):
 
         # Streaming not allowed for funcs (yet).
         return next(iter(output))
+
+    def _serve_corpus_func(
+        self,
+        corpus_func_name: str,
+        request: corpora.CorpusRequest,
+        credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
+            fastapi.security.HTTPBearer()
+        ),
+    ) -> corpora.CorpusResponse:
+        """Verifies the request is a valid request from Fixie, and dispatches it to
+        the appropriate corpus function.
+        """
+        token_claims = self._check_credentials(credentials)
+
+        try:
+            pyfunc = self._corpus_funcs[corpus_func_name]
+        except KeyError:
+            raise exceptions.AgentException(
+                response_message=f"I'm sorry, corpus func[{corpus_func_name}] is not defined.",
+                error_code="ERR_FUNC_NOT_DEFINED",
+                error_message="The function was not defined.",
+                http_status_code=404,
+                func_name=corpus_func_name,
+                available_funcs=list(self._corpus_funcs.keys()),
+            )
+
+        output = pyfunc(request, token_claims)
+
+        return next(iter(output))
+
+    def _check_credentials(
+        self, credentials: fastapi.security.HTTPAuthorizationCredentials
+    ) -> token.VerifiedTokenClaims:
+        token_claims = token.VerifiedTokenClaims.from_token(
+            credentials.credentials, self._jwks_client, self._allowed_agent_id
+        )
+        if token_claims is None:
+            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        return token_claims
 
 
 def _oauth(query: api.Message, oauth_handler: oauth.OAuthHandler) -> str:

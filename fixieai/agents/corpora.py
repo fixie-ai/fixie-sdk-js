@@ -6,7 +6,7 @@ import dataclasses_json.core
 from pydantic import dataclasses as pydantic_dataclasses
 
 
-@dataclasses.dataclass
+@pydantic_dataclasses.dataclass
 class CorpusRequest(dataclasses_json.DataClassJsonMixin):
     """A request for some piece of the agent's corpus. This should yield a
     CORPUS_LOAD type response.
@@ -79,7 +79,7 @@ class CorpusRequest(dataclasses_json.DataClassJsonMixin):
     continuation_token: Optional[str] = None
 
 
-@dataclasses.dataclass
+@pydantic_dataclasses.dataclass
 class CorpusPartition:
     """An identifier for a subset of a corpus, along with an optional
     continuation_token to use when loading its first page. Each partition will
@@ -94,7 +94,7 @@ class CorpusPartition:
     continuation_token: Optional[str] = None
 
 
-@dataclasses.dataclass
+@pydantic_dataclasses.dataclass
 class CorpusDocument:
     """Some meaningful item of data from a corpus. This could be an HTML page,
     a Word document, or a raw string of text (among others). Fixie will handle
@@ -116,8 +116,8 @@ class CorpusDocument:
         return self.content.decode(self.encoding)
 
 
-@dataclasses.dataclass
-class CorpusPage(dataclasses_json.DataClassJsonMixin):
+@pydantic_dataclasses.dataclass
+class CorpusPage:
     """A page of CorpusDocuments. In addition to the documents themselves, a
     page may include a continuation token for fetching the next page (in the
     same partition). Omitting a continuation token implies that this is the
@@ -128,10 +128,10 @@ class CorpusPage(dataclasses_json.DataClassJsonMixin):
     """
 
     documents: List[CorpusDocument]
-    continuation_token: Optional[str]
+    continuation_token: Optional[str] = None
 
 
-@dataclasses.dataclass
+@pydantic_dataclasses.dataclass
 class CorpusResponse(dataclasses_json.DataClassJsonMixin):
     """A response to a CorpusRequest. See CorpusRequest for details."""
 
