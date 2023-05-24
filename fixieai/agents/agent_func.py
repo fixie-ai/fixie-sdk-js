@@ -365,23 +365,15 @@ class AgentCorpusFunc(
                 f"Registered function {func_name} must have one or zero arguments."
             )
         param = next(iter(params.keys()), None)
-        bound_request_mapper = (
-            _bind_argument_mapper(
-                func,
-                {param},
-                [
-                    (corpora.CorpusRequest, lambda request, claims: request),
-                    (param, lambda request, claims: request),
-                ],
-            )
-            if param
-            else None
-        )
-
-        if bool(params) != bool(bound_request_mapper):
-            raise TypeError(
-                f"Registered function {func_name}'s parameter has the wrong type: {param}. (Should be CorpusRequest.)"
-            )
+        if param:
+            type_hints = get_type_hints(func)
+            if param in type_hints and type_hints.get(param) != corpora.CorpusRequest:
+                raise TypeError(
+                    f"Registered function {func_name}'s parameter has the wrong type: {param}. (Should be CorpusRequest.)"
+                )
+            bound_request_mapper = (param, lambda request, claims: request)
+        else:
+            bound_request_mapper = None
 
         # Validate that the return type annotation is compatible.
         return_type = get_type_hints(func).get("return")
