@@ -18,7 +18,9 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 import rich.console as rich_console
+import rich.table
 import validators
+from gql import gql
 
 import fixieai.client
 from fixieai import constants
@@ -668,3 +670,156 @@ def unpublish(ctx, path):
     agent.update_agent(published=False)
 
     console.print(f"Agent [green]{agent_id}[/] has been made private.")
+
+
+@agent.group(help="Revisions-related commands.")
+def revisions():
+    pass
+
+
+@revisions.command("list", help="Lists the revisions associated with an agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--json", is_flag=True, default=False)
+@click.pass_context
+def list_revisions(ctx, path, json):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        console.print(
+            f"[red]Error:[/] Agent [green]{agent_id}[/] not deployed. Use [blue]`fixie agent deploy`[/] to deploy it."
+        )
+        raise click.Abort()
+
+    query = gql(
+        """
+        query GetRevisions($agentId: String!) {
+            agentById(agentId: $agentId) {
+                allRevisions {
+                    id
+                    created
+                    isCurrent
+                    indexedCorpora {
+                        status
+                        created
+                        modified
+                        vectorCount
+                    }
+                    deployment {
+                        __typename
+                        ... on ExternalDeployment {
+                            url
+                        }
+                        ... on ManagedDeployment {
+                            environment
+                        }
+                    }
+                    metadata {
+                        key
+                        value
+                    }
+                }
+            }
+        }
+        """
+    )
+    revisions = client.gqlclient.execute(query, variable_values={"agentId": agent_id})[
+        "agentById"
+    ]["allRevisions"]
+
+    if json:
+        console.print_json(data=revisions)
+    else:
+        table = rich.table.Table(title=f"{agent_id} revisions")
+        table.add_column("ID", no_wrap=True)
+        table.add_column("Date")
+        table.add_column("Deployment")
+
+        has_corpora = False
+        if any(revision["indexedCorpora"] for revision in revisions):
+            table.add_column("Indexed")
+            has_corpora = True
+
+        table.add_column("Current")
+
+        for revision in revisions:
+            row = [
+                revision["id"],
+                revision["created"],
+            ]
+
+            deployment = revision["deployment"]
+            if deployment is None:
+                row.append("-")
+            elif deployment["__typename"] == "ExternalDeployment":
+                row.append(deployment["url"])
+            elif deployment["__typename"] == "ManagedDeployment":
+                row.append(f"Fixie-hosted {deployment['environment'].title()}")
+            else:
+                row.append("?")
+
+            if has_corpora:
+                indexes = revision["indexedCorpora"] or []
+                if any(index["status"] == "FAILED" for index in indexes):
+                    row.append("❌")
+                elif any(index["status"] == "IN_PROGRESS" for index in indexes):
+                    row.append("⏳")
+                elif indexes and all(
+                    index["status"] == "COMPLETED" for index in indexes
+                ):
+                    row.append("✅")
+                else:
+                    row.append("")
+
+            row.append("✅" if revision["isCurrent"] else "")
+
+            table.add_row(*row)
+
+        console.print(table)
+
+
+@revisions.command(
+    "set-current", help="Sets the current (active) revision of an agent."
+)
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--id", required=True, help="The revision ID to make current.")
+@click.pass_context
+def set_current_revision(ctx, path, id):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+    client.set_current_agent_revision(config.handle, id)
+    console.print(f"Set current revision to {id}.")
+
+
+@revisions.command("delete", help="Deletes a revision of an agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--id", required=True, help="The revision ID to delete.")
+@click.option("--force/-f", help="Delete the revision even if it is the current one.")
+@click.pass_context
+def delete_revision(ctx, path, id, force):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+
+    current_revision = client.get_current_agent_revision(config.handle)
+    if current_revision == id:
+        if not force:
+            console.print(
+                f"Not deleting revision {id} because it is the current revision. (Use --force to delete it anyway.)",
+                style="red",
+            )
+            raise click.exceptions.Exit(1)
+        else:
+            console.print(
+                f"Deleting current revision {id} because --force was set. This will prevent the agent from responding to requests.",
+                style="yellow",
+            )
+
+    client.delete_agent_revision(config.handle, id)
+    console.print(f"Deleted revision {id}.")

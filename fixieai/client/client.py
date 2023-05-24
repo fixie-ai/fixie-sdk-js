@@ -11,6 +11,7 @@ from gql import gql
 from gql.transport.requests import RequestsHTTPTransport
 
 from fixieai import constants
+from fixieai.client import utils
 from fixieai.client.agent import Agent
 from fixieai.client.session import Session
 
@@ -137,8 +138,8 @@ class FixieClient:
                 Agents owned by this user.
             name: The name of the new Agent.
             description: A description of the new Agent.
-            query_url: The URL of the new Agent's query endpoint.
-            func_url: The URL of the new Agent's func endpoint.
+            query_url: (deprecated) Unused.
+            func_url: (deprecated) The URL of the new Agent's func endpoint.
             more_info_url: A URL with more information about the new Agent.
             published: Whether the new Agent should be published.
         """
@@ -211,6 +212,140 @@ class FixieClient:
             headers=self._request_headers,
         ).raise_for_status()
 
+    def create_agent_revision(
+        self,
+        handle: str,
+        make_current: bool,
+        *,
+        reindex_corpora: bool = False,
+        metadata: Optional[Dict[str, str]] = None,
+        external_url: Optional[str] = None,
+        python_gzip_tarfile: Optional[BinaryIO] = None,
+    ) -> str:
+        """Creates a new Agent revision."""
+
+        mutation = gql(
+            """
+            mutation CreateAgentRevision(
+                $handle: String!,
+                $metadata: [RevisionMetadataKeyValuePairInput!]!,
+                $makeCurrent: Boolean!,
+                $externalDeployment: ExternalDeploymentInput,
+                $managedDeployment: ManagedDeploymentInput,
+                $reindexCorpora: Boolean!,
+            ) {
+                createAgentRevision(agentHandle: $handle, makeCurrent: $makeCurrent, revision: { 
+                    metadata: $metadata
+                    externalDeployment: $externalDeployment
+                    managedDeployment: $managedDeployment
+                }, reindexCorpora: $reindexCorpora) {
+                    revision {
+                        id
+                    }
+                }
+            }
+            """
+        )
+
+        with utils.patched_gql_file_uploader(
+            python_gzip_tarfile, "upload.tar.gz", "application/gzip"
+        ):
+            result = self._gqlclient.execute(
+                mutation,
+                variable_values={
+                    "handle": handle,
+                    "metadata": [
+                        {"key": key, "value": value} for key, value in metadata.items()
+                    ]
+                    if metadata
+                    else [],
+                    "makeCurrent": make_current,
+                    "reindexCorpora": reindex_corpora,
+                    "externalDeployment": {"url": external_url}
+                    if external_url
+                    else None,
+                    "managedDeployment": {
+                        "environment": "PYTHON",
+                        "codePackage": python_gzip_tarfile,
+                    }
+                    if python_gzip_tarfile
+                    else None,
+                },
+                upload_files=True,
+            )
+
+        revision_id = result["createAgentRevision"]["revision"]["id"]
+        assert isinstance(revision_id, str)
+        return revision_id
+
+    def get_current_agent_revision(self, handle: str) -> Optional[str]:
+        """Gets the current (active) revision of an agent."""
+
+        query = gql(
+            """
+            query GetRevisionId($handle: String!) {
+                agentByHandle(handle: $handle) {
+                    currentRevision {
+                        id
+                    }
+                }
+            }
+            """
+        )
+
+        response = self._gqlclient.execute(
+            query,
+            variable_values={"handle": handle},
+        )
+
+        revision = response["agentByHandle"]["currentRevision"]
+        return revision["id"] if revision is not None else None
+
+    def set_current_agent_revision(self, handle: str, revision_id: str):
+        """Sets the current (active) revision of an agent."""
+
+        mutation = gql(
+            """
+            mutation SetCurrentAgentRevision(
+                $handle: String!,
+                $currentRevisionId: ID!) {
+                updateAgent(
+                    agentData: {
+                        handle: $handle,
+                        currentRevisionId: $currentRevisionId
+                    }
+                ) {
+                    agent {
+                        agentId
+                    }
+                }
+            }
+            """
+        )
+
+        _ = self._gqlclient.execute(
+            mutation,
+            variable_values={"handle": handle, "currentRevisionId": revision_id},
+        )
+
+    def delete_agent_revision(self, handle: str, revision_id: str):
+        """Deletes an Agent revision."""
+
+        mutation = gql(
+            """
+            mutation DeleteRevision($handle: String!, $revisionId: ID!) {
+                deleteAgentRevision(agentHandle: $handle, revisionId: $revisionId) {
+                    agent {
+                        agentId
+                    }
+                }
+            }
+            """
+        )
+        _ = self._gqlclient.execute(
+            mutation, variable_values={"handle": handle, "revisionId": revision_id}
+        )
+
     def deploy_agent(
         self,
         handle: str,
@@ -222,9 +357,8 @@ class FixieClient:
             handle: The handle of the Agent to deploy. Must be owned by the current user.
             gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
         """
-        username = self.get_current_username()
-        requests.post(
-            f"{constants.FIXIE_DEPLOYMENT_URL}/{username}/{handle}",
-            headers=self._request_headers,
-            files={"agent.tar.gz": ("agent.tar.gz", gzip_tarfile, "application/gzip")},
-        ).raise_for_status()
+        return self.create_agent_revision(
+            handle,
+            make_current=True,
+            python_gzip_tarfile=gzip_tarfile,
+        )
