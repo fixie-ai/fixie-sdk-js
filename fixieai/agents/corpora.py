@@ -3,6 +3,7 @@ import dataclasses
 from typing import List, Optional
 
 import dataclasses_json.core
+from deprecated import deprecated
 from pydantic import dataclasses as pydantic_dataclasses
 
 
@@ -139,6 +140,14 @@ class CorpusResponse(dataclasses_json.DataClassJsonMixin):
     page: Optional[CorpusPage] = None
 
 
+@deprecated(reason="Use register_corpus_func for custom document loading.")
+@pydantic_dataclasses.dataclass
+class DocumentLoader:
+    """Deprecated. This doesn't do anything."""
+
+    name: str
+
+
 @pydantic_dataclasses.dataclass
 class UrlDocumentCorpus:
     """URL Document corpus for a Fixie CodeShot Agent."""
@@ -151,6 +160,8 @@ class UrlDocumentCorpus:
     """A list of wildcard patterns to exclude from crawled URLs (e.g., */no_crawl/*)."""
 
     auth_token_func: Optional[str] = None
+
+    loader: Optional[DocumentLoader] = None  # Deprecated.
 
 
 DocumentCorpus = UrlDocumentCorpus  # Deprecated: Prefer UrlDocumentCorpus
