@@ -9,6 +9,7 @@ from fixieai.agents.corpora import CorpusPage
 from fixieai.agents.corpora import CorpusPartition
 from fixieai.agents.corpora import CorpusRequest
 from fixieai.agents.corpora import CorpusResponse
+from fixieai.agents.corpora import CustomCorpus
 from fixieai.agents.corpora import DocumentCorpus
 from fixieai.agents.corpora import UrlDocumentCorpus
 from fixieai.agents.llm_settings import LlmSettings
@@ -27,6 +28,7 @@ __all__ = [
     "CorpusPartition",
     "CorpusRequest",
     "CorpusResponse",
+    "CustomCorpus",
     "DocumentCorpus",
     "Embed",
     "LlmSettings",

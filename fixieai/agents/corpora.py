@@ -140,6 +140,14 @@ class CorpusResponse(dataclasses_json.DataClassJsonMixin):
     page: Optional[CorpusPage] = None
 
 
+@pydantic_dataclasses.dataclass
+class CustomCorpus:
+    """A custom corpus for a Fixie CodeShot Agent. This uses a registered
+    corpus func to load documents from an arbitrary source."""
+
+    func_name: str
+
+
 @deprecated(reason="Use register_corpus_func for custom document loading.")
 @pydantic_dataclasses.dataclass
 class DocumentLoader:
