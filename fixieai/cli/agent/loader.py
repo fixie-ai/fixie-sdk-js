@@ -97,6 +97,7 @@ def uvicorn_app_factory():
     fastapi_app = impl.app()
     fastapi_app.add_middleware(openai_proxy.OpenAIProxyRequestTokenForwarderMiddleware)
 
+    # The CLI no longer uses this, but continue to honor it to preserve compatibility with CLI 0.2.x.
     if os.getenv("FIXIE_REFRESH_ON_STARTUP") == "true":
         fastapi_app.add_event_handler(
             "startup", functools.partial(_refresh_agent_async, config.handle)
