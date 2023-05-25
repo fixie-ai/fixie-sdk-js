@@ -4,7 +4,7 @@ from fixieai.agents import corpora
 
 
 def test_request_serialization():
-    request = corpora.CorpusRequest(partition="partition", continuation_token="token")
+    request = corpora.CorpusRequest(partition="partition", page_token="token")
     as_dict = request.to_dict()
     assert isinstance(as_dict, dict)
 

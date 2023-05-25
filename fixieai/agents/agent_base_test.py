@@ -20,7 +20,7 @@ CORPUS_RESPONSE_JSON = {
     "partitions": [
         {
             "partition": "newPartition",
-            "continuation_token": None,
+            "first_page_token": None,
         }
     ],
     "page": {
@@ -32,12 +32,12 @@ CORPUS_RESPONSE_JSON = {
                 "encoding": "UTF-8",
             }
         ],
-        "continuation_token": None,
+        "next_page_token": None,
     },
 }
 CORPUS_REQUEST_JSON = {
     "partition": "defaultPartition",
-    "continuation_token": "token",
+    "page_token": "token",
 }
 
 
