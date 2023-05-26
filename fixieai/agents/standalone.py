@@ -10,7 +10,6 @@ from fixieai.agents import agent_func
 from fixieai.agents import api
 from fixieai.agents import metadata
 from fixieai.agents import oauth
-from fixieai.agents import token
 
 
 class StandaloneAgent(agent_base.AgentBase):
@@ -35,7 +34,7 @@ class StandaloneAgent(agent_base.AgentBase):
         if isinstance(handle_message, agent_func.AgentFunc):
             self._handle_message: agent_func.AgentFunc = handle_message
         else:
-            self._handle_message = agent_func.AgentFunc.create(
+            self._handle_message = agent_func.AgentQueryFunc.create(
                 handle_message,
                 oauth_params,
                 default_message_type=api.Message,
@@ -65,11 +64,7 @@ class StandaloneAgent(agent_base.AgentBase):
         the previously specified `handle_message` function. Depending on the return
         value of that function, either a single or a streaming response is returned.
         """
-        token_claims = token.VerifiedTokenClaims.from_token(
-            credentials.credentials, self._jwks_client, self._allowed_agent_id
-        )
-        if token_claims is None:
-            raise fastapi.HTTPException(status_code=403, detail="Invalid token")
+        token_claims = super()._check_credentials(credentials)
 
         output = self._handle_message(query, token_claims)
         return fastapi.responses.StreamingResponse(

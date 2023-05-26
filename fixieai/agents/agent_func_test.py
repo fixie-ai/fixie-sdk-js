@@ -5,6 +5,7 @@ import pytest
 import fixieai
 from fixieai.agents import agent_func
 from fixieai.agents import api
+from fixieai.agents import corpora
 from fixieai.agents import oauth
 from fixieai.agents import token
 
@@ -20,7 +21,7 @@ def oauth_params():
     )
 
 
-def test_create_from_python_type_coercion(oauth_params):
+def test_create_query_func_from_python_type_coercion(oauth_params):
     def valid(
         expected: Optional[Iterable[api.AgentResponse]] = None,
         oauth_params=None,
@@ -28,7 +29,7 @@ def test_create_from_python_type_coercion(oauth_params):
         allow_generator=False,
     ):
         def _wrap(f):
-            normalized = agent_func.AgentFunc.create(
+            normalized = agent_func.AgentQueryFunc.create(
                 f, oauth_params, default_message_type, allow_generator
             )
             query_text = "Test query"
@@ -182,7 +183,7 @@ def test_create_from_python_type_coercion(oauth_params):
     ):
         def _wrap(f):
             with pytest.raises(exception_type, match=match):
-                agent_func.AgentFunc.create(
+                agent_func.AgentQueryFunc.create(
                     f, oauth_params, default_message_type, allow_generator
                 )
 
@@ -219,3 +220,88 @@ def test_create_from_python_type_coercion(oauth_params):
     @invalid(TypeError, "returns", allow_generator=True)
     def generator_invalid_generic() -> Generator[int, None, None]:
         yield 1
+
+
+def test_create_corpus_func_from_python_type_coercion():
+    REQUEST = corpora.CorpusRequest("part1", "pageToken")
+    RESPONSE = corpora.CorpusResponse(
+        [
+            corpora.CorpusPartition("part1"),
+            corpora.CorpusPartition("part2", "page0Token"),
+        ],
+        corpora.CorpusPage(
+            [corpora.CorpusDocument("doc1", "doc1Contents".encode())], "token"
+        ),
+    )
+
+    def valid():
+        def _wrap(f):
+            normalized = agent_func.AgentCorpusFunc.create(f)
+            result = normalized(
+                REQUEST,
+                token.VerifiedTokenClaims("test-agent-id", False, "FAKE_TOKEN"),
+            )
+            assert [RESPONSE] == list(result)
+
+        return _wrap
+
+    @valid()
+    def valid_no_arguments():
+        return RESPONSE
+
+    @valid()
+    def valid_untyped_query(query):
+        assert REQUEST == query
+        return RESPONSE
+
+    @valid()
+    def valid_untyped_request(request):
+        assert REQUEST == request
+        return RESPONSE
+
+    @valid()
+    def valid_untyped_gibberish(gibberish):
+        assert REQUEST == gibberish
+        return RESPONSE
+
+    @valid()
+    def valid_type_annotation(x: corpora.CorpusRequest):
+        assert REQUEST == x
+        return RESPONSE
+
+    def invalid(match: str):
+        def _wrap(f):
+            with pytest.raises(TypeError, match=match):
+                agent_func.AgentCorpusFunc.create(f)
+
+        return _wrap
+
+    @invalid("must have one or zero arguments")
+    def extra_argument_is_invalid(request, x):
+        ...
+
+    @invalid("query")
+    def invalid_type_annotation(query: int):
+        ...
+
+    @invalid("variable args")
+    def varargs_not_allowed(*query):
+        ...
+
+    @invalid("variable args")
+    def kwargs_not_allowed(**query):
+        ...
+
+    @invalid("returns")
+    def invalid_response_type(query) -> api.AgentResponse:
+        return api.AgentResponse(api.Message(query))
+
+    @invalid("returns")
+    def void_response_type(query) -> None:
+        return
+
+    @invalid("returns")
+    def invalid_response_type_generator() -> (
+        Generator[corpora.CorpusResponse, None, None]
+    ):
+        yield RESPONSE

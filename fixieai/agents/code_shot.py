@@ -59,7 +59,7 @@ class CodeShotAgent(agent_base.AgentBase):
         self,
         base_prompt: str,
         few_shots: Union[str, List[str]],
-        corpora: Optional[List[corpora.DocumentCorpus]] = None,
+        corpora: Optional[List[corpora.UrlDocumentCorpus]] = None,
         conversational: bool = False,
         oauth_params: Optional[oauth.OAuthParams] = None,
         llm_settings: Optional[llm_settings.LlmSettings] = None,
@@ -71,11 +71,19 @@ class CodeShotAgent(agent_base.AgentBase):
 
         self.base_prompt = base_prompt
         self.few_shots = few_shots
-        self.corpora = corpora
+        self.url_corpora = corpora
         self.conversational = conversational
         self.llm_settings = llm_settings
 
         utils.strip_prompt_lines(self)
+
+    @property
+    def corpora(self):
+        url_corpora = self.url_corpora or []
+        custom_corpora = [
+            corpora.CustomCorpus(func_name=f) for f in self._corpus_funcs.keys()
+        ]
+        return url_corpora + custom_corpora if url_corpora or custom_corpora else None
 
     def metadata(self) -> metadata.Metadata:
         return metadata.CodeShotAgentMetadata(
