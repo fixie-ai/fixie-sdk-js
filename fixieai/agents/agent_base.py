@@ -258,7 +258,7 @@ class AgentBase(abc.ABC):
         credentials: fastapi.security.HTTPAuthorizationCredentials = fastapi.Depends(
             fastapi.security.HTTPBearer()
         ),
-    ) -> corpora.CorpusResponse:
+    ) -> fastapi.responses.JSONResponse:
         """Verifies the request is a valid request from Fixie, and dispatches it to
         the appropriate corpus function.
         """
@@ -278,7 +278,11 @@ class AgentBase(abc.ABC):
 
         output = pyfunc(request, token_claims)
 
-        return next(iter(output))
+        result = next(iter(output))
+        # Use dataclasses_json instead of FastAPI's default json encoder. This
+        # allows us to use our own bytes encoder instead of the default, which
+        # always uses utf-8 and therefore wouldn't allow some characters.
+        return fastapi.responses.JSONResponse(result.to_dict())
 
     def _check_credentials(
         self, credentials: fastapi.security.HTTPAuthorizationCredentials
