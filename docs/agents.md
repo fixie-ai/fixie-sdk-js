@@ -8,7 +8,7 @@ See [Fixie Agent Python API](python-agent-api.md) for the full API reference.
 
 ## CodeShotAgent
 
-The base class for agents in Fixie is [`CodeShotAgent`][fixieai.agents.code_shot.codeshotagent]. This class handles communication with the Fixie platform via the [Agent Protocol](agent-protocol.md) and provides a simple API for registering functions that can be invoked by the few-shot examples used by the agent.
+The base class for agents in Fixie is [`CodeShotAgent`][fixieai.agents.code_shot.CodeShotAgent]. This class handles communication with the Fixie platform via the [Agent Protocol](agent-protocol.md) and provides a simple API for registering functions that can be invoked by the few-shot examples used by the agent.
 
 A typical `CodeShotAgent` structure looks like this:
 
@@ -56,19 +56,19 @@ def my_func(query, user_storage=None, oauth_handler=None):
     ...
 ```
 
-The `query` parameter is either a `str` or a [`Message`][fixieai.agents.api.message] object. If the query parameter is a string, this parameter contains the text of the agent query. If the query parameter is a `Message` object, this parameter contains the text of the agent along with zero or more [`Embed`][fixieai.agents.api.embed] objects, as described in the [Embeds](#embeds) section below.
+The `query` parameter is either a `str` or a [`Message`][fixieai.agents.api.Message] object. If the query parameter is a string, this parameter contains the text of the agent query. If the query parameter is a `Message` object, this parameter contains the text of the agent along with zero or more [`Embed`][fixieai.agents.api.Embed] objects, as described in the [Embeds](#embeds) section below.
 
 The optional `user_storage` parameter provides the Func an interface to the Fixie [User Storage](#user-storage) service, as described below.
 
 The optional `oauth_handler` parameter provides the Func an interface for performing OAuth authentication with external services, as described in the [OAuth](#agent-oauth-support) section below.
 
-The function must return either a `str` or a [`Message`][fixieai.agents.api.message] object. Returning a string is equivalent to returning a `Message` object with the string as its `text` field and no `embeds`.
+The function must return either a `str` or a [`Message`][fixieai.agents.api.Message] object. Returning a string is equivalent to returning a `Message` object with the string as its `text` field and no `embeds`.
 
 ## Embeds
 
 **Embeds** enable the association of arbitrary binary data with a query or response Message in Fixie, similar to email attachments. Embeds can be used to store images, videos, text, or any other binary data.
 
-Embeds are represented by the [`Embed`][fixieai.agents.api.embed] class. Agents can access the Embeds associated with a Message as follows:
+Embeds are represented by the [`Embed`][fixieai.agents.api.Embed] class. Agents can access the Embeds associated with a Message as follows:
 
 ```python
 @agent.register_func()
@@ -112,7 +112,7 @@ Note: It can take up to 10 minutes to index content, depending on the number of 
 
 ## User Storage
 
-Fixie agents can store and retrieve arbitrary data associated with a user using the [`UserStorage`][fixieai.agents.userstorage] class. This class provides a simple interface to a persistent key/value storage service, with a separate key/value store for each Fixie user. This can be used to maintain state about a particular user that persists across agent invocations.
+Fixie agents can store and retrieve arbitrary data associated with a user using the [`UserStorage`][fixieai.agents.user_storage.UserStorage] class. This class provides a simple interface to a persistent key/value storage service, with a separate key/value store for each Fixie user. This can be used to maintain state about a particular user that persists across agent invocations.
 
 The `UserStorage` instance for a given query can be obtained by providing a `user_storage` parameter to an agent function. The `UserStorage` object acts as a Python `dict` that stores state associated with an arbitrary string key. `UserStorage` values may consist of Python primitive types, such as `str`, `int`, `float`, `bool`, `None`, or `bytes`, as well as lists of these types, or a `dict` mapping a `str` to one of these types.
 
@@ -129,7 +129,7 @@ def my_func(query: fixieai.Message, user_storage: fixieai.UserStorage) -> str:
 
 Fixie Agents can authenticate to third-party services to perform actions on behalf of the user. This is done using OAuth 2.0, a standard protocol for authorization. OAuth 2.0 allows users to grant limited access to their accounts on one service, to another service, without having to share their password.
 
-Fixie provides a simple interface for agents to perform OAuth authentication, using the [`OAuthParams`][fixieai.agents.oauthparams] class. Using this class, an agent function can use the [`OAuthHandler`][fixieai.agents.oauthhandler] class, passed to the function as the `oauth_handler` parameter, to obtain an access token for the user.
+Fixie provides a simple interface for agents to perform OAuth authentication, using the [`OAuthParams`][fixieai.agents.oauth.OAuthParams] class. Using this class, an agent function can use the [`OAuthHandler`][fixieai.agents.oauth.OAuthHandler] class, passed to the function as the `oauth_handler` parameter, to obtain an access token for the user.
 
 ### OAuth Example
 
