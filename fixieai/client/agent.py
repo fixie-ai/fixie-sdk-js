@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from gql import gql
@@ -271,6 +272,9 @@ class Agent:
         if query_url is not None:
             variable_values["queryUrl"] = query_url
         if func_url is not None:
+            warnings.warn(
+                "Setting func_url via create_agent is deprecated, use FixieClient.create_agent_revision instead."
+            )
             variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
@@ -338,6 +342,9 @@ class Agent:
         if query_url is not None:
             variable_values["queryUrl"] = query_url
         if func_url is not None:
+            warnings.warn(
+                "Setting func_url via update_agent is deprecated, use FixieClient.create_agent_revision instead."
+            )
             variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
