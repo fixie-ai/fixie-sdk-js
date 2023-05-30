@@ -27,7 +27,7 @@ CORPUS_RESPONSE_JSON = {
         "documents": [
             {
                 "source_name": "doc1",
-                "content": "doc1Content",
+                "content": "ZG9jMUNvbnRlbnQ=",
                 "mime_type": "text/plain",
                 "encoding": "UTF-8",
             }
