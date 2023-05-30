@@ -64,7 +64,7 @@ def load_agent_from_path(
     elif isinstance(impl, agent_func.AgentFunc):
         agent_impl = agents.StandaloneAgent(impl)
     elif inspect.isfunction(impl):
-        func = agent_func.AgentFunc.create(
+        func = agent_func.AgentQueryFunc.create(
             impl, oauth_params=None, default_message_type=str, allow_generator=True
         )
         agent_impl = agents.StandaloneAgent(func)

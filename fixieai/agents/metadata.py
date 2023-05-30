@@ -20,7 +20,9 @@ class CodeShotAgentMetadata:
 
     base_prompt: str
     few_shots: List[str]
-    corpora: Optional[List[fixie_corpora.DocumentCorpus]] = None
+    corpora: Optional[
+        List[Union[fixie_corpora.UrlDocumentCorpus, fixie_corpora.CustomCorpus]]
+    ] = None
     conversational: bool = False
     response_model: Optional[llm_settings.LlmSettings] = None
     type: Literal["code_shot"] = "code_shot"

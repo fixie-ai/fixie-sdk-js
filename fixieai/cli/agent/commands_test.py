@@ -249,6 +249,8 @@ invalid URL
 
 
 def test_temporary_revision_replacer(mock_graphql):
+    """Tests the _temporary_revision_replacer context manager."""
+
     mock_graphql["GetRevisionId"] = unittest.mock.MagicMock()
     mock_graphql["CreateAgentRevision"] = unittest.mock.MagicMock()
     mock_graphql["DeleteRevision"] = unittest.mock.MagicMock()
@@ -261,8 +263,8 @@ def test_temporary_revision_replacer(mock_graphql):
         counter += 1
         return str(counter)
 
-    mock_graphql["GetRevisionId"].return_value = {
-        "agentByHandle": {"currentRevision": {"id": "0"}}
+    mock_graphql["GetRevisionId"].side_effect = lambda *_, **__: {
+        "agentByHandle": {"currentRevision": {"id": str(counter)}}
     }
     mock_graphql["CreateAgentRevision"].side_effect = lambda *_, **__: {
         "createAgentRevision": {"revision": {"id": next_revision_id()}}
@@ -272,6 +274,7 @@ def test_temporary_revision_replacer(mock_graphql):
     with commands._temporary_revision_replacer(
         mock_console, fixieai.FixieClient(), "testagent"
     ) as replacer:
+        # The first replacement should create a new revision.
         assert mock_graphql["CreateAgentRevision"].call_count == 0
         replacer("mock://mock.example.org")
         assert (
@@ -281,6 +284,8 @@ def test_temporary_revision_replacer(mock_graphql):
             == "mock://mock.example.org"
         )
         assert mock_graphql["DeleteRevision"].call_count == 0
+
+        # The second replacement should create a new revision and delete the previously created revision.
         replacer("mock://mock2.example.org")
         assert (
             mock_graphql["CreateAgentRevision"].call_args[1]["variable_values"][
@@ -293,8 +298,22 @@ def test_temporary_revision_replacer(mock_graphql):
             == "1"
         )
 
+    # When the context manager exits it should delete the last temporary revision and restore the initial revision.
+    assert (
+        mock_graphql["DeleteRevision"].call_args[1]["variable_values"]["revisionId"]
+        == "2"
+    )
+    assert (
+        mock_graphql["SetCurrentAgentRevision"].call_args[1]["variable_values"][
+            "currentRevisionId"
+        ]
+        == "0"
+    )
+
 
 def test_temporary_revision_replacer_no_current_revision(mock_graphql):
+    """Tests the _temporary_revision_replacer context manager when there is no current revision."""
+
     mock_graphql["GetRevisionId"] = unittest.mock.MagicMock()
     mock_graphql["CreateAgentRevision"] = unittest.mock.MagicMock()
     mock_graphql["DeleteRevision"] = unittest.mock.MagicMock()
@@ -327,7 +346,7 @@ def test_temporary_revision_replacer_no_current_revision(mock_graphql):
             == "mock://mock.example.org"
         )
 
-    # Exiting the context manager should delete the last revision.
+    # Exiting the context manager should delete the last revision, but there's no revision to restore.
     assert (
         mock_graphql["DeleteRevision"].call_args[1]["variable_values"]["revisionId"]
         == "1"

@@ -222,7 +222,18 @@ class FixieClient:
         external_url: Optional[str] = None,
         python_gzip_tarfile: Optional[BinaryIO] = None,
     ) -> str:
-        """Creates a new Agent revision."""
+        """Creates a new Agent revision.
+
+        Args:
+            handle: The handle of the Agent. Must be owned by the current user.
+            make_current: Whether the new revision should be made the current (active) revision.
+            reindex_corpora: Whether to reindex all corpora for the new revision.
+            metadata: Optional client-provided metadata to associate with the revision.
+            external_url: The URL at which the revision is hosted, if hosted externally.
+            python_gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+
+        Exactly one of `external_url` and `python_gzip_tarfile` must be provided.
+        """
 
         mutation = gql(
             """
