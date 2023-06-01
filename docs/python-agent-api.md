@@ -8,6 +8,10 @@
     options:
       show_source: true
 
+## ::: fixieai.agents.corpora
+    options:
+      show_source: true
+
 ## ::: fixieai.agents.oauth
     options:
       show_source: true

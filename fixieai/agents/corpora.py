@@ -12,15 +12,16 @@ class CorpusRequest(dataclasses_json.DataClassJsonMixin):
     """A request for some piece of the agent's corpus.
 
     In addition to returning documents, each response may expand the corpus
-    space in one or both of two dimensions:
-        Responses may include new partitions to be loaded. Partitions are
-            non-overlapping subsets of a corpus which may be loaded in parallel
-            by Fixie. A response's new partitions will be ignored if previously
-            included in another response.
-        When a response includes a page of documents, that page may indicate
-            that another page is available in the same partition. Pages are
-            always loaded serially in order. The partition is completed when
-            a response has a page with no next_page_token.
+    space in one or both of two dimensions: new partitions and next pages.
+
+    Partitions are non-overlapping subsets of a corpus which may be loaded in
+    parallel by Fixie. A response's new partitions will be ignored if
+    previously included in another response.
+
+    When a response includes a page of documents, that page may indicate that
+    another page is available in the same partition. Pages are always loaded
+    serially in order. The partition is completed when a response has a page
+    with no next_page_token.
 
     Agents will always receive a first request with the default (unnamed)
     partition and no page_token. Subsequent requests depend on prior responses
@@ -28,10 +29,13 @@ class CorpusRequest(dataclasses_json.DataClassJsonMixin):
 
     Examples:
         Simple handful of documents:
+
             When receiving the initial request, the agent responds with a page
             of documents. This could include a next_page_token for more
             documents in the single default partition if needed.
+
         Web crawl:
+
             Each URL corresponds to a partition and the agent never returns
             tokens. The initial response only includes partitions, one for each
             root URL to crawl. Each subsequent request includes the partition
@@ -41,7 +45,9 @@ class CorpusRequest(dataclasses_json.DataClassJsonMixin):
             response also contains those URLs as new partitions. The process
             repeats for all partitions until there are no known incomplete
             partitions or until crawl limits are reached.
+
         Database:
+
             Consider a database with a parent table keyed by parent_id and an
             interleaved child table keyed by (parent_id, child_id) whose rows
             correspond to corpus documents. This agent will use tokens that
@@ -66,7 +72,7 @@ class CorpusRequest(dataclasses_json.DataClassJsonMixin):
                 work and would be an effective way to limit parallelism if
                 desired.
 
-    Args:
+    Attributes:
         partition: The partition of the corpus that should be read. This will
             be empty for the initial request, indicating the default partition.
             For subsequent requests, it will either be the name of a partition

@@ -4,7 +4,7 @@
 
 One of the most popular use cases for LLMs is doing question answering (Q/A) over a large corpus of unstructured data.
 
-Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval.
+Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval. For data sets that aren't easily available to a web crawler, Fixie also supports [custom corpora](#custom-corpora).
 
 To get started, let's look at a simple [CodeShotAgent](/agents/#CodeShotAgent) that answers questions about Python:
 
@@ -84,6 +84,58 @@ agent = fixieai.CodeShotAgent(BASE_PROMPT, [], CORPORA, conversational=True)
 def auth():
     return "12345"
 ```
+
+## Custom Corpora
+
+If web crawling isn't a good fit for your use case, you can register a corpus function to load documents any way you need to. This allows for reading a private database for example.
+
+```python
+import fixieai
+from datetime import datetime
+
+BASE_PROMPT = """I am a helpful assistant that can answer questions \
+  about the contents of MyDatabase. I try to be as concise as possible \
+  in my answers while still effectively answering the question."""
+
+agents = fixieai.CodeShotAgent(BASE_PROMPT, [], conversational=True)
+
+class MyDatabasePageToken:
+    read_timestamp: datetime
+    offset: int = 0
+
+    def encode(self) -> str:
+        # Serialize to a utf-8 encoded string
+        pass
+
+    @staticmethod
+    def decode(token: str) -> MyDatabasePageToken:
+        # Undo encode
+        pass
+
+PAGE_SIZE = 20
+
+@agent.register_corpus_func
+def load_my_database(request: fixieai.CorpusRequest) -> fixie.CorpusResponse:
+    if not request.partition:
+        initial_read = db_client.read("MyTopLevelTable", keys_only=True)
+        first_page_token = MyDatabasePageToken(initial_read.timestamp())
+        partition_names = [row.key for row in initial_read.results]
+        return fixieai.CorpusResponse(partitions=[fixieai.CorpusPartition(name, first_page_token) for name in partition_names])
+    else:
+        top_level_key = request.partition
+        token = MyDatabasePageToken.decode(request.page_token)
+        offset = token.offset * PAGE_SIZE
+        read = db_client.read("MyNestedTable", parent_key=top_level_key, limit=PAGE_SIZE, offset=offset, read_timestamp=token.read_timestamp)
+        docs = [fixie.CorpusDocument(row.key, row.my_column) for row in read.results]
+        if read.has_more_results():
+            token.offset += 1
+            next_page_token = token.encode()
+        else:
+            next_page_token = None
+        return fixieai.CorpusResponse(page=fixieai.CorpusPage(docs, next_page_token))
+```
+
+This example assumes an easily partitionable database with columns that already have text data, but there are way more options available. See [CorpusRequest][fixieai.agents.corpora.CorpusRequest] for more details.
 
 ## Using Fewshots with Docs
 
