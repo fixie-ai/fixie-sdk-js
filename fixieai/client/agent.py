@@ -35,6 +35,7 @@ class Agent:
         if "/" in agent_id:
             self._owner, self._handle = agent_id.split("/")
         else:
+            self._owner = self._client.get_current_username()
             self._handle = agent_id
 
         self._metadata: Optional[Dict[str, Any]] = None
@@ -107,10 +108,12 @@ class Agent:
 
     @property
     def owner(self) -> Optional[str]:
-        """Return the owner of this Agent."""
+        """Return the owner of this Agent, which is either a username or an Organization handle."""
         if self._metadata is None:
             return None
-        owner_username = self._metadata["owner"]["username"]
+        owner_username = self._metadata["owner"].get("username") or self._metadata[
+            "owner"
+        ].get("handle")
         assert owner_username is None or isinstance(owner_username, str)
         return owner_username
 
@@ -156,70 +159,42 @@ class Agent:
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
-
-        if self._owner is None:
-            # Query by handle.
-            query = gql(
-                """
-                query getAgentByHandle($handle: String!) {
-                    agentByHandle(handle: $handle) {
-                        agentId
-                        handle
-                        name
-                        description
-                        queries
-                        moreInfoUrl
-                        published
-                        owner {
-                            username
-                        }
-                        queryUrl
-                        funcUrl
-                        created
-                        modified
-                    }
-                }
+        query = gql(
             """
-            )
-            result = self._gqlclient.execute(
-                query, variable_values={"handle": self._handle}
-            )
-            if "agentByHandle" not in result or result["agentByHandle"] is None:
-                raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-            agent_dict = result["agentByHandle"]
-
-        else:
-            # Query by agent ID.
-            query = gql(
-                """
-                query getAgentById($agentId: String!) {
-                    agentById(agentId: $agentId) {
-                        agentId
-                        handle
-                        name
-                        description
-                        queries
-                        moreInfoUrl
-                        published
-                        owner {
-                            username
+            query getAgentById($agentId: String!) {
+                agentById(agentId: $agentId) {
+                    agentId
+                    handle
+                    name
+                    description
+                    queries
+                    moreInfoUrl
+                    published
+                    owner {
+                        __typename
+                        ... on User {
+                            usernamer
                         }
-                        queryUrl
-                        funcUrl
-                        created
-                        modified
+                        ... on Organization {
+                            handle
+                        }
                     }
+                    queryUrl
+                    funcUrl
+                    created
+                    modified
                 }
-            """
+            }
+        """
+        )
+        result = self._gqlclient.execute(
+            query, variable_values={"agentId": f"{self._owner}/{self._handle}"}
+        )
+        if "agentById" not in result or result["agentById"] is None:
+            raise ValueError(
+                f"Cannot fetch agent metadata for {self._owner}/{self._handle}"
             )
-            result = self._gqlclient.execute(
-                query, variable_values={"agentId": f"{self._owner}/{self._handle}"}
-            )
-            if "agentById" not in result or result["agentById"] is None:
-                raise ValueError(
-                    f"Cannot fetch agent metadata for {self._owner}/{self._handle}"
-                )
-            agent_dict = result["agentById"]
+        agent_dict = result["agentById"]
 
         assert isinstance(agent_dict, dict) and all(
             isinstance(k, str) for k in agent_dict.keys()

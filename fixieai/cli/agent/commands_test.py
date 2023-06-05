@@ -69,7 +69,7 @@ def mock_graphql(mocker):
             "GetSampleQueries": {
                 "agentById": {"queries": ["Why did the chicken cross the road?"]}
             },
-            "GetRevisionId": {"agentByHandle": {"currentRevision": {"id": "FAKEID"}}},
+            "GetRevisionId": {"agentById": {"currentRevision": {"id": "FAKEID"}}},
             "DeleteRevision": {
                 "deleteAgentRevision": {"agent": {"agentId": "testuser/testagent"}}
             },
@@ -264,7 +264,7 @@ def test_temporary_revision_replacer(mock_graphql):
         return str(counter)
 
     mock_graphql["GetRevisionId"].side_effect = lambda *_, **__: {
-        "agentByHandle": {"currentRevision": {"id": str(counter)}}
+        "agentById": {"currentRevision": {"id": str(counter)}}
     }
     mock_graphql["CreateAgentRevision"].side_effect = lambda *_, **__: {
         "createAgentRevision": {"revision": {"id": next_revision_id()}}
@@ -327,7 +327,7 @@ def test_temporary_revision_replacer_no_current_revision(mock_graphql):
         return str(counter)
 
     mock_graphql["GetRevisionId"].return_value = {
-        "agentByHandle": {"currentRevision": None}
+        "agentById": {"currentRevision": None}
     }
     mock_graphql["CreateAgentRevision"].side_effect = lambda *_, **__: {
         "createAgentRevision": {"revision": {"id": next_revision_id()}}
