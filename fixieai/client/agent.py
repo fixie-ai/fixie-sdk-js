@@ -341,8 +341,8 @@ class Agent:
         """Delete this Agent."""
         query = gql(
             """
-            mutation DeleteAgent($handle: String!) {
-                deleteAgent(handle: $handle) {
+            mutation DeleteAgent($owner: String!, $handle: String!) {
+                deleteAgent(agentData: {owner: $owner, handle: $handle}) {
                     agent {
                         handle
                     }
@@ -350,4 +350,6 @@ class Agent:
             }
         """
         )
-        _ = self._gqlclient.execute(query, variable_values={"handle": self._handle})
+        _ = self._gqlclient.execute(
+            query, variable_values={"owner": self.owner, "handle": self._handle}
+        )
