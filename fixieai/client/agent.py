@@ -172,10 +172,10 @@ class Agent:
                     published
                     owner {
                         __typename
-                        ... on User {
-                            usernamer
+                        ... on UserType {
+                            username
                         }
-                        ... on Organization {
+                        ... on OrganizationType {
                             handle
                         }
                     }
