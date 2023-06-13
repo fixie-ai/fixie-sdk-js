@@ -175,7 +175,7 @@ class FixieClient:
         return Session(self, session_id)
 
     def get_current_user(self) -> Dict[str, Any]:
-        """Returns the username of the current user."""
+        """Returns the user metadata of the current user."""
         query = gql(
             """
             query getUsername {
@@ -185,6 +185,7 @@ class FixieClient:
                     lastName
                     email
                     organization {
+                        handle
                         name
                     }
                     dailyQueryLimit
@@ -291,11 +292,11 @@ class FixieClient:
 
     def get_current_agent_revision(self, handle: str) -> Optional[str]:
         """Gets the current (active) revision of an agent."""
-
+        agent = self.get_agent(handle)
         query = gql(
             """
-            query GetRevisionId($handle: String!) {
-                agentByHandle(handle: $handle) {
+            query GetRevisionId($agentId: String!) {
+                agentById(agentId: $agentId) {
                     currentRevision {
                         id
                     }
@@ -306,10 +307,10 @@ class FixieClient:
 
         response = self._gqlclient.execute(
             query,
-            variable_values={"handle": handle},
+            variable_values={"agentId": agent.agent_id},
         )
 
-        revision = response["agentByHandle"]["currentRevision"]
+        revision = response["agentById"]["currentRevision"]
         return revision["id"] if revision is not None else None
 
     def set_current_agent_revision(self, handle: str, revision_id: str):

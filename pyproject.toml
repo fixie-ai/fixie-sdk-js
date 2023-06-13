@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fixieai"
-version = "0.2.24"
+version = "1.0.0"
 description = "SDK for the Fixie.ai platform. See: https://fixie.ai"
 authors = ["Fixie.ai Team <hello@fixie.ai>"]
 packages = [
@@ -36,6 +36,7 @@ packaging = "^23.0"
 wrapt = "^1.15.0"
 watchfiles = "^0.19.0"
 Deprecated = "^1.2.13"
+types-Deprecated = "^1.2.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.3"
