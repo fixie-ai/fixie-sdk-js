@@ -255,6 +255,8 @@ def show_agent(ctx, agent_id: str):
     click.echo(f"Modified: {agent.modified}")
     if agent.queries:
         click.echo(f"Queries: {agent.queries}")
+    current_revision = client.get_current_agent_revision(agent_id)
+    click.echo(f"Current revision: {current_revision}")
 
 
 @agent.command("delete", help="Delete an agent.")
@@ -377,7 +379,9 @@ def _temporary_revision_replacer(
     """Yields a function that can be used to temporarily replace an agent's current revision."""
 
     # Get the preexisting revision so that we can restore it when we're done.
-    existing_revision_id = client.get_current_agent_revision(agent_handle)
+    existing_revision_id = client.get_current_agent_revision(
+        client.get_current_username() + "/" + agent_handle
+    )
     current_temporary_revision: Optional[str] = None
 
     if existing_revision_id is not None:
@@ -1013,7 +1017,9 @@ def delete_revision(ctx, path, id, force):
 
     client: fixieai.FixieClient = ctx.obj.client
 
-    current_revision = client.get_current_agent_revision(config.handle)
+    current_revision = client.get_current_agent_revision(
+        client.get_current_username() + "/" + config.handle
+    )
     if current_revision == id:
         if not force:
             console.print(
