@@ -721,7 +721,7 @@ def _agent_js_code_package(agent_dir: str):
         with open(package_json_path) as package_json_file:
             package_json = json.load(package_json_file)
         tarball_path = os.path.join(
-            tarball_dir, package_json["name"] + "-" + package_json["version"] + ".tgz"
+            tarball_dir, f"{package_json['name']}-{package_json['version']}.tgz"
         )
         subprocess.check_call(["npm", "pack", agent_path], cwd=tarball_dir)
         tarball_file = open(tarball_path, "rb")
