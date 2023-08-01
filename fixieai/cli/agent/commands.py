@@ -1,6 +1,7 @@
 import contextlib
 import functools
 import io
+import json
 import os
 import pathlib
 import random
@@ -591,7 +592,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
                 agent_dir,
                 startup_timeout_seconds=10.0,
             ) as popen:
-
                 # The server has started up, so we can replace the revision.
                 replace_revision(current_url)
 
@@ -682,7 +682,9 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
 
 
 @contextlib.contextmanager
-def _agent_code_package(agent_dir: str, agent_id: str, console: rich_console.Console):
+def _agent_py_code_package(
+    agent_dir: str, agent_id: str, console: rich_console.Console
+):
     """Yields a file-like code package that can be deployed to Fixie."""
 
     with tempfile.TemporaryFile() as tarball_file:
@@ -708,6 +710,21 @@ def _agent_code_package(agent_dir: str, agent_id: str, console: rich_console.Con
             )
 
         tarball_file.seek(0)
+        yield tarball_file
+
+
+@contextlib.contextmanager
+def _agent_js_code_package(agent_dir: str):
+    agent_path = os.path.abspath(agent_dir)
+    with tempfile.TemporaryDirectory() as tarball_dir:
+        package_json_path = os.path.join(agent_path, "package.json")
+        with open(package_json_path) as package_json_file:
+            package_json = json.load(package_json_file)
+        tarball_path = os.path.join(
+            tarball_dir, f"{package_json['name']}-{package_json['version']}.tgz"
+        )
+        subprocess.check_call(["npm", "pack", agent_path], cwd=tarball_dir)
+        tarball_file = open(tarball_path, "rb")
         yield tarball_file
 
 
@@ -772,7 +789,9 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
     console.print(f"🦊 Deploying agent [green]{agent_id}[/]...")
 
     agent_dir = os.path.dirname(path) or "."
-    if validate:
+    package_json_path = os.path.join(agent_dir, "package.json")
+    is_js_agent = os.path.exists(package_json_path)
+    if validate and not is_js_agent:
         # Validate that the agent loads in a virtual environment before deploying.
         python_exe, agent_env = _configure_venv(console, agent_dir)
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
@@ -786,16 +805,30 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
 
     if config.deployment_url is None:
         # Deploy the code to Fixie.
-        with _agent_code_package(
-            agent_dir, agent_id, console
-        ) as tarball_file, _spinner(console, "Deploying..."):
-            revision_id = client.create_agent_revision(
-                config.handle,
-                make_current=make_current,
-                metadata=metadata_dict,
-                python_gzip_tarfile=tarball_file,
-                reindex_corpora=reindex,
-            )
+        if is_js_agent:
+            with _agent_js_code_package(agent_dir) as tarball_file, _spinner(
+                console, "Deploying..."
+            ):
+                revision_id = client.create_agent_revision(
+                    config.handle,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
+                    environment=fixieai.client.FixieEnvironment.NODEJS,
+                )
+        else:
+            with _agent_py_code_package(
+                agent_dir, agent_id, console
+            ) as tarball_file, _spinner(console, "Deploying..."):
+                revision_id = client.create_agent_revision(
+                    config.handle,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
+                    environment=fixieai.client.FixieEnvironment.PYTHON,
+                )
     else:
         # Create a new revision with the specified URL.
         with _spinner(console, "Deploying..."):

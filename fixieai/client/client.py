@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import logging
 from typing import Any, BinaryIO, Dict, List, Optional
 
@@ -14,6 +15,12 @@ from fixieai import constants
 from fixieai.client import utils
 from fixieai.client.agent import Agent
 from fixieai.client.session import Session
+
+
+class FixieEnvironment(enum.Enum):
+    PYTHON = "PYTHON"
+    NODEJS = "NODEJS"
+
 
 _CLIENT: Optional["FixieClient"] = None
 _SESSION: Optional[Session] = None
@@ -221,7 +228,8 @@ class FixieClient:
         reindex_corpora: bool = False,
         metadata: Optional[Dict[str, str]] = None,
         external_url: Optional[str] = None,
-        python_gzip_tarfile: Optional[BinaryIO] = None,
+        gzip_tarfile: Optional[BinaryIO] = None,
+        environment: FixieEnvironment = FixieEnvironment.PYTHON,
     ) -> str:
         """Creates a new Agent revision.
 
@@ -231,9 +239,10 @@ class FixieClient:
             reindex_corpora: Whether to reindex all corpora for the new revision.
             metadata: Optional client-provided metadata to associate with the revision.
             external_url: The URL at which the revision is hosted, if hosted externally.
-            python_gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+            gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+            environment: The environment in which the revision should be run.
 
-        Exactly one of `external_url` and `python_gzip_tarfile` must be provided.
+        Exactly one of `external_url` and `gzip_tarfile` must be provided.
         """
 
         mutation = gql(
@@ -260,7 +269,7 @@ class FixieClient:
         )
 
         with utils.patched_gql_file_uploader(
-            python_gzip_tarfile, "upload.tar.gz", "application/gzip"
+            gzip_tarfile, "upload.tar.gz", "application/gzip"
         ):
             result = self._gqlclient.execute(
                 mutation,
@@ -277,10 +286,10 @@ class FixieClient:
                     if external_url
                     else None,
                     "managedDeployment": {
-                        "environment": "PYTHON",
-                        "codePackage": python_gzip_tarfile,
+                        "environment": environment,
+                        "codePackage": gzip_tarfile,
                     }
-                    if python_gzip_tarfile
+                    if gzip_tarfile
                     else None,
                 },
                 upload_files=True,
@@ -359,9 +368,7 @@ class FixieClient:
         )
 
     def deploy_agent(
-        self,
-        handle: str,
-        gzip_tarfile: BinaryIO,
+        self, handle: str, gzip_tarfile: BinaryIO, environment: FixieEnvironment
     ):
         """Deploys an agent implementation.
 
@@ -372,5 +379,6 @@ class FixieClient:
         return self.create_agent_revision(
             handle,
             make_current=True,
-            python_gzip_tarfile=gzip_tarfile,
+            gzip_tarfile=gzip_tarfile,
+            environment=environment,
         )
