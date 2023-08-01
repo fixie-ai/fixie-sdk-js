@@ -18,6 +18,7 @@ from fixieai.agents import StandaloneAgent
 from fixieai.agents import UrlDocumentCorpus
 from fixieai.agents import UserStorage
 from fixieai.client import FixieClient
+from fixieai.client import FixieEnvironment
 from fixieai.client import get_agents
 from fixieai.client import get_client
 from fixieai.client import get_embeds
@@ -42,6 +43,7 @@ __all__ = [
     "UrlDocumentCorpus",
     "UserStorage",
     "FixieClient",
+    "FixieEnvironment",
     "get_agents",
     "get_client",
     "get_embeds",
