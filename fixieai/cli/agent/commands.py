@@ -811,7 +811,7 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
                     config.handle,
                     make_current=make_current,
                     metadata=metadata_dict,
-                    javascript_gzip_tarfile=tarball_file,
+                    python_gzip_tarfile=tarball_file,
                     reindex_corpora=reindex,
                 )
         else:
