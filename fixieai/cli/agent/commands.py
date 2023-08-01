@@ -717,12 +717,17 @@ def _agent_py_code_package(
 def _agent_js_code_package(
     agent_dir: str, agent_id: str, console: rich_console.Console
 ):
-    package_json_path = os.path.join(agent_dir, "package.json")
-    with open(package_json_path) as package_json_file:
-        package_json = json.load(package_json_file)
-    tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
-    subprocess.check_call(["npm", "pack"], cwd=agent_dir)
-    tarball_file = open(tgz_name, "rb")
+    with tempfile.TemporaryDirectory as tarball_dir:
+        print("tarball dir", tarball_dir)
+        package_json_path = os.path.join(agent_dir, "package.json")
+        with open(package_json_path) as package_json_file:
+            package_json = json.load(package_json_file)
+        tarball_path = os.path.join(
+            tarball_dir, package_json["name"] + "-" + package_json["version"] + ".tgz"
+        )
+        subprocess.check_call(["npm", "pack", agent_dir], cwd=tarball_dir)
+        print("tb path", tarball_path)
+        tarball_file = open(tarball_path, "rb")
     yield tarball_file
 
 
