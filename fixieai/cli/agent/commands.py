@@ -718,7 +718,8 @@ def _agent_js_code_package(
     agent_dir: str, agent_id: str, console: rich_console.Console
 ):
     package_json_path = os.path.join(agent_dir, "package.json")
-    package_json = json.load(package_json_path)
+    with open(package_json_path) as package_json_file:
+        package_json = json.load(package_json_file)
     tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
     subprocess.check_call(["npm", "pack"], cwd=agent_dir)
     tarball_file = open(tgz_name, "rb")
