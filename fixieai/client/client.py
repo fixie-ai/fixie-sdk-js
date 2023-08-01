@@ -261,7 +261,7 @@ class FixieClient:
         )
 
         with utils.patched_gql_file_uploader(
-            python_gzip_tarfile, "upload.tar.gz", "application/gzip"
+            gzip_tarfile, "upload.tar.gz", "application/gzip"
         ):
             result = self._gqlclient.execute(
                 mutation,
@@ -359,11 +359,7 @@ class FixieClient:
             mutation, variable_values={"handle": handle, "revisionId": revision_id}
         )
 
-    def deploy_agent(
-        self,
-        handle: str,
-        gzip_tarfile: BinaryIO,
-    ):
+    def deploy_agent(self, handle: str, gzip_tarfile: BinaryIO, environment: str):
         """Deploys an agent implementation.
 
         Args:
@@ -373,5 +369,6 @@ class FixieClient:
         return self.create_agent_revision(
             handle,
             make_current=True,
-            python_gzip_tarfile=gzip_tarfile,
+            gzip_tarfile=gzip_tarfile,
+            environment=environment,
         )
