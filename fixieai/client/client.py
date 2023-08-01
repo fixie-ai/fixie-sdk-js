@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import logging
 from typing import Any, BinaryIO, Dict, List, Optional
 
@@ -14,6 +15,12 @@ from fixieai import constants
 from fixieai.client import utils
 from fixieai.client.agent import Agent
 from fixieai.client.session import Session
+
+
+class FixieEnvironment(enum.Enum):
+    PYTHON = "PYTHON"
+    NODEJS = "NODEJS"
+
 
 _CLIENT: Optional["FixieClient"] = None
 _SESSION: Optional[Session] = None
@@ -222,7 +229,7 @@ class FixieClient:
         metadata: Optional[Dict[str, str]] = None,
         external_url: Optional[str] = None,
         gzip_tarfile: Optional[BinaryIO] = None,
-        environment: str = "PYTHON",
+        environment: FixieEnvironment = FixieEnvironment.PYTHON,
     ) -> str:
         """Creates a new Agent revision.
 
@@ -233,7 +240,7 @@ class FixieClient:
             metadata: Optional client-provided metadata to associate with the revision.
             external_url: The URL at which the revision is hosted, if hosted externally.
             gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
-            environment: The environment in which the revision should be run. Must be one of "PYTHON" or "NODEJS".
+            environment: The environment in which the revision should be run.
 
         Exactly one of `external_url` and `gzip_tarfile` must be provided.
         """

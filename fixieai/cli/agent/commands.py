@@ -725,7 +725,7 @@ def _agent_js_code_package(agent_dir: str):
         )
         subprocess.check_call(["npm", "pack", agent_path], cwd=tarball_dir)
         tarball_file = open(tarball_path, "rb")
-    yield tarball_file
+        yield tarball_file
 
 
 @agent.command("deploy", help="Deploy the current agent.")
@@ -815,7 +815,7 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
                     metadata=metadata_dict,
                     gzip_tarfile=tarball_file,
                     reindex_corpora=reindex,
-                    environment="NODEJS",
+                    environment=fixieai.client.FixieEnvironment.NODEJS,
                 )
         else:
             with _agent_py_code_package(
@@ -827,7 +827,7 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
                     metadata=metadata_dict,
                     gzip_tarfile=tarball_file,
                     reindex_corpora=reindex,
-                    environment="PYTHON",
+                    environment=fixieai.client.FixieEnvironment.PYTHON,
                 )
     else:
         # Create a new revision with the specified URL.
