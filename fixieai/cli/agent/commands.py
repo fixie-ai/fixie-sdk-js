@@ -811,8 +811,9 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
                     config.handle,
                     make_current=make_current,
                     metadata=metadata_dict,
-                    python_gzip_tarfile=tarball_file,
+                    gzip_tarfile=tarball_file,
                     reindex_corpora=reindex,
+                    environment="NODEJS",
                 )
         else:
             with _agent_py_code_package(
@@ -822,8 +823,9 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
                     config.handle,
                     make_current=make_current,
                     metadata=metadata_dict,
-                    python_gzip_tarfile=tarball_file,
+                    gzip_tarfile=tarball_file,
                     reindex_corpora=reindex,
+                    environment="PYTHON",
                 )
     else:
         # Create a new revision with the specified URL.

@@ -221,7 +221,8 @@ class FixieClient:
         reindex_corpora: bool = False,
         metadata: Optional[Dict[str, str]] = None,
         external_url: Optional[str] = None,
-        python_gzip_tarfile: Optional[BinaryIO] = None,
+        gzip_tarfile: Optional[BinaryIO] = None,
+        environment: str = "PYTHON",
     ) -> str:
         """Creates a new Agent revision.
 
@@ -231,7 +232,7 @@ class FixieClient:
             reindex_corpora: Whether to reindex all corpora for the new revision.
             metadata: Optional client-provided metadata to associate with the revision.
             external_url: The URL at which the revision is hosted, if hosted externally.
-            python_gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+            gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
 
         Exactly one of `external_url` and `python_gzip_tarfile` must be provided.
         """
@@ -277,10 +278,10 @@ class FixieClient:
                     if external_url
                     else None,
                     "managedDeployment": {
-                        "environment": "PYTHON",
-                        "codePackage": python_gzip_tarfile,
+                        "environment": environment,
+                        "codePackage": gzip_tarfile,
                     }
-                    if python_gzip_tarfile
+                    if gzip_tarfile
                     else None,
                 },
                 upload_files=True,
