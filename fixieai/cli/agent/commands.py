@@ -598,7 +598,7 @@ def deploy(ctx, path, metadata_only, public, validate):
                         tarball,
                     )
                     tarball_file.seek(0)
-                    with _spinner(console, "Deploying..."):
+                    with _spinner(console, "Deploying Python..."):
                         ctx.obj.client.deploy_agent(
                             config.handle,
                             tarball_file,
@@ -608,7 +608,7 @@ def deploy(ctx, path, metadata_only, public, validate):
             tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
             subprocess.check_call(["npm", "pack"], cwd=agent_dir)
             tarball_file = open(tgz_name, "rb")
-            with _spinner(console, "Deploying..."):
+            with _spinner(console, "Deploying JS..."):
                 ctx.obj.client.deploy_agent(
                     config.handle,
                     tarball_file,
