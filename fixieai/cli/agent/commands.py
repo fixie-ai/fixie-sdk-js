@@ -780,8 +780,10 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
         )
     if public:
         config.public = True
+
     client: fixieai.FixieClient = ctx.obj.client
     agent_id = f"{client.get_current_username()}/{config.handle}"
+    console.print(f"🦊 Deploying agent [green]{agent_id}[/]...")
 
     agent_dir = os.path.dirname(path) or "."
     package_json_path = os.path.join(agent_dir, "package.json")
