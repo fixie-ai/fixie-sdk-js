@@ -233,8 +233,9 @@ class FixieClient:
             metadata: Optional client-provided metadata to associate with the revision.
             external_url: The URL at which the revision is hosted, if hosted externally.
             gzip_tarfile: A file-like of a gzip-compressed tarfile containing the files to deploy.
+            environment: The environment in which the revision should be run. Must be one of "PYTHON" or "NODEJS".
 
-        Exactly one of `external_url` and `python_gzip_tarfile` must be provided.
+        Exactly one of `external_url` and `gzip_tarfile` must be provided.
         """
 
         mutation = gql(
