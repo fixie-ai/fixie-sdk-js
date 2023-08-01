@@ -717,7 +717,7 @@ def _agent_py_code_package(
 def _agent_js_code_package(
     agent_dir: str, agent_id: str, console: rich_console.Console
 ):
-    with tempfile.TemporaryDirectory as tarball_dir:
+    with tempfile.TemporaryDirectory() as tarball_dir:
         print("tarball dir", tarball_dir)
         package_json_path = os.path.join(agent_dir, "package.json")
         with open(package_json_path) as package_json_file:
