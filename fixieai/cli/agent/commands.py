@@ -7,11 +7,13 @@ import pathlib
 import random
 import re
 import shlex
+import socket
 import subprocess
 import sys
 import tarfile
 import tempfile
 import threading
+import time
 import urllib.request
 import venv
 from contextlib import contextmanager
@@ -19,7 +21,10 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 import rich.console as rich_console
+import rich.table
 import validators
+import watchfiles
+from gql import gql
 
 import fixieai.client
 from fixieai import constants
@@ -54,6 +59,15 @@ def _slugify(s: str) -> str:
     s = re.sub(r"[\s_-]+", "-", s)
     s = s.strip("-")
     return s
+
+
+def _cli_revision_metadata(command: str) -> dict:
+    """Returns common agent revision metadata for CLI-created revisions."""
+    return {
+        "fixie.ai/client": "python-cli",
+        "fixie.ai/python-cli/command": command,
+        "fixie.ai/python-cli/version": fixieai.__version__,
+    }
 
 
 def _update_agent_requirements(
@@ -238,14 +252,12 @@ def show_agent(ctx, agent_id: str):
     if agent.more_info_url:
         click.echo(f"More info URL: {agent.more_info_url}")
     click.echo(f"Published: {agent.published}")
-    if agent.func_url:
-        click.echo(f"Func URL: {agent.func_url}")
-    if agent.query_url:
-        click.echo(f"Query URL: {agent.query_url}")
     click.echo(f"Created: {agent.created}")
     click.echo(f"Modified: {agent.modified}")
     if agent.queries:
         click.echo(f"Queries: {agent.queries}")
+    current_revision = client.get_current_agent_revision(agent_id)
+    click.echo(f"Current revision: {current_revision}")
 
 
 @agent.command("delete", help="Delete an agent.")
@@ -286,7 +298,6 @@ def _ensure_agent_updated(
             name=config.name,
             description=config.description,
             more_info_url=config.more_info_url,
-            func_url=config.deployment_url,
             published=config.public or False,
         )
     else:
@@ -295,7 +306,6 @@ def _ensure_agent_updated(
             name=config.name,
             description=config.description,
             more_info_url=config.more_info_url,
-            func_url=config.deployment_url,
             published=config.public or False,
         )
 
@@ -363,6 +373,129 @@ def _validate_agent_loads_or_exit(
         sys.exit(loader_process.returncode)
 
 
+@contextlib.contextmanager
+def _temporary_revision_replacer(
+    console: rich.console.Console, client: fixieai.FixieClient, agent_handle: str
+):
+    """Yields a function that can be used to temporarily replace an agent's current revision."""
+
+    # Get the preexisting revision so that we can restore it when we're done.
+    existing_revision_id = client.get_current_agent_revision(
+        client.get_current_username() + "/" + agent_handle
+    )
+    current_temporary_revision: Optional[str] = None
+
+    if existing_revision_id is not None:
+        console.print(
+            f"[yellow]This temporarily replaces existing revision {existing_revision_id}.[/yellow]"
+        )
+
+    def replace_revision(external_url: str):
+        nonlocal current_temporary_revision
+
+        # Create a new temporary revision.
+        revision_to_delete = current_temporary_revision
+        current_temporary_revision = client.create_agent_revision(
+            handle=agent_handle,
+            make_current=True,
+            metadata=_cli_revision_metadata("serve"),
+            external_url=external_url,
+        )
+
+        # Delete the previous temporary revision.
+        if revision_to_delete:
+            client.delete_agent_revision(agent_handle, revision_to_delete)
+
+        console.print(
+            f"[green]Now serving temporary revision {current_temporary_revision}.[/green]"
+        )
+
+    try:
+        yield replace_revision
+    finally:
+        if existing_revision_id:
+            client.set_current_agent_revision(agent_handle, existing_revision_id)
+            console.print(
+                f"[yellow]Restored existing revision {existing_revision_id}.[/yellow]"
+            )
+
+        if current_temporary_revision:
+            client.delete_agent_revision(agent_handle, current_temporary_revision)
+
+
+@contextlib.contextmanager
+def _server_process(
+    console: rich_console.Console,
+    on_exit_event: threading.Event,
+    python_exe: str,
+    host: str,
+    port: int,
+    agent_env: Dict[str, str],
+    agent_dir: str,
+    startup_timeout_seconds: float,
+):
+    """Yields a Popen object with a running and ready server process."""
+
+    with subprocess.Popen(
+        [
+            os.path.abspath(python_exe),
+            "-m",
+            "uvicorn",
+            "fixieai.cli.agent.loader:uvicorn_app_factory",
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--factory",
+        ],
+        env=agent_env,
+        cwd=agent_dir or None,
+    ) as popen:
+
+        def _wait_for_exit():
+            popen.wait()
+            on_exit_event.set()
+
+        waiter_thread = threading.Thread(target=_wait_for_exit, daemon=True)
+        waiter_thread.start()
+
+        try:
+            # Wait for the server to start up by polling the port.
+            deadline = time.monotonic() + startup_timeout_seconds
+            while time.monotonic() < deadline and popen.poll() is None:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    try:
+                        s.connect(("127.0.0.1" if host == "0.0.0.0" else host, port))
+                        break
+                    except ConnectionRefusedError:
+                        time.sleep(0.1)
+
+            if time.monotonic() >= deadline or popen.poll() is not None:
+                console.print("Server process failed to start.", style="red")
+                raise click.Abort()
+
+            yield popen
+        finally:
+            popen.terminate()
+            waiter_thread.join()
+
+
+def _wait_for_agent_changes_or_event(
+    agent_dir: str, event: threading.Event
+) -> Optional[str]:
+    """Waits for any changes in the specified directory or the event to be set."""
+
+    for changes in watchfiles.watch(
+        agent_dir,
+        watch_filter=lambda change, path: path.endswith(".py"),
+        stop_event=event,
+    ):
+        for change, path in changes:
+            return path
+
+    return None
+
+
 @agent.command(
     "serve", help="Serve the current agent locally via a publicly-accessible URL."
 )
@@ -404,65 +537,89 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             python_exe, agent_env = _configure_venv(console, agent_dir)
         else:
             python_exe, agent_env = sys.executable, os.environ.copy()
-
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
-
-        # Validate that the agent loads before setting up the server.
-        _validate_agent_loads_or_exit(
-            console, agent_dir, config.handle, python_exe, agent_env
-        )
 
         if use_tunnel:
             # Start up a tunnel via localhost.run.
             console.print(f"Opening tunnel to {host}:{port} via localhost.run.")
-            console.print(
-                f"[yellow]This replaces any existing deployment, run [bold]fixie deploy[/bold] to redeploy to prod.[/yellow]"
-            )
             deployment_urls_iter = iter(stack.enter_context(tunnel.Tunnel(port)))
-            config.deployment_url = next(deployment_urls_iter)
-
-            agent_api = _ensure_agent_updated(client, agent_id, config)
-
-            def _watch_tunnel():
-                while True:
-                    url = next(deployment_urls_iter, None)
-                    if url is None:
-                        break
-                    agent_api.update_agent(func_url=url)
-                    console.print(
-                        f"[yellow]Tunnel URL was updated, now serving via {url}[/yellow]"
-                    )
-
-            threading.Thread(target=_watch_tunnel, daemon=True).start()
+        elif config.deployment_url:
+            deployment_urls_iter = iter([config.deployment_url])
         else:
-            agent_api = _ensure_agent_updated(client, agent_id, config)
+            console.print(
+                f"[red]You must specify a deployment_url in agent.yaml or use --tunnel.[/red]"
+            )
+            raise click.Abort()
 
-        console.print(
-            f"🦊 Agent [green]{agent_api.agent_id}[/] running locally on {host}:{port}, served via {agent_api.func_url}"
-        )
+        agent_api = _ensure_agent_updated(client, agent_id, config)
         console.print(
             f"You can access your agent via [cyan]{client.get_agent_page_url(agent_api.agent_id)}[/]"
             f" or `[green]fixie console --agent {agent_api.agent_id}[/]`."
         )
 
-        # Trigger an agent refresh each time it reloads.
-        agent_env[FIXIE_REFRESH_ON_STARTUP] = "true"
-        subprocess.run(
-            [
-                os.path.abspath(python_exe),
-                "-m",
-                "uvicorn",
-                "fixieai.cli.agent.loader:uvicorn_app_factory",
-                "--host",
+        replace_revision = stack.enter_context(
+            _temporary_revision_replacer(console, client, config.handle)
+        )
+
+        # An Event that indicates that either the subprocess exited or the tunnel URL has been rotated.
+        requires_action = threading.Event()
+        current_url = next(deployment_urls_iter)
+
+        def _watch_tunnel():
+            """Watches the tunnel for URL rotations."""
+            nonlocal current_url
+
+            while True:
+                try:
+                    current_url = next(deployment_urls_iter)
+                except StopIteration:
+                    return
+                finally:
+                    requires_action.set()
+
+        threading.Thread(target=_watch_tunnel, daemon=True).start()
+
+        while True:
+            requires_action.clear()
+
+            with _server_process(
+                console,
+                requires_action,
+                python_exe,
                 host,
-                "--port",
-                str(port),
-                "--factory",
-            ]
-            + (["--reload"] if reload else []),
-            env=agent_env,
-            cwd=agent_dir or None,
-        ).check_returncode()
+                port,
+                agent_env,
+                agent_dir,
+                startup_timeout_seconds=10.0,
+            ) as popen:
+                # The server has started up, so we can replace the revision.
+                replace_revision(current_url)
+
+                while True:
+                    if reload:
+                        changed_file = _wait_for_agent_changes_or_event(
+                            agent_dir, requires_action
+                        )
+                        if changed_file is not None:
+                            console.print(
+                                f"[yellow]{changed_file} was changed. Restarting server.[/yellow]"
+                            )
+                            break
+                        else:
+                            assert requires_action.is_set()
+
+                    requires_action.wait()
+                    requires_action.clear()
+
+                    if popen.poll() is not None:
+                        console.print(
+                            "The server process stopped, exiting.",
+                            style="red" if popen.returncode != 0 else None,
+                        )
+                        raise click.exceptions.Exit(popen.returncode)
+                    else:
+                        # The tunnel URL changed.
+                        replace_revision(current_url)
 
 
 _DEPLOYMENT_BOOTSTRAP_SOURCE = """
@@ -524,12 +681,57 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     tarball.addfile(tarinfo, io.BytesIO(file_bytes))
 
 
+@contextlib.contextmanager
+def _agent_py_code_package(
+    agent_dir: str, agent_id: str, console: rich_console.Console
+):
+    """Yields a file-like code package that can be deployed to Fixie."""
+
+    with tempfile.TemporaryFile() as tarball_file:
+        with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
+            tarball.add(
+                agent_dir,
+                arcname="agent",
+                filter=functools.partial(_tarinfo_filter, console, agent_dir, "agent/"),
+            )
+
+            # Add the bootstrapping code and environment variables
+            _add_text_file_to_tarfile("main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball)
+            _add_text_file_to_tarfile(
+                ".env",
+                "\n".join(
+                    f"{key}={value}"
+                    for key, value in {
+                        FIXIE_ALLOWED_AGENT_ID: agent_id,
+                        "FIXIE_API_URL": constants.FIXIE_API_URL,
+                    }.items()
+                ),
+                tarball,
+            )
+
+        tarball_file.seek(0)
+        yield tarball_file
+
+
+@contextlib.contextmanager
+def _agent_js_code_package(
+    agent_dir: str, agent_id: str, console: rich_console.Console
+):
+    package_json_path = os.path.join(agent_dir, "package.json")
+    package_json = json.load(package_json_path)
+    tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
+    subprocess.check_call(["npm", "pack"], cwd=agent_dir)
+    tarball_file = open(tgz_name, "rb")
+    yield tarball_file
+
+
 @agent.command("deploy", help="Deploy the current agent.")
 @click.argument("path", callback=_validate_agent_path, required=False)
 @click.option(
     "--metadata-only",
     is_flag=True,
-    help="Only publish metadata and refresh, do not redeploy.",
+    default=None,
+    help="(No longer supported.)",
 )
 @click.option("--public", is_flag=True, help="Make the agent public.", default=None)
 @click.option(
@@ -537,11 +739,37 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     "validate",
     is_flag=True,
     default=True,
-    help="(default enabled) Validate that the agent loads in a local venv before deploying",
+    help="(default enabled) Validate that the agent loads in a local venv before deploying.",
+)
+@click.option(
+    "--current/--not-current",
+    "make_current",
+    is_flag=True,
+    default=True,
+    help="(default enabled) Change the current revision to the deployed revision.",
+)
+@click.option(
+    "--metadata",
+    nargs=2,
+    type=str,
+    help="Additional metadata to associate with the revision.",
+    multiple=True,
+)
+@click.option(
+    "--reindex/--no-reindex",
+    "reindex",
+    is_flag=True,
+    default=False,
+    help="Force any corpora to be reindexed.",
 )
 @click.pass_context
-def deploy(ctx, path, metadata_only, public, validate):
+def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, reindex):
     console = rich_console.Console(soft_wrap=True)
+    if metadata_only is not None:
+        console.print(
+            "[yellow]Warning:[/] The [blue]--metadata-only[/] option is no longer supported."
+        )
+
     config = agent_config.load_config(path)
     if config.public is not None:
         console.print(
@@ -566,69 +794,67 @@ def deploy(ctx, path, metadata_only, public, validate):
             console, agent_dir, config.handle, python_exe, agent_env
         )
 
-    agent_api = _ensure_agent_updated(client, agent_id, config)
+    _ = _ensure_agent_updated(client, agent_id, config)
 
-    if config.deployment_url is None and not metadata_only:
-        # check if package.json exists
-        if not is_js_agent:
-            # Deploy the agent to fixie with some bootstrapping code.
-            with tempfile.TemporaryFile() as tarball_file:
-                with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
-                    tarball.add(
-                        agent_dir,
-                        arcname="agent",
-                        filter=functools.partial(
-                            _tarinfo_filter, console, agent_dir, "agent/"
-                        ),
-                    )
+    metadata_dict = {**dict(metadata or []), **_cli_revision_metadata("deploy")}
 
-                    # Add the bootstrapping code and environment variables
-                    _add_text_file_to_tarfile(
-                        "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
-                    )
-                    _add_text_file_to_tarfile(
-                        ".env",
-                        "\n".join(
-                            f"{key}={value}"
-                            for key, value in {
-                                FIXIE_ALLOWED_AGENT_ID: agent_id,
-                                "FIXIE_API_URL": constants.FIXIE_API_URL,
-                            }.items()
-                        ),
-                        tarball,
-                    )
-                    tarball_file.seek(0)
-                    with _spinner(console, "Deploying Python..."):
-                        ctx.obj.client.deploy_agent(
-                            config.handle,
-                            tarball_file,
-                        )
-        else:
-            package_json = json.load(package_json_path)
-            tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
-            subprocess.check_call(["npm", "pack"], cwd=agent_dir)
-            tarball_file = open(tgz_name, "rb")
-            with _spinner(console, "Deploying JS..."):
-                ctx.obj.client.deploy_agent(
+    if config.deployment_url is None:
+        # Deploy the code to Fixie.
+        if is_js_agent:
+            with _agent_js_code_package(
+                agent_dir, agent_id, console
+            ) as tarball_file, _spinner(console, "Deploying JS..."):
+                revision_id = client.create_agent_revision(
                     config.handle,
-                    tarball_file,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    javascript_gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
                 )
+        else:
+            with _agent_py_code_package(
+                agent_dir, agent_id, console
+            ) as tarball_file, _spinner(console, "Deploying Python..."):
+                revision_id = client.create_agent_revision(
+                    config.handle,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    python_gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
+                )
+    else:
+        # Create a new revision with the specified URL.
+        with _spinner(console, "Deploying..."):
+            revision_id = client.create_agent_revision(
+                config.handle,
+                make_current=make_current,
+                metadata=metadata_dict,
+                external_url=config.deployment_url,
+                reindex_corpora=reindex,
+            )
 
-    # Trigger a refresh with the updated deployment
-    with _spinner(console, "Refreshing..."):
-        client.refresh_agent(config.handle)
+    sample_queries = client.gqlclient.execute(
+        gql(
+            """
+            query GetSampleQueries($agentId: String!) {
+                agentById(agentId: $agentId) {
+                    queries
+                }
+            }
+            """
+        ),
+        variable_values={"agentId": agent_id},
+    )
 
-    agent_api.update_agent()
-    if agent_api.queries:
-        suggested_query = random.choice(agent_api.queries)
+    if sample_queries["agentById"]["queries"]:
+        suggested_query = random.choice(sample_queries["agentById"]["queries"])
     else:
         suggested_query = "Hello!"
 
-    suggested_command = (
-        f"fixie console --agent {agent_api.agent_id} {shlex.quote(suggested_query)}"
-    )
     console.print(
-        f"Your agent was deployed to {constants.FIXIE_API_URL}/agents/{agent_api.agent_id}\nYou can also chat with your agent using the fixie CLI:\n\n{suggested_command}"
+        f"Revision {revision_id} was deployed to {constants.FIXIE_API_URL}/agents/{agent_id}\n"
+        f"You can also chat with your agent using the fixie CLI:\n\n"
+        f"fixie console --agent {agent_id} {shlex.quote(suggested_query)}"
     )
 
 
@@ -680,3 +906,158 @@ def unpublish(ctx, path):
     agent.update_agent(published=False)
 
     console.print(f"Agent [green]{agent_id}[/] has been made private.")
+
+
+@agent.group(help="Revisions-related commands.")
+def revisions():
+    pass
+
+
+@revisions.command("list", help="Lists the revisions associated with an agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--json", is_flag=True, default=False)
+@click.pass_context
+def list_revisions(ctx, path, json):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+    agent_id = f"{client.get_current_username()}/{config.handle}"
+    agent = client.get_agent(agent_id)
+    if not agent.valid:
+        console.print(
+            f"[red]Error:[/] Agent [green]{agent_id}[/] not deployed. Use [blue]`fixie agent deploy`[/] to deploy it."
+        )
+        raise click.Abort()
+
+    query = gql(
+        """
+        query GetRevisions($agentId: String!) {
+            agentById(agentId: $agentId) {
+                allRevisions {
+                    id
+                    created
+                    isCurrent
+                    indexedCorpora {
+                        status
+                        created
+                        modified
+                        vectorCount
+                    }
+                    deployment {
+                        __typename
+                        ... on ExternalDeployment {
+                            url
+                        }
+                        ... on ManagedDeployment {
+                            environment
+                        }
+                    }
+                    metadata {
+                        key
+                        value
+                    }
+                }
+            }
+        }
+        """
+    )
+    revisions = client.gqlclient.execute(query, variable_values={"agentId": agent_id})[
+        "agentById"
+    ]["allRevisions"]
+
+    if json:
+        console.print_json(data=revisions)
+    else:
+        table = rich.table.Table(title=f"{agent_id} revisions")
+        table.add_column("ID", no_wrap=True)
+        table.add_column("Date")
+        table.add_column("Deployment")
+
+        has_corpora = False
+        if any(revision["indexedCorpora"] for revision in revisions):
+            table.add_column("Indexed")
+            has_corpora = True
+
+        table.add_column("Current")
+
+        for revision in revisions:
+            row = [
+                revision["id"],
+                revision["created"],
+            ]
+
+            deployment = revision["deployment"]
+            if deployment is None:
+                row.append("-")
+            elif deployment["__typename"] == "ExternalDeployment":
+                row.append(deployment["url"])
+            elif deployment["__typename"] == "ManagedDeployment":
+                row.append(f"Fixie-hosted {deployment['environment'].title()}")
+            else:
+                row.append("?")
+
+            if has_corpora:
+                indexes = revision["indexedCorpora"] or []
+                if any(index["status"] == "FAILED" for index in indexes):
+                    row.append("❌")
+                elif any(index["status"] == "IN_PROGRESS" for index in indexes):
+                    row.append("⏳")
+                elif indexes and all(
+                    index["status"] == "COMPLETED" for index in indexes
+                ):
+                    row.append("✅")
+                else:
+                    row.append("")
+
+            row.append("✅" if revision["isCurrent"] else "")
+
+            table.add_row(*row)
+
+        console.print(table)
+
+
+@revisions.command(
+    "set-current", help="Sets the current (active) revision of an agent."
+)
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--id", required=True, help="The revision ID to make current.")
+@click.pass_context
+def set_current_revision(ctx, path, id):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+    client.set_current_agent_revision(config.handle, id)
+    console.print(f"Set current revision to {id}.")
+
+
+@revisions.command("delete", help="Deletes a revision of an agent.")
+@click.argument("path", callback=_validate_agent_path, required=False)
+@click.option("--id", required=True, help="The revision ID to delete.")
+@click.option("--force/-f", help="Delete the revision even if it is the current one.")
+@click.pass_context
+def delete_revision(ctx, path, id, force):
+    console = rich_console.Console(soft_wrap=True)
+    config = agent_config.load_config(path)
+
+    client: fixieai.FixieClient = ctx.obj.client
+
+    current_revision = client.get_current_agent_revision(
+        client.get_current_username() + "/" + config.handle
+    )
+    if current_revision == id:
+        if not force:
+            console.print(
+                f"Not deleting revision {id} because it is the current revision. (Use --force to delete it anyway.)",
+                style="red",
+            )
+            raise click.exceptions.Exit(1)
+        else:
+            console.print(
+                f"Deleting current revision {id} because --force was set. This will prevent the agent from responding to requests.",
+                style="yellow",
+            )
+
+    client.delete_agent_revision(config.handle, id)
+    console.print(f"Deleted revision {id}.")

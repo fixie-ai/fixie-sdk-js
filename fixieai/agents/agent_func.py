@@ -1,64 +1,152 @@
 from __future__ import annotations
 
+import abc
 import collections.abc
 import inspect
 import typing
 from typing import (
     Any,
     Callable,
+    Generator,
+    Generic,
     Iterable,
     Optional,
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
     get_type_hints,
 )
 
 from fixieai.agents import api
+from fixieai.agents import corpora
+from fixieai.agents import exceptions
 from fixieai.agents import oauth
+from fixieai.agents import token
 from fixieai.agents import user_storage
+from fixieai.agents.api import AgentResponse
+from fixieai.agents.api import Message
+from fixieai.agents.corpora import CorpusResponse
 
-# An ArgumentMapper converts a query+agent ID into a supported func argument (e.g. "query" or "user_storage")
-ArgumentMapper = Callable[[api.AgentQuery, str], Any]
+F = TypeVar("F")  # from (request)
+T = TypeVar("T")  # to (response)
+R = TypeVar("R")  # any supported response type
+
+# An ArgumentMapper converts a query + token claims into a supported func argument (e.g. "query" or "user_storage")
+ArgumentMapper = Callable[[F, token.VerifiedTokenClaims], Any]
 
 # BoundArgumentMapper is an ArgumentMapper that has been bound to a named parameter.
 BoundArgumentMapper = Tuple[str, ArgumentMapper]
 
 
-class AgentFunc:
-    """A Python function that can be invoked by Fixie.
+class AgentFunc(abc.ABC, Generic[F, T, R]):
+    """A Python function that can be invoked by Fixie."""
+
+    @abc.abstractmethod
+    def adapt_result(self, result: R) -> Generator[T, None, None]:
+        pass
+
+    @abc.abstractmethod
+    def adapt_exception(self, e: exceptions.AgentException) -> T:
+        pass
+
+    def __init__(
+        self,
+        impl: Callable[..., R],
+        argument_mappers: Iterable[BoundArgumentMapper],
+    ):
+        self._impl = impl
+        self._argument_mappers = tuple(argument_mappers)
+
+    def __call__(
+        self, agent_query: F, claims: token.VerifiedTokenClaims
+    ) -> Iterable[T]:
+        with exceptions.AgentException.exception_remapper():
+            kwargs = {}
+            for name, mapper in self._argument_mappers:
+                kwargs[name] = mapper(agent_query, claims)
+
+            result = self._impl(**kwargs)
+
+        def _gen() -> Iterable[T]:
+            # Within a generator we need to catch exceptions and convert them to responses.
+            try:
+                with exceptions.AgentException.exception_remapper():
+                    yield from self.adapt_result(result)
+            except exceptions.AgentException as e:
+                yield self.adapt_exception(e)
+
+        return _gen()
+
+
+class AgentQueryFunc(
+    AgentFunc[
+        api.AgentQuery,
+        api.AgentResponse,
+        Union[
+            api.AgentResponse,
+            api.Message,
+            str,
+            Iterable[Union[api.AgentResponse, api.Message, str]],
+        ],
+    ]
+):
+    """A Python function that can be invoked by Fixie in the context of a user query.
 
     Wrapped functions can take up to three arguments:
 
-    1. A message or query of type: `str`, `api.AgentMessage`, or `api.AgentQuery`;
+    1. A message or query of type: `str`, `api.Message`, or `api.AgentQuery`;
        name: "query", or "message"; or the first parameter if no other rules apply.
     2. A user storage object of type `user_storage.UserStorage` or name "user_storage".
     3. An OAuth handler of type `oauth.OAuthHandler` or name "oauth_handler".
 
     The semantics of each parameter are inferred by type annotation or name/position if no
     type annotations are present.
+
+    The function may return an `api.AgentResponse`, an `api.Message`, a `str` or an
+    iterable of one of the same. If an iterable is returned and allow_multiple is
+    false, all values after the first will be dropped.
     """
 
     def __init__(
         self,
-        impl: Callable,
-        argument_mappers: Iterable[BoundArgumentMapper],
+        impl: Callable[
+            ..., AgentResponse | Message | str | Iterable[AgentResponse | Message | str]
+        ],
+        argument_mappers: Iterable[
+            Tuple[str, Callable[[F, token.VerifiedTokenClaims], Any]]
+        ],
         allow_multiple_responses: bool,
     ):
-        self._impl = impl
-        self._argument_mappers = tuple(argument_mappers)
+        super().__init__(impl, argument_mappers)
         self._allow_multiple_responses = allow_multiple_responses
 
-    def __call__(
-        self, agent_query: api.AgentQuery, agent_id: str
-    ) -> Iterable[api.AgentResponse]:
-        kwargs = {}
-        for name, mapper in self._argument_mappers:
-            kwargs[name] = mapper(agent_query, agent_id)
+    def adapt_result(
+        self,
+        result: AgentResponse | Message | str | Iterable[AgentResponse | Message | str],
+    ) -> Generator[AgentResponse, None, None]:
+        """Adapts any allowed func return type into an Iterable of AgentResponses."""
 
-        result = self._impl(**kwargs)
-        return _adapt_func_result(result, self._allow_multiple_responses)
+        if isinstance(result, api.AgentResponse):
+            yield result
+        elif isinstance(result, api.Message):
+            yield api.AgentResponse(message=result)
+        elif isinstance(result, str):
+            yield api.AgentResponse(message=api.Message(result))
+        elif isinstance(result, Iterable):
+            for value in result:
+                yield from self.adapt_result(value)
+
+                if not self._allow_multiple_responses:
+                    break
+        else:
+            raise TypeError(
+                f"The func result was type {type(result)}, but must be a str, Message, AgentResponse, or iterable."
+            )
+
+    def adapt_exception(self, e: exceptions.AgentException) -> AgentResponse:
+        return e.to_response()
 
     @classmethod
     def create(
@@ -67,8 +155,8 @@ class AgentFunc:
         oauth_params: Optional[oauth.OAuthParams],
         default_message_type: Union[Type[str], Type[api.Message], Type[api.AgentQuery]],
         allow_generator: bool,
-    ) -> AgentFunc:
-        """Constructs an AgentFunc from a Python function.
+    ) -> AgentQueryFunc:
+        """Constructs an AgentQueryFunc from a Python function.
 
         Args:
             func: the Python function to wrap
@@ -109,9 +197,9 @@ class AgentFunc:
 
         # Try to bind a query/message mapper.
         typed_message_mappers = {
-            api.AgentQuery: lambda query, agent_id: query,
-            api.Message: lambda query, agent_id: query.message,
-            str: lambda query, agent_id: query.message.text,
+            api.AgentQuery: lambda query, claims: query,
+            api.Message: lambda query, claims: query.message,
+            str: lambda query, claims: query.message.text,
         }
         bound_message_mapper = _bind_argument_mapper(
             func,
@@ -124,9 +212,7 @@ class AgentFunc:
         )
 
         # Try to bind a UserStorage mapper.
-        user_storage_mapper = lambda query, agent_id: user_storage.UserStorage(
-            query, agent_id
-        )
+        user_storage_mapper = lambda query, claims: user_storage.UserStorage(claims)
         bound_user_storage_mapper = _bind_argument_mapper(
             func,
             unbound_parameter_names=unbound_parameter_names,
@@ -137,8 +223,8 @@ class AgentFunc:
         )
 
         # Try to bind an OAuthHandler mapper.
-        oauth_mapper = lambda query, agent_id: oauth_params and oauth.OAuthHandler(
-            oauth_params, query, agent_id
+        oauth_mapper = lambda query, claims: oauth_params and oauth.OAuthHandler(
+            oauth_params, claims
         )
         bound_oauth_mapper = _bind_argument_mapper(
             func,
@@ -205,7 +291,7 @@ class AgentFunc:
                     f"or str but it returns {return_type}."
                 )
 
-        return AgentFunc(
+        return AgentQueryFunc(
             func,
             [
                 bound_mapper
@@ -220,26 +306,84 @@ class AgentFunc:
         )
 
 
-def _adapt_func_result(
-    result: Any, allow_multiple: bool
-) -> Iterable[api.AgentResponse]:
-    """Adapts any allowed func return type into an Iterable of AgentResponses."""
+class AgentCorpusFunc(
+    AgentFunc[
+        corpora.CorpusRequest,
+        corpora.CorpusResponse,
+        corpora.CorpusResponse,
+    ]
+):
+    """A Python function that can be invoked by Fixie to load a custom corpus.
 
-    if isinstance(result, api.AgentResponse):
-        yield result
-    elif isinstance(result, api.Message):
-        yield api.AgentResponse(message=result)
-    elif isinstance(result, str):
-        yield api.AgentResponse(message=api.Message(result))
-    elif isinstance(result, collections.abc.Iterable):
-        for value in result:
-            yield from _adapt_func_result(value, allow_multiple)
+    Wrapped functions must take one `corpora.CorpusRequest` argument (or no
+    arguments) and return a `corpora.CorpusResponse`.
+    """
 
-            if not allow_multiple:
-                break
-    else:
-        raise TypeError(
-            f"The func result was type {type(result)}, but must be a str, Message, AgentResponse, or iterable."
+    def adapt_result(
+        self, result: CorpusResponse
+    ) -> Generator[CorpusResponse, None, None]:
+        if isinstance(result, CorpusResponse):
+            yield result
+        else:
+            raise TypeError(
+                f"The func result was type {type(result)}, but must be a CorpusResponse."
+            )
+
+    def adapt_exception(self, e: exceptions.AgentException) -> CorpusResponse:
+        raise e
+
+    @classmethod
+    def create(
+        cls,
+        func: Callable[[corpora.CorpusRequest], corpora.CorpusResponse],
+    ) -> AgentCorpusFunc:
+        """Constructs an AgentCorpusFunc from a Python function.
+
+        Args:
+            func: the Python function to wrap
+        """
+
+        if not inspect.isfunction(func):
+            raise TypeError(
+                f"Registered function {func!r} is not a function, but a {type(func)!r}."
+            )
+        signature = inspect.signature(func)
+        func_name = func.__name__
+        params = signature.parameters
+
+        # Validate that there are no var args (*args or **kwargs).
+        if any(
+            param.kind in (param.VAR_KEYWORD, param.VAR_POSITIONAL)
+            for param in params.values()
+        ):
+            raise TypeError(
+                f"Registered function {func_name} cannot accept variable args: {params!r}."
+            )
+
+        if len(params) > 1:
+            raise TypeError(
+                f"Registered function {func_name} must have one or zero arguments."
+            )
+        param = next(iter(params.keys()), None)
+        if param:
+            type_hints = get_type_hints(func)
+            if param in type_hints and type_hints.get(param) != corpora.CorpusRequest:
+                raise TypeError(
+                    f"Registered function {func_name}'s parameter has the wrong type: {param}. (Should be CorpusRequest.)"
+                )
+            bound_request_mapper = (param, lambda request, claims: request)
+        else:
+            bound_request_mapper = None
+
+        # Validate that the return type annotation is compatible.
+        return_type = get_type_hints(func).get("return")
+        if return_type is not None and return_type != corpora.CorpusResponse:
+            raise TypeError(
+                f"Expected registered function to return a CorpusResponse, but it returns {return_type}"
+            )
+
+        return AgentCorpusFunc(
+            func, [bound_request_mapper] if bound_request_mapper else []
         )
 
 

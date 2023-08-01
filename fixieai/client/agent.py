@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from gql import gql
@@ -34,6 +35,7 @@ class Agent:
         if "/" in agent_id:
             self._owner, self._handle = agent_id.split("/")
         else:
+            self._owner = self._client.get_current_username()
             self._handle = agent_id
 
         self._metadata: Optional[Dict[str, Any]] = None
@@ -106,10 +108,12 @@ class Agent:
 
     @property
     def owner(self) -> Optional[str]:
-        """Return the owner of this Agent."""
+        """Return the owner of this Agent, which is either a username or an Organization handle."""
         if self._metadata is None:
             return None
-        owner_username = self._metadata["owner"]["username"]
+        owner_username = self._metadata["owner"].get("username") or self._metadata[
+            "owner"
+        ].get("handle")
         assert owner_username is None or isinstance(owner_username, str)
         return owner_username
 
@@ -155,70 +159,42 @@ class Agent:
 
     def get_metadata(self) -> Dict[str, Any]:
         """Return metadata about this Agent."""
-
-        if self._owner is None:
-            # Query by handle.
-            query = gql(
-                """
-                query getAgentByHandle($handle: String!) {
-                    agentByHandle(handle: $handle) {
-                        agentId
-                        handle
-                        name
-                        description
-                        queries
-                        moreInfoUrl
-                        published
-                        owner {
+        query = gql(
+            """
+            query getAgentById($agentId: String!) {
+                agentById(agentId: $agentId) {
+                    agentId
+                    handle
+                    name
+                    description
+                    queries
+                    moreInfoUrl
+                    published
+                    owner {
+                        __typename
+                        ... on UserType {
                             username
                         }
-                        queryUrl
-                        funcUrl
-                        created
-                        modified
-                    }
-                }
-            """
-            )
-            result = self._gqlclient.execute(
-                query, variable_values={"handle": self._handle}
-            )
-            if "agentByHandle" not in result or result["agentByHandle"] is None:
-                raise ValueError(f"Cannot fetch agent metadata for {self._handle}")
-            agent_dict = result["agentByHandle"]
-
-        else:
-            # Query by agent ID.
-            query = gql(
-                """
-                query getAgentById($agentId: String!) {
-                    agentById(agentId: $agentId) {
-                        agentId
-                        handle
-                        name
-                        description
-                        queries
-                        moreInfoUrl
-                        published
-                        owner {
-                            username
+                        ... on OrganizationType {
+                            handle
                         }
-                        queryUrl
-                        funcUrl
-                        created
-                        modified
                     }
+                    queryUrl
+                    funcUrl
+                    created
+                    modified
                 }
-            """
+            }
+        """
+        )
+        result = self._gqlclient.execute(
+            query, variable_values={"agentId": f"{self._owner}/{self._handle}"}
+        )
+        if "agentById" not in result or result["agentById"] is None:
+            raise ValueError(
+                f"Cannot fetch agent metadata for {self._owner}/{self._handle}"
             )
-            result = self._gqlclient.execute(
-                query, variable_values={"agentId": f"{self._owner}/{self._handle}"}
-            )
-            if "agentById" not in result or result["agentById"] is None:
-                raise ValueError(
-                    f"Cannot fetch agent metadata for {self._owner}/{self._handle}"
-                )
-            agent_dict = result["agentById"]
+        agent_dict = result["agentById"]
 
         assert isinstance(agent_dict, dict) and all(
             isinstance(k, str) for k in agent_dict.keys()
@@ -271,6 +247,9 @@ class Agent:
         if query_url is not None:
             variable_values["queryUrl"] = query_url
         if func_url is not None:
+            warnings.warn(
+                "Setting func_url via create_agent is deprecated, use FixieClient.create_agent_revision instead."
+            )
             variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
@@ -338,6 +317,9 @@ class Agent:
         if query_url is not None:
             variable_values["queryUrl"] = query_url
         if func_url is not None:
+            warnings.warn(
+                "Setting func_url via update_agent is deprecated, use FixieClient.create_agent_revision instead."
+            )
             variable_values["funcUrl"] = func_url
         if more_info_url is not None:
             variable_values["moreInfoUrl"] = more_info_url
@@ -359,8 +341,8 @@ class Agent:
         """Delete this Agent."""
         query = gql(
             """
-            mutation DeleteAgent($handle: String!) {
-                deleteAgent(handle: $handle) {
+            mutation DeleteAgent($owner: String!, $handle: String!) {
+                deleteAgent(agentData: {owner: $owner, handle: $handle}) {
                     agent {
                         handle
                     }
@@ -368,4 +350,6 @@ class Agent:
             }
         """
         )
-        _ = self._gqlclient.execute(query, variable_values={"handle": self._handle})
+        _ = self._gqlclient.execute(
+            query, variable_values={"owner": self.owner, "handle": self._handle}
+        )

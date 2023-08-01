@@ -10,7 +10,7 @@ import dataclasses_json
 import requests
 
 from fixieai import constants
-from fixieai.agents import api
+from fixieai.agents import token
 from fixieai.agents import user_storage
 
 
@@ -70,12 +70,11 @@ class OAuthHandler:
     def __init__(
         self,
         oauth_params: OAuthParams,
-        query: api.AgentQuery,
-        agent_id: str,
+        token_claims: token.VerifiedTokenClaims,
     ):
-        self._storage = user_storage.UserStorage(query, agent_id)
+        self._storage = user_storage.UserStorage(token_claims)
         self._oauth_params = oauth_params
-        self._agent_id = agent_id
+        self._agent_id = token_claims.agent_id
 
     def get_authorization_url(self) -> str:
         """Returns a URL to launch the authorization flow."""

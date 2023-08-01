@@ -31,11 +31,11 @@ check:
 
 # Run all tests.
 test PATH=".":
-    poetry run pytest --ignore third_party {{PATH}}
+    poetry run pytest --ignore third_party --ignore fixie-examples {{PATH}}
 
 # Run tests with verbose output.
 test-verbose PATH=".":
-    poetry run pytest --ignore third_party -vv --log-cli-level=INFO {{PATH}}
+    poetry run pytest --ignore third_party --ignore fixie-examples -vv --log-cli-level=INFO {{PATH}}
 
 # Run a Python REPL in the Poetry environment.
 python:

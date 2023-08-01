@@ -1,4 +1,3 @@
-import dataclasses
 import os
 
 import fastapi
@@ -8,8 +7,8 @@ from fastapi import testclient
 
 import fixieai
 from fixieai import agents
-from fixieai.agents import agent_base
 from fixieai.agents import code_shot
+from fixieai.agents import token
 
 agent_id = "dummy"
 BASE_PROMPT = "I am a simple dummy agent."
@@ -25,18 +24,18 @@ Func[simple2] says: Simple response
 A: Simple final response
 """
 CORPORA = [
-    agents.DocumentCorpus(
-        urls=["http://example.com/doc1.txt"], loader=agents.DocumentLoader("text")
-    ),
+    agents.UrlDocumentCorpus(urls=["http://example.com/doc1.txt"]),
 ]
 
 
 @pytest.fixture(autouse=True)
 def mock_token_verifier(mocker):
     return mocker.patch.object(
-        agent_base.VerifiedTokenClaims,
+        token.VerifiedTokenClaims,
         "from_token",
-        return_value=agent_base.VerifiedTokenClaims(agent_id="fake agent id"),
+        return_value=token.VerifiedTokenClaims(
+            agent_id="fake agent id", is_anonymous=False, token="fake token"
+        ),
     )
 
 
@@ -60,6 +59,12 @@ def dummy_code_shot_agent(mocker):
         ),
     )
 
+    @agent.register_corpus_func()
+    def load_empty_custom_corpus(
+        request: agents.CorpusRequest,
+    ) -> agents.CorpusResponse:
+        return agents.CorpusResponse()
+
     return agent
 
 
@@ -75,7 +80,15 @@ def test_code_shot_handshake(dummy_code_shot_agent, mocker):
     assert yaml_content == {
         "base_prompt": dummy_code_shot_agent.base_prompt,
         "few_shots": dummy_code_shot_agent.few_shots,
-        "corpora": [dataclasses.asdict(c) for c in dummy_code_shot_agent.corpora],
+        "corpora": [
+            {
+                "urls": ["http://example.com/doc1.txt"],
+                "exclude_patterns": None,
+                "auth_token_func": None,
+                "loader": None,
+            },
+            {"func_name": "load_empty_custom_corpus"},
+        ],
         "conversational": dummy_code_shot_agent.conversational,
         "response_model": {
             "model": dummy_code_shot_agent.llm_settings.model,

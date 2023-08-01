@@ -3,6 +3,7 @@ import json
 from typing import Callable, List, Optional
 
 import fastapi
+import fastapi.security
 
 from fixieai.agents import agent_base
 from fixieai.agents import agent_func
@@ -33,7 +34,7 @@ class StandaloneAgent(agent_base.AgentBase):
         if isinstance(handle_message, agent_func.AgentFunc):
             self._handle_message: agent_func.AgentFunc = handle_message
         else:
-            self._handle_message = agent_func.AgentFunc.create(
+            self._handle_message = agent_func.AgentQueryFunc.create(
                 handle_message,
                 oauth_params,
                 default_message_type=api.Message,
@@ -63,11 +64,9 @@ class StandaloneAgent(agent_base.AgentBase):
         the previously specified `handle_message` function. Depending on the return
         value of that function, either a single or a streaming response is returned.
         """
-        token_claims = self.validate_token_and_update_query_access_token(
-            query, credentials
-        )
+        token_claims = super()._check_credentials(credentials)
 
-        output = self._handle_message(query, token_claims.agent_id)
+        output = self._handle_message(query, token_claims)
         return fastapi.responses.StreamingResponse(
             (json.dumps(dataclasses.asdict(resp)) + "\n" for resp in output),
             media_type="application/json",
