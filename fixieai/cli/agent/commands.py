@@ -714,12 +714,9 @@ def _agent_py_code_package(
 
 
 @contextlib.contextmanager
-def _agent_js_code_package(
-    agent_dir: str, agent_id: str, console: rich_console.Console
-):
+def _agent_js_code_package(agent_dir: str):
     agent_path = os.path.abspath(agent_dir)
     with tempfile.TemporaryDirectory() as tarball_dir:
-        print("agent dir", agent_path)
         package_json_path = os.path.join(agent_path, "package.json")
         with open(package_json_path) as package_json_file:
             package_json = json.load(package_json_file)
@@ -727,7 +724,6 @@ def _agent_js_code_package(
             tarball_dir, package_json["name"] + "-" + package_json["version"] + ".tgz"
         )
         subprocess.check_call(["npm", "pack", agent_path], cwd=tarball_dir)
-        print("tb path", tarball_path)
         tarball_file = open(tarball_path, "rb")
     yield tarball_file
 
@@ -810,9 +806,9 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
     if config.deployment_url is None:
         # Deploy the code to Fixie.
         if is_js_agent:
-            with _agent_js_code_package(
-                agent_dir, agent_id, console
-            ) as tarball_file, _spinner(console, "Deploying JS..."):
+            with _agent_js_code_package(agent_dir) as tarball_file, _spinner(
+                console, "Deploying..."
+            ):
                 revision_id = client.create_agent_revision(
                     config.handle,
                     make_current=make_current,
@@ -824,7 +820,7 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
         else:
             with _agent_py_code_package(
                 agent_dir, agent_id, console
-            ) as tarball_file, _spinner(console, "Deploying Python..."):
+            ) as tarball_file, _spinner(console, "Deploying..."):
                 revision_id = client.create_agent_revision(
                     config.handle,
                     make_current=make_current,
