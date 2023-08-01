@@ -367,7 +367,9 @@ class FixieClient:
             mutation, variable_values={"handle": handle, "revisionId": revision_id}
         )
 
-    def deploy_agent(self, handle: str, gzip_tarfile: BinaryIO, environment: str):
+    def deploy_agent(
+        self, handle: str, gzip_tarfile: BinaryIO, environment: FixieEnvironment
+    ):
         """Deploys an agent implementation.
 
         Args:
