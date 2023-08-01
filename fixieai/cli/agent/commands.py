@@ -1,6 +1,7 @@
 import contextlib
 import functools
 import io
+import json
 import os
 import pathlib
 import random
@@ -551,13 +552,13 @@ def deploy(ctx, path, metadata_only, public, validate):
         )
     if public:
         config.public = True
-
     client: fixieai.FixieClient = ctx.obj.client
     agent_id = f"{client.get_current_username()}/{config.handle}"
-    console.print(f"🦊 Deploying agent [green]{agent_id}[/]...")
 
     agent_dir = os.path.dirname(path) or "."
-    if validate:
+    package_json_path = os.path.join(agent_dir, "package.json")
+    is_js_agent = os.path.exists(package_json_path)
+    if validate and not is_js_agent:
         # Validate that the agent loads in a virtual environment before deploying.
         python_exe, agent_env = _configure_venv(console, agent_dir)
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
@@ -568,34 +569,45 @@ def deploy(ctx, path, metadata_only, public, validate):
     agent_api = _ensure_agent_updated(client, agent_id, config)
 
     if config.deployment_url is None and not metadata_only:
-        # Deploy the agent to fixie with some bootstrapping code.
-        with tempfile.TemporaryFile() as tarball_file:
-            with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
-                tarball.add(
-                    agent_dir,
-                    arcname="agent",
-                    filter=functools.partial(
-                        _tarinfo_filter, console, agent_dir, "agent/"
-                    ),
-                )
+        # check if package.json exists
+        if not is_js_agent:
+            # Deploy the agent to fixie with some bootstrapping code.
+            with tempfile.TemporaryFile() as tarball_file:
+                with tarfile.open(fileobj=tarball_file, mode="w:gz") as tarball:
+                    tarball.add(
+                        agent_dir,
+                        arcname="agent",
+                        filter=functools.partial(
+                            _tarinfo_filter, console, agent_dir, "agent/"
+                        ),
+                    )
 
-                # Add the bootstrapping code and environment variables
-                _add_text_file_to_tarfile(
-                    "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
-                )
-                _add_text_file_to_tarfile(
-                    ".env",
-                    "\n".join(
-                        f"{key}={value}"
-                        for key, value in {
-                            FIXIE_ALLOWED_AGENT_ID: agent_id,
-                            "FIXIE_API_URL": constants.FIXIE_API_URL,
-                        }.items()
-                    ),
-                    tarball,
-                )
-
-            tarball_file.seek(0)
+                    # Add the bootstrapping code and environment variables
+                    _add_text_file_to_tarfile(
+                        "main.py", _DEPLOYMENT_BOOTSTRAP_SOURCE, tarball
+                    )
+                    _add_text_file_to_tarfile(
+                        ".env",
+                        "\n".join(
+                            f"{key}={value}"
+                            for key, value in {
+                                FIXIE_ALLOWED_AGENT_ID: agent_id,
+                                "FIXIE_API_URL": constants.FIXIE_API_URL,
+                            }.items()
+                        ),
+                        tarball,
+                    )
+                    tarball_file.seek(0)
+                    with _spinner(console, "Deploying..."):
+                        ctx.obj.client.deploy_agent(
+                            config.handle,
+                            tarball_file,
+                        )
+        else:
+            package_json = json.load(package_json_path)
+            tgz_name = package_json["name"] + "-" + package_json["version"] + ".tgz"
+            subprocess.check_call(["npm", "pack"], cwd=agent_dir)
+            tarball_file = open(tgz_name, "rb")
             with _spinner(console, "Deploying..."):
                 ctx.obj.client.deploy_agent(
                     config.handle,
