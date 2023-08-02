@@ -17,7 +17,7 @@ from fixieai.client.agent import Agent
 from fixieai.client.session import Session
 
 
-class FixieEnvironment(enum.Enum):
+class FixieEnvironment(str, enum.Enum):
     PYTHON = "PYTHON"
     NODEJS = "NODEJS"
 
