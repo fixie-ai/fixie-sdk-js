@@ -379,13 +379,29 @@ class FixieClient:
         )
 
     def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Any:
+        """Performs a POST request with the appropriate auth token.
+        The response will be parsed as JSON and returned.
+
+        Args:
+            url: The URL to POST to, which should start with https://api.fixie.ai/api
+            data: The data to send in the request body (optional)
+        """
+        assert url.startswith("https://api.fixie.ai/api")
         response = self._rest_client.post(url, headers=self._request_headers, json=data)
         response.raise_for_status()
         return response.json()
 
     def streaming_post(
-        self, url: str, data: Dict[str, Any]
+        self, url: str, data: Optional[Dict[str, Any]] = None
     ) -> Generator[Any, None, None]:
+        """Performs a POST request with the appropriate auth token, and handles a streaming response.
+        The response will be yielded as a generator of JSON objects, one per line.
+
+        Args:
+            url: The URL to POST to, which should start with https://api.fixie.ai/api
+            data: The data to send in the request body (optional)
+        """
+        assert url.startswith("https://api.fixie.ai/api")
         response = self._rest_client.post(
             url, headers=self._request_headers, json=data, stream=True
         )
