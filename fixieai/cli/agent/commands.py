@@ -270,13 +270,6 @@ def delete_agent(ctx, handle: str):
     click.echo(f"Deleted agent {agent.agent_id}")
 
 
-def _get_agent_type(agent_dir) -> fixieai.client.FixieEnvironment:
-    if os.path.exists(os.path.join(agent_dir, "package.json")):
-        return fixieai.client.FixieEnvironment.NODEJS
-    else:
-        return fixieai.client.FixieEnvironment.PYTHON
-
-
 def _validate_agent_path(ctx, param, value):
     normalized = agent_config.normalize_path(value)
     if not os.path.exists(normalized):
@@ -434,8 +427,7 @@ def _temporary_revision_replacer(
 def _server_process(
     console: rich_console.Console,
     on_exit_event: threading.Event,
-    agent_type: fixieai.client.FixieEnvironment,
-    agent_exe: str,
+    python_exe: str,
     host: str,
     port: int,
     agent_env: Dict[str, str],
@@ -444,9 +436,9 @@ def _server_process(
 ):
     """Yields a Popen object with a running and ready server process."""
 
-    if agent_type == fixieai.client.FixieEnvironment.PYTHON:
-        args = [
-            os.path.abspath(agent_exe),
+    with subprocess.Popen(
+        [
+            os.path.abspath(python_exe),
             "-m",
             "uvicorn",
             "fixieai.cli.agent.loader:uvicorn_app_factory",
@@ -455,17 +447,7 @@ def _server_process(
             "--port",
             str(port),
             "--factory",
-        ]
-    elif agent_type == fixieai.client.FixieEnvironment.NODEJS:
-        args = [
-            agent_exe,
-            "ts-node",
-            os.path.join(agent_dir, "dist/serve-bin.js"),
-            "--port",
-            str(port),
-        ]
-    with subprocess.Popen(
-        args,
+        ],
         env=agent_env,
         cwd=agent_dir or None,
     ) as popen:
@@ -549,21 +531,12 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
 
     with contextlib.ExitStack() as stack:
         agent_dir = os.path.dirname(path) or "."
-        agent_type = _get_agent_type(agent_dir)
 
         # Configure the virtual enviroment
-        if agent_type == fixieai.client.FixieEnvironment.PYTHON:
-            if use_venv:
-                agent_exe, agent_env = _configure_venv(console, agent_dir)
-            else:
-                agent_exe, agent_env = sys.executable, os.environ.copy()
-        elif agent_type == fixieai.client.FixieEnvironment.NODEJS:
-            if use_venv:
-                # TODO: Implement virtual environment for node
-                pass
-            else:
-                agent_exe = "npx"
-                agent_env = os.environ.copy()
+        if use_venv:
+            python_exe, agent_env = _configure_venv(console, agent_dir)
+        else:
+            python_exe, agent_env = sys.executable, os.environ.copy()
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
 
         if use_tunnel:
@@ -612,8 +585,7 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             with _server_process(
                 console,
                 requires_action,
-                agent_type,
-                agent_exe,
+                python_exe,
                 host,
                 port,
                 agent_env,
@@ -707,21 +679,6 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     tarinfo = tarfile.TarInfo(path)
     tarinfo.size = len(file_bytes)
     tarball.addfile(tarinfo, io.BytesIO(file_bytes))
-
-
-@contextlib.contextmanager
-def _agent_code_package(
-    agent_type: fixieai.client.FixieEnvironment,
-    agent_dir: str,
-    agent_id: str,
-    console: rich_console.Console,
-):
-    if agent_type == fixieai.client.FixieEnvironment.PYTHON:
-        return _agent_py_code_package(agent_dir, agent_id, console)
-    elif agent_type == fixieai.client.FixieEnvironment.NODEJS:
-        return _agent_js_code_package(agent_dir)
-    else:
-        raise ValueError(f"Unknown agent type {agent_type}")
 
 
 @contextlib.contextmanager
@@ -832,8 +789,9 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
     console.print(f"🦊 Deploying agent [green]{agent_id}[/]...")
 
     agent_dir = os.path.dirname(path) or "."
-    agent_type = _get_agent_type(agent_dir)
-    if validate and agent_type == fixieai.client.FixieEnvironment.PYTHON:
+    package_json_path = os.path.join(agent_dir, "package.json")
+    is_js_agent = os.path.exists(package_json_path)
+    if validate and not is_js_agent:
         # Validate that the agent loads in a virtual environment before deploying.
         python_exe, agent_env = _configure_venv(console, agent_dir)
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
@@ -847,17 +805,30 @@ def deploy(ctx, path, metadata_only, public, validate, make_current, metadata, r
 
     if config.deployment_url is None:
         # Deploy the code to Fixie.
-        with _agent_code_package(
-            agent_type, agent_dir, agent_id, console
-        ) as tarball_file, _spinner(console, "Deploying..."):
-            revision_id = client.create_agent_revision(
-                config.handle,
-                make_current=make_current,
-                metadata=metadata_dict,
-                gzip_tarfile=tarball_file,
-                reindex_corpora=reindex,
-                environment=agent_type,
-            )
+        if is_js_agent:
+            with _agent_js_code_package(agent_dir) as tarball_file, _spinner(
+                console, "Deploying..."
+            ):
+                revision_id = client.create_agent_revision(
+                    config.handle,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
+                    environment=fixieai.client.FixieEnvironment.NODEJS,
+                )
+        else:
+            with _agent_py_code_package(
+                agent_dir, agent_id, console
+            ) as tarball_file, _spinner(console, "Deploying..."):
+                revision_id = client.create_agent_revision(
+                    config.handle,
+                    make_current=make_current,
+                    metadata=metadata_dict,
+                    gzip_tarfile=tarball_file,
+                    reindex_corpora=reindex,
+                    environment=fixieai.client.FixieEnvironment.PYTHON,
+                )
     else:
         # Create a new revision with the specified URL.
         with _spinner(console, "Deploying..."):
