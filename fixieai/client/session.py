@@ -192,7 +192,7 @@ class Session:
         """Run a single query against the Fixie API and return the response."""
         final = ""
         for message in self.streaming_query(text):
-            final = message
+            final = message["text"]
         return final
 
     def streaming_query(self, text: str) -> Generator[Dict[str, Any], None, None]:

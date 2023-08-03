@@ -378,14 +378,14 @@ class FixieClient:
             environment=environment,
         )
 
-    def post(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Any:
         response = self._rest_client.post(url, headers=self._request_headers, json=data)
         response.raise_for_status()
         return response.json()
 
     def streaming_post(
         self, url: str, data: Dict[str, Any]
-    ) -> Generator[Dict[str, Any], None, None]:
+    ) -> Generator[Any, None, None]:
         response = self._rest_client.post(
             url, headers=self._request_headers, json=data, stream=True
         )
