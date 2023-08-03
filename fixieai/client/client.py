@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import enum
+import json
 import logging
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import Any, BinaryIO, Dict, Generator, List, Optional
 
 import requests
 from gql import Client
@@ -82,6 +83,7 @@ class FixieClient:
             url=constants.FIXIE_GRAPHQL_URL,
             headers=self._request_headers,
         )
+        self._rest_client = requests.Session()
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
 
     @property
@@ -93,10 +95,6 @@ class FixieClient:
     def url(self) -> str:
         """Return the URL of the Fixie API server."""
         return constants.FIXIE_API_URL
-
-    def clone(self) -> "FixieClient":
-        """Return a new FixieClient instance with the same configuration."""
-        return FixieClient(api_key=self._api_key)
 
     def get_agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -126,7 +124,7 @@ class FixieClient:
 
     def get_agent_page_url(self, agent_id: str) -> str:
         """Return the URL of the Agent page on the Fixie Platform."""
-        return f"{constants.FIXIE_AGENT_URL}/{agent_id}"
+        return f"{constants.FIXIE_WEB_AGENT_URL}/{agent_id}"
 
     def create_agent(
         self,
@@ -215,10 +213,7 @@ class FixieClient:
     def refresh_agent(self, agent_handle: str):
         """Indicates that an agent's prompts should be refreshed."""
         username = self.get_current_username()
-        requests.post(
-            f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}",
-            headers=self._request_headers,
-        ).raise_for_status()
+        self.post(f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}")
 
     def create_agent_revision(
         self,
@@ -382,3 +377,17 @@ class FixieClient:
             gzip_tarfile=gzip_tarfile,
             environment=environment,
         )
+
+    def post(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+        response = requests.post(url, headers=self._request_headers, json=data)
+        response.raise_for_status()
+        return response.json()
+
+    def streaming_post(
+        self, url: str, data: Dict[str, Any]
+    ) -> Generator[Dict[str, Any], None, None]:
+        response = requests.post(
+            url, headers=self._request_headers, json=data, stream=True
+        )
+        response.raise_for_status()
+        return (json.loads(line) for line in response.iter_lines())
