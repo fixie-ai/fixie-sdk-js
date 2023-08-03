@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import enum
+import json
 import logging
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import Any, BinaryIO, Dict, Generator, List, Optional
 
 import requests
 from gql import Client
@@ -82,6 +83,7 @@ class FixieClient:
             url=constants.FIXIE_GRAPHQL_URL,
             headers=self._request_headers,
         )
+        self._rest_client = requests.Session()
         self._gqlclient = Client(transport=transport, fetch_schema_from_transport=False)
 
     @property
@@ -93,10 +95,6 @@ class FixieClient:
     def url(self) -> str:
         """Return the URL of the Fixie API server."""
         return constants.FIXIE_API_URL
-
-    def clone(self) -> "FixieClient":
-        """Return a new FixieClient instance with the same configuration."""
-        return FixieClient(api_key=self._api_key)
 
     def get_agents(self) -> Dict[str, Dict[str, str]]:
         """Return metadata about all running Fixie Agents. The keys of the returned
@@ -126,7 +124,7 @@ class FixieClient:
 
     def get_agent_page_url(self, agent_id: str) -> str:
         """Return the URL of the Agent page on the Fixie Platform."""
-        return f"{constants.FIXIE_AGENT_URL}/{agent_id}"
+        return f"{constants.FIXIE_WEB_AGENT_URL}/{agent_id}"
 
     def create_agent(
         self,
@@ -215,10 +213,7 @@ class FixieClient:
     def refresh_agent(self, agent_handle: str):
         """Indicates that an agent's prompts should be refreshed."""
         username = self.get_current_username()
-        requests.post(
-            f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}",
-            headers=self._request_headers,
-        ).raise_for_status()
+        self.post(f"{constants.FIXIE_REFRESH_URL}/{username}/{agent_handle}")
 
     def create_agent_revision(
         self,
@@ -382,3 +377,33 @@ class FixieClient:
             gzip_tarfile=gzip_tarfile,
             environment=environment,
         )
+
+    def post(self, url: str, data: Optional[Dict[str, Any]] = None) -> Any:
+        """Performs a POST request with the appropriate auth token.
+        The response will be parsed as JSON and returned.
+
+        Args:
+            url: The URL to POST to, which should start with https://api.fixie.ai/api
+            data: The data to send in the request body (optional)
+        """
+        assert url.startswith("https://api.fixie.ai/api")
+        response = self._rest_client.post(url, headers=self._request_headers, json=data)
+        response.raise_for_status()
+        return response.json()
+
+    def streaming_post(
+        self, url: str, data: Optional[Dict[str, Any]] = None
+    ) -> Generator[Any, None, None]:
+        """Performs a POST request with the appropriate auth token, and handles a streaming response.
+        The response will be yielded as a generator of JSON objects, one per line.
+
+        Args:
+            url: The URL to POST to, which should start with https://api.fixie.ai/api
+            data: The data to send in the request body (optional)
+        """
+        assert url.startswith("https://api.fixie.ai/api")
+        response = self._rest_client.post(
+            url, headers=self._request_headers, json=data, stream=True
+        )
+        response.raise_for_status()
+        return (json.loads(line) for line in response.iter_lines())

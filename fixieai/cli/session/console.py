@@ -1,6 +1,7 @@
 import io
 import os.path
 import re
+import sys
 from typing import Any, Dict, List, Optional
 
 import prompt_toolkit
@@ -44,7 +45,7 @@ class Console:
         textconsole.print(f"Connected to: {self._session.session_url}")
 
         # Show what's already in the session thus far.
-        for message in self._session.get_messages_since_last_time():
+        for message in self._session.get_messages():
             self._show_message(message, show_user_message=True)
 
         history = prompt_toolkit.history.FileHistory(self._history_file)
@@ -62,13 +63,21 @@ class Console:
             self._query(in_text)
 
     def _query(self, in_text: str) -> None:
-        with textconsole.status("Working...", spinner="bouncingBall"):
-            try:
-                for message in self._session.run(in_text):
-                    self._show_message(message)
-            except requests.exceptions.HTTPError as e:
-                textconsole.print(f"🚨 {e}")
-                return
+        try:
+            self._response_index += 1
+            print(f"{self._response_index}❯ ", end="")
+            pos = 0
+            sys.stdout.flush()
+            for message in self._session.streaming_query(in_text):
+                text = message["text"][pos:]
+                print(text, end="")
+                sys.stdout.flush()
+                pos += len(text)
+            print("")
+            self._show_embeds(message["text"])
+        except requests.exceptions.HTTPError as e:
+            textconsole.print(f"🚨 {e}")
+            return
 
     def _show_message(self, message: Dict[str, Any], show_user_message: bool = False):
         """Shows a message dict from FixieClient.
@@ -78,7 +87,7 @@ class Console:
         to a session.
         """
         sender_handle = (
-            message["sentBy"]["handle"] if message["sentBy"] else "<unknown>"
+            message["sentBy"]["handle"] if message.get("sentBy") else "<unknown>"
         )
         message_text = message["text"]
 

@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import datetime
-import threading
-import time
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 
 from gql import gql
+
+from fixieai import constants
 
 if TYPE_CHECKING:
     import fixieai.client as fixie_client
@@ -35,6 +34,7 @@ class Session:
         self._client = client
         self._gqlclient = self._client.gqlclient
         self._session_id = session_id
+        self._frontend_agent_id = frontend_agent_id
         if session_id:
             # Test that the session exists.
             _ = self.get_metadata()
@@ -43,8 +43,6 @@ class Session:
             ), "Cannot specify frontend_agent_id when using an existing session"
         else:
             self._session_id = self._create_session(frontend_agent_id)
-        self._frontend_agent_id: Optional[str] = None
-        self._last_message_timestamp: Optional[datetime.datetime] = None
 
     @property
     def session_id(self) -> Optional[str]:
@@ -60,10 +58,6 @@ class Session:
     def frontend_agent_id(self) -> Optional[str]:
         """Return the frontend agent ID used by this Fixie client."""
         return self._frontend_agent_id
-
-    def clone(self) -> "Session":
-        """Return a new Session instance with the same configuration."""
-        return Session(self._client.clone(), session_id=self._session_id)
 
     def _create_session(self, frontend_agent_id: Optional[str] = None) -> str:
         """Create a new session."""
@@ -89,7 +83,6 @@ class Session:
             raise ValueError(f"Failed to create Session")
         assert isinstance(result["createSession"], dict)
         assert isinstance(result["createSession"]["session"], dict)
-        self._frontend_agent_id = result["createSession"]["session"]["frontendAgentId"]
         assert isinstance(result["createSession"]["session"]["handle"], str)
         return result["createSession"]["session"]["handle"]
 
@@ -195,57 +188,23 @@ class Session:
         )
         return result["sessionByHandle"]["messages"]
 
-    def add_message(self, text: str) -> str:
-        """Add a message to this Session. Returns the added message text."""
-        query = gql(
-            """
-            mutation Post($handle: String!, $text: String!) {
-                sendSessionMessage(messageData: {session: $handle, text: $text}) {
-                    message {
-                        text
-                    }
-                }
-            }
-            """
-        )
-        result = self._gqlclient.execute(
-            query, variable_values={"handle": self._session_id, "text": text}
-        )
-        assert isinstance(result["sendSessionMessage"]["message"]["text"], str)
-        return result["sendSessionMessage"]["message"]["text"]
-
     def query(self, text: str) -> str:
         """Run a single query against the Fixie API and return the response."""
-        self.add_message(text)
-        # The reply to the query comes in as the most recent 'response' message in the
-        # session.
-        response = self.get_messages()[-1]
-        assert isinstance(response["text"], str)
-        return response["text"]
+        final = ""
+        for message in self.streaming_query(text):
+            final = message["text"]
+        return final
 
-    def run(self, text: str) -> Generator[Dict[str, Any], None, None]:
-        """Run a query against the Fixie API, returning a generator that yields
-        messages."""
-
-        # Run the query in the background, and continue polling for replies.
-        background_client = self.clone()
-        threading.Thread(target=background_client.add_message, args=(text,)).start()
-
-        response_received = False
-        while not response_received:
-            time.sleep(1)
-            messages = self.get_messages_since_last_time()
-            for message in messages:
-                response_received = message["type"] == "response"
-                yield message
-
-    def get_messages_since_last_time(self) -> List[Dict[str, Any]]:
-        """Return all messages since the given timestamp."""
-        timestamp = self._last_message_timestamp
-        messages_since_last_time = []
-        for message in self.get_messages():
-            message_timestamp = datetime.datetime.fromisoformat(message["timestamp"])
-            if timestamp is None or message_timestamp > timestamp:
-                messages_since_last_time.append(message)
-                self._last_message_timestamp = message_timestamp
-        return messages_since_last_time
+    def streaming_query(self, text: str) -> Generator[Dict[str, Any], None, None]:
+        """Run a single query against the Fixie API and return a stream."""
+        data = {
+            "session": self._session_id,
+            "message": {"text": text},
+            "stream": True,
+        }
+        url = f"{constants.FIXIE_AGENT_URL}/{self._frontend_agent_id}"
+        for response in self._client.streaming_post(url, data):
+            yield {
+                "text": response["message"]["text"],
+                "type": response["type"],
+            }

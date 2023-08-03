@@ -13,6 +13,8 @@ FIXIE_CONFIG_PATH = os.getenv(
 
 # Fixie's GraphQL URL.
 FIXIE_GRAPHQL_URL = f"{FIXIE_API_URL}/graphql"
+# Fixie's Agent service URL.
+FIXIE_AGENT_URL = f"{FIXIE_API_URL}/api/agents"
 # Fixie's UserStorage service URL.
 FIXIE_USER_STORAGE_URL = f"{FIXIE_API_URL}/api/userstorage"
 # Fixie's refresh endpoint. It will be pinged when your agent comes alive.
@@ -29,7 +31,7 @@ FIXIE_OPENAI_PROXY_URL = f"{FIXIE_API_URL}/api/openai-proxy/v1"
 # Valid audiences for Fixie's query JWTs.
 FIXIE_AGENT_API_AUDIENCES = ["https://app.fixie.ai/api", "https://app.dev.fixie.ai/api"]
 # Fixie Agents' URL
-FIXIE_AGENT_URL = f"{FIXIE_API_URL}/agents"
+FIXIE_WEB_AGENT_URL = f"{FIXIE_API_URL}/agents"
 
 
 def fixie_api_key() -> str:
