@@ -709,7 +709,6 @@ def _add_text_file_to_tarfile(path: str, text: str, tarball: tarfile.TarFile):
     tarball.addfile(tarinfo, io.BytesIO(file_bytes))
 
 
-@contextlib.contextmanager
 def _agent_code_package(
     agent_type: fixieai.client.FixieEnvironment,
     agent_dir: str,
