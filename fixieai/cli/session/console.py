@@ -63,7 +63,6 @@ class Console:
             self._query(in_text)
 
     def _query(self, in_text: str) -> None:
-        # with textconsole.status("Working...", spinner="bouncingBall"):
         try:
             pos = 0
             for message in self._session.streaming_query(in_text):
