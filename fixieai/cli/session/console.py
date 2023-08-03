@@ -64,17 +64,20 @@ class Console:
 
     def _query(self, in_text: str) -> None:
         try:
+            self._response_index += 1
+            print(f"{self._response_index}❯ ", end="")
             pos = 0
+            sys.stdout.flush()
             for message in self._session.streaming_query(in_text):
                 text = message["text"][pos:]
                 print(text, end="")
                 sys.stdout.flush()
                 pos += len(text)
-                # self._show_message(message)
+            print("")
+            self._show_embeds(message["text"])
         except requests.exceptions.HTTPError as e:
             textconsole.print(f"🚨 {e}")
             return
-        print("")
 
     def _show_message(self, message: Dict[str, Any], show_user_message: bool = False):
         """Shows a message dict from FixieClient.
@@ -88,10 +91,10 @@ class Console:
         )
         message_text = message["text"]
 
-        if message.get("type") == "query" and sender_handle == "user":
+        if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
                 textconsole.print(Markdown(PROMPT + message_text))
-        elif message.get("type") and message.get("type") != "response":
+        elif message["type"] != "response":
             textconsole.print(
                 Markdown(f"   @{sender_handle}: " + message_text, style="dim")
             )

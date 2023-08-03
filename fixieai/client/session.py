@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from fixieai import constants
 from typing import TYPE_CHECKING, Any, Dict, Generator, List, Optional
 
 from gql import gql
+
+from fixieai import constants
 
 if TYPE_CHECKING:
     import fixieai.client as fixie_client
@@ -187,9 +188,9 @@ class Session:
         )
         return result["sessionByHandle"]["messages"]
 
-    def query(self, text: str):
+    def query(self, text: str) -> str:
         """Run a single query against the Fixie API and return the response."""
-        final = None
+        final = ""
         for message in self.streaming_query(text):
             final = message
         return final
@@ -202,5 +203,8 @@ class Session:
             "stream": True,
         }
         url = f"{constants.FIXIE_AGENT_URL}/{self._frontend_agent_id}"
-        gen = self._client.streaming_post(url, data)
-        return (response["message"] for response in gen)
+        for response in self._client.streaming_post(url, data):
+            yield {
+                "text": response["message"]["text"],
+                "type": response["type"],
+            }
