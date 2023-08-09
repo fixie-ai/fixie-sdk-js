@@ -386,7 +386,7 @@ class FixieClient:
             url: The URL to POST to, which should start with https://api.fixie.ai/api
             data: The data to send in the request body (optional)
         """
-        assert url.startswith("https://api.fixie.ai/api")
+        assert url.startswith(constants.FIXIE_API_URL)
         response = self._rest_client.post(url, headers=self._request_headers, json=data)
         response.raise_for_status()
         return response.json()
@@ -401,7 +401,7 @@ class FixieClient:
             url: The URL to POST to, which should start with https://api.fixie.ai/api
             data: The data to send in the request body (optional)
         """
-        assert url.startswith("https://api.fixie.ai/api")
+        assert url.startswith(constants.FIXIE_API_URL)
         response = self._rest_client.post(
             url, headers=self._request_headers, json=data, stream=True
         )
