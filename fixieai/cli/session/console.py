@@ -9,7 +9,7 @@ import prompt_toolkit.history
 import requests
 from PIL import Image
 from rich import console as rich_console
-from rich.markdown import Markdown
+from rich import markdown
 
 from fixieai import FixieClient
 from fixieai.client.client import Session
@@ -70,7 +70,7 @@ class Console:
             sys.stdout.flush()
             for message in self._session.streaming_query(in_text):
                 text = message["text"][pos:]
-                print(text, end="")
+                textconsole.print(text, end="")
                 sys.stdout.flush()
                 pos += len(text)
             print("")
@@ -93,14 +93,16 @@ class Console:
 
         if message["type"] == "query" and sender_handle == "user":
             if show_user_message:
-                textconsole.print(Markdown(PROMPT + message_text))
+                textconsole.print(markdown.Markdown(PROMPT + message_text))
         elif message["type"] != "response":
             textconsole.print(
-                Markdown(f"   @{sender_handle}: " + message_text, style="dim")
+                markdown.Markdown(f"   @{sender_handle}: " + message_text, style="dim")
             )
         else:
             self._response_index += 1
-            textconsole.print(Markdown(f"{self._response_index}❯ " + message_text))
+            textconsole.print(
+                markdown.Markdown(f"{self._response_index}❯ " + message_text)
+            )
             self._show_embeds(message["text"])
 
     def _show_embeds(self, message: str):
