@@ -558,7 +558,6 @@ def serve(ctx, path, host, port, use_tunnel, reload, use_venv):
             else:
                 agent_exe, agent_env = sys.executable, os.environ.copy()
         elif agent_type == fixieai.client.FixieEnvironment.NODEJS:
-            subprocess.run(["npm", "install"], cwd=agent_dir)
             agent_exe = "npx"
             agent_env = os.environ.copy()
         agent_env[FIXIE_ALLOWED_AGENT_ID] = agent_id
