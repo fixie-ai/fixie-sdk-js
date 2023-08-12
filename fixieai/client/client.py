@@ -406,4 +406,4 @@ class FixieClient:
             url, headers=self._request_headers, json=data, stream=True
         )
         response.raise_for_status()
-        return (json.loads(line) for line in response.iter_lines())
+        return (json.loads(line) for line in response.iter_lines() if line)
