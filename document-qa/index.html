@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fixie.ai/document-qa/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Document Question and Answering - Fixie Developer Portal</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/custom.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Document Question and Answering";
+        var mkdocs_page_input_path = "document-qa.md";
+        var mkdocs_page_url = "/document-qa/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script>
+<script
+async
+src="https://www.googletagmanager.com/gtag/js?id=G-T4VHHYL14W"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+  
+  gtag("config", "G-T4VHHYL14W");
+  </script>
+<script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){
+        o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+        y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+        z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+})('6180bd3c-4b13-420f-6928-e46f13dabb77');
+</script>
+<script type="text/javascript">
+  (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
+  for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?
+  MIXPANEL_CUSTOM_LIB_URL:"file:"===f.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+  </script>
+<script type="text/javascript">
+  window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=document.createElement("script");r.type="text/javascript",r.async=!0,r.src="https://cdn.heapanalytics.com/js/heap-"+e+".js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(r,a);for(var n=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","resetIdentity","removeEventProperty","setEventProperties","track","unsetEventProperty"],o=0;o<p.length;o++)heap[p[o]]=n(p[o])};
+  heap.load("2470912105");
+</script>
+
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/24456200.js"></script>
+
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js','DD_RUM')
+  window.DD_RUM.onReady(function() {
+    window.DD_RUM.init({
+      applicationId: 'c3ef95f4-ab34-4aff-9f26-ed6bb5734d7b',
+      clientToken: 'pub2e9329101f46c60b6b7bed60bf7c5888',
+      site: 'datadoghq.com',
+      service: 'fixie---web',
+      env: 'docs',
+      version: 'docs',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 20,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+    })
+  })
+</script>
+
+<script>
+mixpanel.init('d695f343799edd2d62beb38eea46b4fc', { debug: true });
+window.pendo.initialize();
+</script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/fixie-logo-docs.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Building Fixie Agents</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-quickstart/">Agent QuickStart</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agents/">Fixie Agent API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-protocol/">Agent Protocol</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Common Use Cases</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Document Question and Answering</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#specifying-urls">Specifying URLs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#accessing-private-urls-with-bearer-token">Accessing Private URLs with Bearer Token</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#custom-corpora">Custom Corpora</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#using-fewshots-with-docs">Using Fewshots with Docs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#excluding-documents-during-crawl">Excluding documents during crawl</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supported-file-types">Supported file types</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#monitoring-indexing-status">Monitoring Indexing Status</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../langchain/">Using Langchain</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Python SDK</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-client-api/">Python Client API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-agent-api/">Python Agent API</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Command line interface</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../cli/">CLI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GraphQL API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://app.fixie.ai/static/docs/index.html">GraphQL</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Other links</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/fixie-ai/fixie-sdk">GitHub</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://discord.gg/MsKAeKF8kU">Discord</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://twitter.com/fixieai">Twitter</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Fixie Developer Portal</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+          <li>Common Use Cases &raquo;</li>
+      <li>Document Question and Answering</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="document-question-and-answering">Document Question and Answering</h1>
+<h2 id="overview">Overview</h2>
+<p>One of the most popular use cases for LLMs is doing question answering (Q/A) over a large corpus of unstructured data.</p>
+<p>Fixie makes it possible to quickly build Q/A Agents by automatically crawling a set of developer-provided URLs, generating embeddings, chunking the data, and storing it inside of a Vector Database for efficient retrieval. For data sets that aren't easily available to a web crawler, Fixie also supports <a href="#custom-corpora">custom corpora</a>.</p>
+<p>To get started, let's look at a simple <a href="/agents/#CodeShotAgent">CodeShotAgent</a> that answers questions about Python:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+
+<span class="n">BASE_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;I am a helpful assistant that can answer questions </span><span class="se">\</span>
+<span class="s2">  about Python. I try to be as concise as possible </span><span class="se">\</span>
+<span class="s2">  in my answers while still effectively answering the question.&quot;&quot;&quot;</span>
+
+<span class="n">URLS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;https://docs.python.org/3.11/*&quot;</span>
+<span class="p">]</span>
+
+<span class="n">DOCUMENTS</span> <span class="o">=</span> <span class="p">[</span><span class="n">fixieai</span><span class="o">.</span><span class="n">DocumentCorpus</span><span class="p">(</span><span class="n">urls</span><span class="o">=</span><span class="n">URLS</span><span class="p">)]</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="p">[],</span> <span class="n">DOCUMENTS</span><span class="p">,</span> <span class="n">conversational</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<p>You'll notice that we created a new variable, <code>URLS</code>, that contains an array of webpages that we would like Fixie to automatically crawl. (See <a href="#specifying-urls">Specifying URLs</a> for detail about how this works.)</p>
+<p>Once we have our <code>URLS</code>, we instantiate a new <code>CodeShotAgent</code> with our <code>BASE_PROMPT</code>, an empty Few Shot array, a set of <code>DOCUMENTS</code> that point to our URLs, and whether we want a <code>conversational</code> Agent (conversational agents keep previous questions and answers in memory, so we recommend it for Q/A Agents).</p>
+<p>When a <code>DocumentCorpus</code> is provided, FewShots are optional (hence the empty array that we passed in). If you need FewShots, see <a href="#using-fewshots-with-docs">Using Fewshots with Docs</a>.</p>
+<p>Once ready, you can deploy your agent using <code>fixie deploy</code>. The agent will deploy immediately, but will not answer questions until indexing is complete. See <a href="#monitoring-indexing-status">Monitoring Indexing Status</a> for more.</p>
+<h2 id="specifying-urls">Specifying URLs</h2>
+<p>You can specify URLs in two forms: static or wildcard.</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Example</th>
+<th>Use-case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Static</td>
+<td><code>https://docs.python.org/3.11/tutorial/introduction.html</code></td>
+<td>Index only the specified URL.</td>
+</tr>
+<tr>
+<td>Wildcard</td>
+<td><code>https://docs.python.org/3.11/*</code></td>
+<td>Index the specified URL and all of its subpages.</td>
+</tr>
+</tbody>
+</table>
+<p>When you specify a wildcard, Fixie will:</p>
+<ul>
+<li>Crawl the site, respecting a <a href="https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview#:~:text=A%20sitemap%20is%20a%20file,crawl%20your%20site%20more%20efficiently.">sitemap</a> if it exists.</li>
+<li>Limit the crawl to pages that start with the specified pattern. For example:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="cp"># Wildcard pattern: https://foo.com/bar/*</span>
+
+<span class="n">https</span><span class="o">://</span><span class="n">foo</span><span class="p">.</span><span class="n">com</span><span class="o">/</span><span class="n">bar</span><span class="o">/</span><span class="nf">index</span><span class="p">.</span><span class="n">html</span>
+
+<span class="w">    </span><span class="n">Links</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">https</span><span class="o">://</span><span class="n">foo</span><span class="p">.</span><span class="n">com</span><span class="o">/</span><span class="n">bar</span><span class="o">/</span><span class="n">nested</span><span class="o">/</span><span class="nf">index</span><span class="p">.</span><span class="n">html</span>
+<span class="w">    </span><span class="n">Links</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">https</span><span class="o">://</span><span class="n">foo</span><span class="p">.</span><span class="n">com</span><span class="o">/</span><span class="n">bar</span><span class="o">/</span><span class="n">deep</span><span class="o">/</span><span class="n">nested</span><span class="o">/</span><span class="nf">index</span><span class="p">.</span><span class="n">html</span>
+<span class="w">        </span><span class="n">These</span><span class="w"> </span><span class="n">pages</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="n">indexed</span><span class="p">.</span>
+
+<span class="w">    </span><span class="n">Links</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">https</span><span class="o">://</span><span class="n">foo</span><span class="p">.</span><span class="n">com</span><span class="o">/</span><span class="nf">index</span><span class="p">.</span><span class="n">html</span>
+<span class="w">        </span><span class="n">This</span><span class="w"> </span><span class="n">page</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="kr">not</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="n">indexed</span><span class="p">,</span><span class="w"> </span><span class="n">because</span><span class="w"> </span><span class="n">it</span><span class="w"> </span><span class="n">doesn</span><span class="s">&#39;t start with the wildcard pattern.</span>
+
+<span class="s">    Links to -&gt; https://different-domain.com</span>
+<span class="s">        This page will not be indexed, because it doesn&#39;</span><span class="n">t</span><span class="w"> </span><span class="n">start</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">wildcard</span><span class="w"> </span><span class="n">pattern</span><span class="p">.</span>
+</code></pre></div>
+
+<h2 id="accessing-private-urls-with-bearer-token">Accessing Private URLs with Bearer Token</h2>
+<p>In many cases, the set of documents that you want to access will be behind authentication. Fixie supports passing in a <code>Bearer</code> token with each request. To enable this, you'll define a new function that returns a token that will be passed in to the <code>Authorization</code> HTTP header as follows: <code>Authorization: Bearer {your_token}</code>.</p>
+<p>Here's an example:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+
+<span class="n">BASE_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;I can answer questions from secret, non-public docs.&quot;&quot;&quot;</span>
+
+<span class="n">URLS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;https://private.myamazingsite.com/*&quot;</span>
+<span class="p">]</span>
+
+<span class="n">CORPORA</span> <span class="o">=</span> <span class="p">[</span><span class="n">fixieai</span><span class="o">.</span><span class="n">DocumentCorpus</span><span class="p">(</span><span class="n">urls</span><span class="o">=</span><span class="n">URLS</span><span class="p">,</span> <span class="n">auth_token_func</span><span class="o">=</span><span class="s2">&quot;auth&quot;</span><span class="p">)]</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="p">[],</span> <span class="n">CORPORA</span><span class="p">,</span> <span class="n">conversational</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Don&#39;t forget to call @agent.register_func on your auth function</span>
+<span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span>
+<span class="k">def</span> <span class="nf">auth</span><span class="p">():</span>
+    <span class="k">return</span> <span class="s2">&quot;12345&quot;</span>
+</code></pre></div>
+
+<h2 id="custom-corpora">Custom Corpora</h2>
+<p>If web crawling isn't a good fit for your use case, you can register a corpus function to load documents any way you need to. This allows for reading a private database for example.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="n">BASE_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;I am a helpful assistant that can answer questions </span><span class="se">\</span>
+<span class="s2">  about the contents of MyDatabase. I try to be as concise as possible </span><span class="se">\</span>
+<span class="s2">  in my answers while still effectively answering the question.&quot;&quot;&quot;</span>
+
+<span class="n">agents</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="p">[],</span> <span class="n">conversational</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">MyDatabasePageToken</span><span class="p">:</span>
+    <span class="n">read_timestamp</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># Serialize to a utf-8 encoded string</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyDatabasePageToken</span><span class="p">:</span>
+        <span class="c1"># Undo encode</span>
+        <span class="k">pass</span>
+
+<span class="n">PAGE_SIZE</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="nd">@agent</span><span class="o">.</span><span class="n">register_corpus_func</span>
+<span class="k">def</span> <span class="nf">load_my_database</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CorpusRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fixie</span><span class="o">.</span><span class="n">CorpusResponse</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">partition</span><span class="p">:</span>
+        <span class="n">initial_read</span> <span class="o">=</span> <span class="n">db_client</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;MyTopLevelTable&quot;</span><span class="p">,</span> <span class="n">keys_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">first_page_token</span> <span class="o">=</span> <span class="n">MyDatabasePageToken</span><span class="p">(</span><span class="n">initial_read</span><span class="o">.</span><span class="n">timestamp</span><span class="p">())</span>
+        <span class="n">partition_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">initial_read</span><span class="o">.</span><span class="n">results</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CorpusResponse</span><span class="p">(</span><span class="n">partitions</span><span class="o">=</span><span class="p">[</span><span class="n">fixieai</span><span class="o">.</span><span class="n">CorpusPartition</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">first_page_token</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">partition_names</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">top_level_key</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">partition</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">MyDatabasePageToken</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">page_token</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">offset</span> <span class="o">*</span> <span class="n">PAGE_SIZE</span>
+        <span class="n">read</span> <span class="o">=</span> <span class="n">db_client</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;MyNestedTable&quot;</span><span class="p">,</span> <span class="n">parent_key</span><span class="o">=</span><span class="n">top_level_key</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">PAGE_SIZE</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">read_timestamp</span><span class="o">=</span><span class="n">token</span><span class="o">.</span><span class="n">read_timestamp</span><span class="p">)</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span><span class="n">fixie</span><span class="o">.</span><span class="n">CorpusDocument</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">my_column</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">read</span><span class="o">.</span><span class="n">results</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">read</span><span class="o">.</span><span class="n">has_more_results</span><span class="p">():</span>
+            <span class="n">token</span><span class="o">.</span><span class="n">offset</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">next_page_token</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">next_page_token</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CorpusResponse</span><span class="p">(</span><span class="n">page</span><span class="o">=</span><span class="n">fixieai</span><span class="o">.</span><span class="n">CorpusPage</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">next_page_token</span><span class="p">))</span>
+</code></pre></div>
+
+<p>This example assumes an easily partitionable database with columns that already have text data, but there are way more options available. See <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.corpora.CorpusRequest">CorpusRequest</a> for more details.</p>
+<h2 id="using-fewshots-with-docs">Using Fewshots with Docs</h2>
+<p>By default, you don't need to use FewShots with Docs. Fixie's automatic behavior will produce a Q/A agent that meets the general need.</p>
+<p>If using FewShots, you'll need to manually tell Fixie to query the corpus using the built-in <code>fixie_query_corpus</code> function.</p>
+<p>Here's an example for an Agent that has access to docs about the primary plot points from HBO's Silicon Valley:</p>
+<div class="highlight"><pre><span></span><code><span class="n">FEW_SHOTS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Q: Who was Gilfoyle played by?</span>
+<span class="s2">Ask Func[fixie_query_corpus]: Who was Gilfoyle played by?</span>
+<span class="s2">Func[fixie_query_corpus] says: Gilfoyle was played by Martin Starr.</span>
+<span class="s2">A: Gilfoyle was played by Martin Starr.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</code></pre></div>
+
+<h2 id="excluding-documents-during-crawl">Excluding documents during crawl</h2>
+<p>There are some cases where you don't want Fixie to crawl certain wepages or types of webpages when using the <code>*</code> wildcard pattern. In order to do this, you can supply a set of <code>exclude_patterns</code>, which are an array of regular expressions:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+
+<span class="n">BASE_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;I answer questions based on the supplied corpus&quot;&quot;&quot;</span>
+
+<span class="n">URLS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;https://public.myamazingsite.com/*&quot;</span>
+<span class="p">]</span>
+
+<span class="c1"># Don&#39;t index any PDFs</span>
+<span class="n">EXCLUDE_PATTERNS</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="s2">&quot;*.pdf&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">CORPORA</span> <span class="o">=</span> <span class="p">[</span><span class="n">fixieai</span><span class="o">.</span><span class="n">DocumentCorpus</span><span class="p">(</span><span class="n">urls</span><span class="o">=</span><span class="n">URLS</span><span class="p">,</span> <span class="n">exclude_patterns</span><span class="o">=</span><span class="n">EXCLUDE_PATTERNS</span><span class="p">)]</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="p">[],</span> <span class="n">CORPORA</span><span class="p">,</span> <span class="n">conversational</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="supported-file-types">Supported file types</h2>
+<table>
+<thead>
+<tr>
+<th>File Type</th>
+<th>Extension</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Documents</td>
+<td><code>.doc</code>, <code>.docx</code>, <code>.ppt</code>, <code>.pptx</code></td>
+</tr>
+<tr>
+<td>PDFs</td>
+<td><code>.pdf</code></td>
+</tr>
+<tr>
+<td>Webpages</td>
+<td><code>.html</code></td>
+</tr>
+<tr>
+<td>Text</td>
+<td><code>.md</code>, <code>.txt</code>, <code>.rtf</code>,</td>
+</tr>
+<tr>
+<td>Email</td>
+<td><code>.msg</code>, <code>.eml</code></td>
+</tr>
+<tr>
+<td>E-Books</td>
+<td><code>.epub</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="monitoring-indexing-status">Monitoring Indexing Status</h2>
+<p>You can check the indexing status of your Agent by asking it any question. Your agent will return <code>I'm still starting up. Please try again in a few minutes</code> if it's still indexing. Indexing can take upwards of a few hours for very large data sets (smaller sets can be done in just a few minutes).</p>
+<p>Coming soon is the ability to see and manage your indexing directly on <a href="https://app.fixie.ai">the Fixie dev console</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../agent-protocol/" class="btn btn-neutral float-left" title="Agent Protocol"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../langchain/" class="btn btn-neutral float-right" title="Using Langchain">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023 Fixie.ai, Inc.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../agent-protocol/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../langchain/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fixie.ai/langchain/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Using Langchain - Fixie Developer Portal</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/custom.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Using Langchain";
+        var mkdocs_page_input_path = "langchain.md";
+        var mkdocs_page_url = "/langchain/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script>
+<script
+async
+src="https://www.googletagmanager.com/gtag/js?id=G-T4VHHYL14W"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+  
+  gtag("config", "G-T4VHHYL14W");
+  </script>
+<script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){
+        o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+        y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+        z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+})('6180bd3c-4b13-420f-6928-e46f13dabb77');
+</script>
+<script type="text/javascript">
+  (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
+  for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?
+  MIXPANEL_CUSTOM_LIB_URL:"file:"===f.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+  </script>
+<script type="text/javascript">
+  window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=document.createElement("script");r.type="text/javascript",r.async=!0,r.src="https://cdn.heapanalytics.com/js/heap-"+e+".js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(r,a);for(var n=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","resetIdentity","removeEventProperty","setEventProperties","track","unsetEventProperty"],o=0;o<p.length;o++)heap[p[o]]=n(p[o])};
+  heap.load("2470912105");
+</script>
+
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/24456200.js"></script>
+
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js','DD_RUM')
+  window.DD_RUM.onReady(function() {
+    window.DD_RUM.init({
+      applicationId: 'c3ef95f4-ab34-4aff-9f26-ed6bb5734d7b',
+      clientToken: 'pub2e9329101f46c60b6b7bed60bf7c5888',
+      site: 'datadoghq.com',
+      service: 'fixie---web',
+      env: 'docs',
+      version: 'docs',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 20,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+    })
+  })
+</script>
+
+<script>
+mixpanel.init('d695f343799edd2d62beb38eea46b4fc', { debug: true });
+window.pendo.initialize();
+</script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/fixie-logo-docs.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Building Fixie Agents</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-quickstart/">Agent QuickStart</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agents/">Fixie Agent API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-protocol/">Agent Protocol</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Common Use Cases</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../document-qa/">Document Question and Answering</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Using Langchain</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#why-deploy-on-fixie">Why Deploy on Fixie?</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#developing-and-testing-your-agent">Developing and testing your Agent</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#calling-your-agent-via-api">Calling your Agent via API</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Python SDK</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-client-api/">Python Client API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-agent-api/">Python Agent API</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Command line interface</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../cli/">CLI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GraphQL API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://app.fixie.ai/static/docs/index.html">GraphQL</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Other links</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/fixie-ai/fixie-sdk">GitHub</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://discord.gg/MsKAeKF8kU">Discord</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://twitter.com/fixieai">Twitter</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Fixie Developer Portal</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+          <li>Common Use Cases &raquo;</li>
+      <li>Using Langchain</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="deploying-langchain-agents-on-fixie">Deploying LangChain Agents on Fixie</h1>
+<h2 id="overview">Overview</h2>
+<p><a href="https://python.langchain.com/">LangChain</a> is a popular framework for developing applications built on top of Large Language Models. Fixie supports LangChain as a first-class citizen. This means you can develop LangChain Agents/Chains/Prompts just as you typically would and then quickly deploy them onto Fixie infrastructure.</p>
+<h2 id="why-deploy-on-fixie">Why Deploy on Fixie?</h2>
+<p>Deploying on Fixie gives you three major advantages:</p>
+<ol>
+<li>We host it for you (for free). Simply run <code>fixie deploy</code> and your Agent will be hosted in the cloud, complete with a REST API for calling it programatically and a shareable URL that will allow others to demo your agent in the browser.</li>
+<li>No need for an OpenAI key. Fixie will automatically take care of that, and supports 1,000 free requests per day, per user. So if your creation gets popular, you're not stuck footing the bill or asking people to mint their own key.</li>
+<li>It allows you to integrate with the rest of the Fixie ecosystem. This means other people in the community will be able to leverage your agent and vice-versa.</li>
+</ol>
+<h2 id="getting-started">Getting Started</h2>
+<p>First, you'll make to make sure you have installed the Fixie CLI and have authenticated to Fixie (these are necessary for deploying to Fixie):</p>
+<ol>
+<li>Install Fixie on your machine: <code>pip install fixieai</code></li>
+<li>Create an account and link your command line to it: <code>fixie auth</code></li>
+</ol>
+<p>Next, you'll need to tell Fixie what function to call to invoke your app. As an example, let's imagine something as simple as a <a href="https://python.langchain.com/en/latest/getting_started/getting_started.html">PromptTemplate</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">langchain.prompts</span> <span class="kn">import</span> <span class="n">PromptTemplate</span>
+<span class="kn">from</span> <span class="nn">langchain.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="p">(</span>
+    <span class="n">input_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">],</span>
+    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;What is a good name for a company that makes </span><span class="si">{product}</span><span class="s2">?&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
+<span class="n">chain</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;colorful socks&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>In the above example, we're calling <code>chain.run()</code> directly inside of our code with a hardcoded value of "colorful socks". This isn't that useful, since it means we can only get company names for colorful socks! Instead, we want a user to be able to provide the variable themselves, and we want Fixie to pass that to us.</p>
+<p>To accomplish this, we're going to wrap <code>chain.run()</code> inside of a func. Here's our new version:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># main.py</span>
+
+<span class="kn">from</span> <span class="nn">langchain.prompts</span> <span class="kn">import</span> <span class="n">PromptTemplate</span>
+<span class="kn">from</span> <span class="nn">langchain.llms</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">LLMChain</span>
+
+<span class="n">llm</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="n">PromptTemplate</span><span class="p">(</span>
+    <span class="n">input_variables</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">],</span>
+    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;What is a good name for a company that makes </span><span class="si">{product}</span><span class="s2">?&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">chain</span> <span class="o">=</span> <span class="n">LLMChain</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="n">prompt</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">invoke_chain</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">chain</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Instead of calling <code>chain.run()</code> directly, we've instead wrapped it inside of a function called <code>invoke_chain</code> that takes a single <code>str</code> as an input variable. We then pass that string directly to our <code>chain.run()</code>.</p>
+<p>Now we need to tell Fixie about our Chain. To do this, run <code>fixie init</code>. Fixie will ask you a few questions about your agent like its handle (its name inside of Fixie) and description (this helps others understand how to use your creation).</p>
+<p>The <strong>most important part</strong> is the <code>Entry Point</code>. This is where you tell Fixie where to find your function. The format is <code>name_of_your_python_file:name_of_your_function</code>.</p>
+<p>In our case, our file is <code>main.py</code>, so we'll put <code>main:invoke_chain</code>.</p>
+<p>Once you've done this, Fixie will create an <code>agent.yaml</code> file in the same directory. You can edit this any time.</p>
+<p>You'll also notice that Fixie automatically created a <code>requirements.txt</code> file. If you're not familiar with <code>requirements.txt</code>, it's a simple way to define the module requirements for your project. Fixie will automatically install these on deploy. In our example, we need the following setup:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># requirements.txt</span>
+
+<span class="n">langchain</span>
+<span class="n">openai</span>
+<span class="n">fixieai</span>
+</code></pre></div>
+
+<p>Now we're ready to deploy! Run <code>fixie deploy</code> and Fixie takes care of the rest. Feel free to make changes and re-deploy.</p>
+<p>When you're ready to make your agent <strong>public</strong> (so others can access it) simply change <code>published</code> to <code>true</code> in your <code>agent.yaml</code> file and run <code>fixie deploy</code> again.</p>
+<h2 id="developing-and-testing-your-agent">Developing and testing your Agent</h2>
+<p>When you're iteratively developing your agent, the fastest feedback loop is to run it locally, rather than re-deploying to Fixie on every change. To do this, run <code>fixie serve</code>. This will create a tunnel between your machine and Fixie, allowing you to test on Fixie but debug locally on your machine.</p>
+<h2 id="calling-your-agent-via-api">Calling your Agent via API</h2>
+<p>Once your agent is deployed, Fixie automatically provides you with a REST API:</p>
+<div class="highlight"><pre><span></span><code><span class="go">curl &quot;https://app.fixie.ai/api/agents/{username}/{agent_name}&quot; \</span>
+<span class="go">  -d &quot;{ &#39;message&#39;: {&#39;text&#39;: &#39;colorful socks&#39; }}&quot; \</span>
+<span class="go">  -H &quot;Authorization: Bearer {your_api_token}&quot; \</span>
+<span class="go">  -H &quot;Content-Type: application/json&quot;</span>
+</code></pre></div>
+
+<p>You can get your Fixie API Token from your <a href="https://app.fixie.ai/profile">profile page</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../document-qa/" class="btn btn-neutral float-left" title="Document Question and Answering"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../python-client-api/" class="btn btn-neutral float-right" title="Python Client API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023 Fixie.ai, Inc.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../document-qa/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../python-client-api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

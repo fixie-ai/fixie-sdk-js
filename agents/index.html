@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://fixie.ai/agents/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Fixie Agent API - Fixie Developer Portal</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../css/custom.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Fixie Agent API";
+        var mkdocs_page_input_path = "agents.md";
+        var mkdocs_page_url = "/agents/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script>
+<script
+async
+src="https://www.googletagmanager.com/gtag/js?id=G-T4VHHYL14W"
+></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag("js", new Date());
+  
+  gtag("config", "G-T4VHHYL14W");
+  </script>
+<script>
+(function(apiKey){
+    (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=o._q||[];
+    v=['initialize','identify','updateOptions','pageLoad','track'];for(w=0,x=v.length;w<x;++w)(function(m){
+        o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+        y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+        z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);})(window,document,'script','pendo');
+})('6180bd3c-4b13-420f-6928-e46f13dabb77');
+</script>
+<script type="text/javascript">
+  (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
+  for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?
+  MIXPANEL_CUSTOM_LIB_URL:"file:"===f.location.protocol&&"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js".match(/^\/\//)?"https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js":"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";g=f.getElementsByTagName("script")[0];g.parentNode.insertBefore(e,g)}})(document,window.mixpanel||[]);
+  </script>
+<script type="text/javascript">
+  window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=document.createElement("script");r.type="text/javascript",r.async=!0,r.src="https://cdn.heapanalytics.com/js/heap-"+e+".js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(r,a);for(var n=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","resetIdentity","removeEventProperty","setEventProperties","track","unsetEventProperty"],o=0;o<p.length;o++)heap[p[o]]=n(p[o])};
+  heap.load("2470912105");
+</script>
+
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/24456200.js"></script>
+
+<script>
+  (function(h,o,u,n,d) {
+     h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+     d=o.createElement(u);d.async=1;d.src=n
+     n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js','DD_RUM')
+  window.DD_RUM.onReady(function() {
+    window.DD_RUM.init({
+      applicationId: 'c3ef95f4-ab34-4aff-9f26-ed6bb5734d7b',
+      clientToken: 'pub2e9329101f46c60b6b7bed60bf7c5888',
+      site: 'datadoghq.com',
+      service: 'fixie---web',
+      env: 'docs',
+      version: 'docs',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 20,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: 'mask-user-input',
+    })
+  })
+</script>
+
+<script>
+mixpanel.init('d695f343799edd2d62beb38eea46b4fc', { debug: true });
+window.pendo.initialize();
+</script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/fixie-logo-docs.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Introduction</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Building Fixie Agents</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-quickstart/">Agent QuickStart</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="./">Fixie Agent API</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#codeshotagent">CodeShotAgent</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#agent-funcs">Agent Funcs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#embeds">Embeds</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#external-knowledge-base-support">External Knowledge Base Support</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#user-storage">User Storage</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#user-storage-example">User Storage Example</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#agent-oauth-support">Agent OAuth Support</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#oauth-example">OAuth Example</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#default-agent-model-and-model-parameters">Default Agent Model and Model Parameters</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#example">Example:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#supported-models">Supported Models:</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#built-in-functions">Built-In Functions</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../agent-protocol/">Agent Protocol</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Common Use Cases</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../document-qa/">Document Question and Answering</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../langchain/">Using Langchain</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Python SDK</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-client-api/">Python Client API</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../python-agent-api/">Python Agent API</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Command line interface</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../cli/">CLI</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">GraphQL API</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://app.fixie.ai/static/docs/index.html">GraphQL</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Other links</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="" href="https://github.com/fixie-ai/fixie-sdk">GitHub</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://discord.gg/MsKAeKF8kU">Discord</a>
+                  </li>
+                  <li class="toctree-l1"><a class="" href="https://twitter.com/fixieai">Twitter</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">Fixie Developer Portal</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a> &raquo;</li>
+          <li>Building Fixie Agents &raquo;</li>
+      <li>Fixie Agent API</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="developing-a-fixie-agent">Developing a Fixie Agent</h1>
+<p>The Fixie platform enables you to build agents in any language by writing a service that conforms to the protocol described in <a href="../agent-protocol/">Agent Protocol</a>. For Python developers, we provide a Python library for implementing agents using the API described below.</p>
+<p>For a quick start on building your own Fixie agent, review the <a href="../agent-quickstart/">Quick Start</a> guide.</p>
+<p>See <a href="../python-agent-api/">Fixie Agent Python API</a> for the full API reference.</p>
+<h2 id="codeshotagent">CodeShotAgent</h2>
+<p>The base class for agents in Fixie is <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.code_shot.CodeShotAgent"><code>CodeShotAgent</code></a>. This class handles communication with the Fixie platform via the <a href="../agent-protocol/">Agent Protocol</a> and provides a simple API for registering functions that can be invoked by the few-shot examples used by the agent.</p>
+<p>A typical <code>CodeShotAgent</code> structure looks like this:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+
+<span class="n">BASE_PROMPT</span> <span class="o">=</span> <span class="s2">&quot;Base prompt for the agent.&quot;</span>
+<span class="n">FEW_SHOTS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">Q: Example query for the agent</span>
+<span class="s2">Ask Func[my_func]: query to the func</span>
+<span class="s2">Func[my_func] says: response to the query</span>
+<span class="s2">A: Response generated by the agent</span>
+
+<span class="s2">Q: Second example query to the agent</span>
+<span class="s2">A: Second response generated by the agent</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="n">FEW_SHOTS</span><span class="p">)</span>
+
+<span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;Response to the query&quot;</span>
+</code></pre></div>
+
+<p>The <code>BASE_PROMPT</code> and <code>FEW_SHOTS</code> strings provide examples for the underlying Large Language Model (LLM), such as GPT-4, as well as supply the Fixie Platform with information about the types of queries this agent can support.</p>
+<p><code>FEW_SHOTS</code> must be a string composed of one or more <em>stanzas</em>, where each stanza consists of a question, one or more rounds of internal actions taken by the agent, and a final answer. Stanzas must be separated by a blank line. The query line in the stanza must start with <code>Q:</code>, and the answer line must start with <code>A:</code>.</p>
+<p>Internal actions taken by the agent can be one of two forms:</p>
+<ol>
+<li><code>Ask Func[&lt;func_name&gt;]: &lt;query_text&gt;</code>: This indicates that the function <code>&lt;func_name&gt;</code> should be invoked when the output of the underlying LLM starts with this string. The string following <code>Ask Func[&lt;func_name&gt;]:</code> is passed to the function as the <code>query.text</code> parameter.</li>
+<li><code>Ask Agent[&lt;agent_name&gt;]: &lt;query_text&gt;</code>: This indicates that the agent <code>&lt;agent_name&gt;</code> should be invoked when the output of the underlying LLM starts with this string. The string following <code>Ask Agent[&lt;agent_name&gt;]:</code> is passed to the agent as the <code>query.text</code> parameter.</li>
+</ol>
+<h2 id="agent-funcs">Agent Funcs</h2>
+<p>A <strong>Func</strong> is a Python function that the agent can invoke. (To implement Funcs in languages other than Python, create a service that implements the <a href="../agent-protocol/">Fixie Agent Protocol</a>.) When the language model for an agent emits the token <code>Ask Func[&lt;func_name&gt;]</code>, the function <code>&lt;func_name&gt;</code> will be invoked.</p>
+<p>The <code>register_func</code> decorator is used to register a function for invocation by the agent.</p>
+<p>A function registered with the <code>register_func</code> decorator has the signature:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">user_storage</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">oauth_handler</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="o">...</span>
+</code></pre></div>
+
+<p>The <code>query</code> parameter is either a <code>str</code> or a <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.api.Message"><code>Message</code></a> object. If the query parameter is a string, this parameter contains the text of the agent query. If the query parameter is a <code>Message</code> object, this parameter contains the text of the agent along with zero or more <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.api.Embed"><code>Embed</code></a> objects, as described in the <a href="#embeds">Embeds</a> section below.</p>
+<p>The optional <code>user_storage</code> parameter provides the Func an interface to the Fixie <a href="#user-storage">User Storage</a> service, as described below.</p>
+<p>The optional <code>oauth_handler</code> parameter provides the Func an interface for performing OAuth authentication with external services, as described in the <a href="#agent-oauth-support">OAuth</a> section below.</p>
+<p>The function must return either a <code>str</code> or a <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.api.Message"><code>Message</code></a> object. Returning a string is equivalent to returning a <code>Message</code> object with the string as its <code>text</code> field and no <code>embeds</code>.</p>
+<h2 id="embeds">Embeds</h2>
+<p><strong>Embeds</strong> enable the association of arbitrary binary data with a query or response Message in Fixie, similar to email attachments. Embeds can be used to store images, videos, text, or any other binary data.</p>
+<p>Embeds are represented by the <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.api.Embed"><code>Embed</code></a> class. Agents can access the Embeds associated with a Message as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">embed</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">embeds</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Embed key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Embed content-type: </span><span class="si">{</span><span class="n">embed</span><span class="o">.</span><span class="n">content_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">embed_value_as_text</span> <span class="o">=</span> <span class="n">embed</span><span class="o">.</span><span class="n">text</span>
+        <span class="n">embed_value_as_bytes</span> <span class="o">=</span> <span class="n">embed</span><span class="o">.</span><span class="n">content</span>
+</code></pre></div>
+
+<p>An agent function can also add an Embed to its response Message by adding it to the <code>embeds</code> dictionary of the <code>Message</code> object:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">:</span>
+    <span class="n">reply</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;Response to the query&quot;</span><span class="p">)</span>
+    <span class="n">reply</span><span class="o">.</span><span class="n">embeds</span><span class="p">[</span><span class="s2">&quot;my_embed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Embed</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;text/plain&quot;</span><span class="p">)</span>
+    <span class="n">reply</span><span class="o">.</span><span class="n">embeds</span><span class="p">[</span><span class="s2">&quot;my_embed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;Hello, world!&quot;</span>
+</code></pre></div>
+
+<p>Embeds can be queried by leveraging the built-in <code>fixie_query_embed</code> func. e.g., <code>Ask Func[fixie_query_embed]</code>. See <a href="https://github.com/fixie-ai/fixie-examples/tree/main/agents/chatembed">example</a> of how this works.</p>
+<h2 id="external-knowledge-base-support">External Knowledge Base Support</h2>
+<p>Fixie agents come with built-in support for indexing and querying external knowledge in the form of URLs. See the <a href="https://github.com/fixie-ai/fixie-examples/tree/main/agents/support">support agent</a> for an example of how to use this.</p>
+<div class="highlight"><pre><span></span><code><span class="n">URLS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;https://docs.fixie.ai/*&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">DOCS</span> <span class="o">=</span> <span class="p">[</span><span class="n">fixieai</span><span class="o">.</span><span class="n">DocumentCorpus</span><span class="p">(</span><span class="n">urls</span><span class="o">=</span><span class="n">URLS</span><span class="p">)]</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="n">FEW_SHOTS</span><span class="p">,</span> <span class="n">DOCS</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Appending <code>*</code> to the end of the URL will tell Fixie to automatically index all children of the root URL.</p>
+<p>After indexing, you can query the corpus using the built-in <code>Ask Func[fixie_query_corpus]</code> function.</p>
+<p>Note: It can take up to 10 minutes to index content, depending on the number of URLs and content size. We're working on a mechanism to alert you to indexing progress. Stay tuned!</p>
+<h2 id="user-storage">User Storage</h2>
+<p>Fixie agents can store and retrieve arbitrary data associated with a user using the <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.user_storage.UserStorage"><code>UserStorage</code></a> class. This class provides a simple interface to a persistent key/value storage service, with a separate key/value store for each Fixie user. This can be used to maintain state about a particular user that persists across agent invocations.</p>
+<p>The <code>UserStorage</code> instance for a given query can be obtained by providing a <code>user_storage</code> parameter to an agent function. The <code>UserStorage</code> object acts as a Python <code>dict</code> that stores state associated with an arbitrary string key. <code>UserStorage</code> values may consist of Python primitive types, such as <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>None</code>, or <code>bytes</code>, as well as lists of these types, or a <code>dict</code> mapping a <code>str</code> to one of these types.</p>
+<h3 id="user-storage-example">User Storage Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">user_storage</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">UserStorage</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">user_storage</span><span class="p">[</span><span class="s2">&quot;my_key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;my_value&quot;</span>
+    <span class="k">return</span> <span class="n">user_storage</span><span class="p">[</span><span class="s2">&quot;my_key&quot;</span><span class="p">]</span>
+</code></pre></div>
+
+<h2 id="agent-oauth-support">Agent OAuth Support</h2>
+<p>Fixie Agents can authenticate to third-party services to perform actions on behalf of the user. This is done using OAuth 2.0, a standard protocol for authorization. OAuth 2.0 allows users to grant limited access to their accounts on one service, to another service, without having to share their password.</p>
+<p>Fixie provides a simple interface for agents to perform OAuth authentication, using the <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.oauth.OAuthParams"><code>OAuthParams</code></a> class. Using this class, an agent function can use the <a class="autorefs autorefs-internal" href="../python-agent-api/#fixieai.agents.oauth.OAuthHandler"><code>OAuthHandler</code></a> class, passed to the function as the <code>oauth_handler</code> parameter, to obtain an access token for the user.</p>
+<h3 id="oauth-example">OAuth Example</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">fixieai</span>
+
+<span class="n">oauth_params</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">OAuthParams</span><span class="p">(</span>
+    <span class="n">client_id</span><span class="o">=</span><span class="s2">&quot;XXXXX.apps.googleusercontent.com&quot;</span><span class="p">,</span>
+    <span class="n">auth_uri</span><span class="o">=</span><span class="s2">&quot;https://accounts.google.com/o/oauth2/auth&quot;</span><span class="p">,</span>
+    <span class="n">token_uri</span><span class="o">=</span><span class="s2">&quot;https://oauth2.googleapis.com/token&quot;</span><span class="p">,</span>
+    <span class="n">client_secret</span><span class="o">=</span><span class="s2">&quot;XXXXXXXXX&quot;</span><span class="p">,</span>
+    <span class="n">scopes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;https://www.googleapis.com/auth/calendar.events&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span><span class="n">BASE_PROMPT</span><span class="p">,</span> <span class="n">FEW_SHOTS</span><span class="p">,</span> <span class="n">oauth_params</span><span class="o">=</span><span class="n">oauth_params</span><span class="p">)</span>
+
+<span class="nd">@agent</span><span class="o">.</span><span class="n">register_func</span>
+<span class="k">def</span> <span class="nf">my_func</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">oauth_handler</span><span class="p">:</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">OAuthHandler</span><span class="p">):</span>
+    <span class="n">user_token</span> <span class="o">=</span> <span class="n">oauth_handler</span><span class="o">.</span><span class="n">user_token</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">user_token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Return the URL that the user should click on to authorize the agent.</span>
+    <span class="k">return</span> <span class="n">oauth_handler</span><span class="o">.</span><span class="n">get_authorization_url</span><span class="p">()</span>
+
+  <span class="c1"># Do something with the user_token returned by the OAuth handler.</span>
+  <span class="n">client</span> <span class="o">=</span> <span class="n">gcalendar_client</span><span class="o">.</span><span class="n">GcalendarClient</span><span class="p">(</span><span class="n">user_token</span><span class="p">)</span>
+  <span class="c1"># ...</span>
+</code></pre></div>
+
+<h2 id="default-agent-model-and-model-parameters">Default Agent Model and Model Parameters</h2>
+<p>By default, agents use the <code>text-davinci-003</code> model from OpenAI with a default temperature of <code>0</code> and a <code>maximum_tokens</code> size of 1,000. We've found this to be the right default for many use cases, but it's easy to change by passing <code>llm_settings</code> when initializing your <code>CodeShotAgent</code>.</p>
+<h3 id="example">Example:</h3>
+<div class="highlight"><pre><span></span><code><span class="n">agent</span> <span class="o">=</span> <span class="n">fixieai</span><span class="o">.</span><span class="n">CodeShotAgent</span><span class="p">(</span>
+    <span class="n">BASE_PROMPT</span><span class="p">,</span>
+    <span class="p">[],</span>
+    <span class="n">conversational</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">llm_settings</span><span class="o">=</span><span class="n">fixieai</span><span class="o">.</span><span class="n">LlmSettings</span><span class="p">(</span><span class="n">temperature</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;openai/gpt-4&quot;</span><span class="p">,</span> <span class="n">maximum_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<h3 id="supported-models">Supported Models:</h3>
+<table>
+<thead>
+<tr>
+<th>Model Name</th>
+<th>Identifier String</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3</td>
+<td><code>openai/text-davinci-003</code> (default)</td>
+</tr>
+<tr>
+<td>GPT-3.5 (ChatGPT)</td>
+<td><code>openai/gpt-3.5-turbo</code></td>
+</tr>
+<tr>
+<td>GPT-4</td>
+<td><code>openai/gpt-4</code></td>
+</tr>
+<tr>
+<td>AI21 J2 Grande</td>
+<td><code>ai21/j2-grande</code></td>
+</tr>
+<tr>
+<td>AI21 J2 Jumbo</td>
+<td><code>ai21/j2-jumbo</code></td>
+</tr>
+<tr>
+<td>GooseAI GPTJ 6B</td>
+<td><code>gooseai/gpt-j-6b</code></td>
+</tr>
+<tr>
+<td>GooseAI GPT NEO 20B</td>
+<td><code>gooseai/gpt-neo-20b</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="built-in-functions">Built-In Functions</h2>
+<p>All Fixie agents have access to the following built-in functions that they can invoke:</p>
+<ul>
+<li><code>Ask Func[fixie_base_prompt]</code>: Returns the base prompt for the agent.</li>
+<li><code>Ask Func[fixie_local_datetime]</code>: Returns the current date and time in the user's local timezone.</li>
+<li><code>Ask Func[fixie_utc_datetime]</code>: Returns the current date and time in the UTC timezone.</li>
+<li><code>Ask Func[fixie_query_embed]</code>: Executes the prompt in the query against the contents of the embed.</li>
+<li><code>Ask Func[fixie_query_corpus]</code>: Executes the prompt in the query against the contents of the agent-defined corpus.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../agent-quickstart/" class="btn btn-neutral float-left" title="Agent QuickStart"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../agent-protocol/" class="btn btn-neutral float-right" title="Agent Protocol">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>Copyright (c) 2023 Fixie.ai, Inc.</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../agent-quickstart/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../agent-protocol/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
