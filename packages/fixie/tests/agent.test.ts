@@ -74,7 +74,7 @@ describe('FixieAgent AgentRevision tests', () => {
       defaultRuntimeParameters: { foo: 'bar' },
       tarball,
       environmentVariables: { TEST_ENV_VAR: 'test env var value' },
-      runtimeParametersSchema: '{"type": "object"}',
+      runtimeParametersSchema: { type: 'object' },
     });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions'
@@ -85,7 +85,7 @@ describe('FixieAgent AgentRevision tests', () => {
         revision: {
           isCurrent: true,
           runtime: {
-            parametersSchema: '{"type": "object"}',
+            parametersSchema: '{"type":"object"}',
           },
           deployment: {
             managed: {
@@ -93,7 +93,7 @@ describe('FixieAgent AgentRevision tests', () => {
               environmentVariables: { TEST_ENV_VAR: 'test env var value' },
             },
           },
-          defaultRuntimeParameters: { foo: 'bar' },
+          defaultRuntimeParameters: '{"foo":"bar"}',
         },
       })
     );
@@ -110,7 +110,7 @@ describe('FixieAgent AgentRevision tests', () => {
           defaultRuntimeParameters: { foo: 'bar' },
           tarball: 'bogus-tarball-filename',
           environmentVariables: { TEST_ENV_VAR: 'test env var value' },
-          runtimeParametersSchema: '{"type": "object"}',
+          runtimeParametersSchema: { type: 'object' },
         })
     ).rejects.toThrow();
   });

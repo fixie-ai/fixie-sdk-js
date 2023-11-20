@@ -1,5 +1,13 @@
 # fixie
 
+## 7.0.12
+
+### Patch Changes
+
+- Added support for specifying default runtime parameters
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.12
+
 ## 7.0.11
 
 ### Patch Changes

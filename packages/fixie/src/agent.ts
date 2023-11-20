@@ -87,12 +87,7 @@ export class FixieAgent extends FixieAgentBase {
       `
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
-    const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
-    if (schema && schema.type !== 'object') {
-      throw new Error(`The first argument of your default export must be an object (not ${schema.type})`);
-    }
-
-    return schema;
+    return TJS.generateSchema(program, 'RuntimeParameters', settings);
   }
 
   /** Package the code in the given directory and return the path to the tarball. */
@@ -132,7 +127,7 @@ export class FixieAgent extends FixieAgentBase {
   }: {
     tarball: string;
     defaultRuntimeParameters?: Record<string, unknown>;
-    runtimeParametersSchema?: string;
+    runtimeParametersSchema?: Record<string, unknown> | null;
     isCurrent?: boolean;
     environmentVariables?: Record<string, string>;
   }): Promise<AgentRevision> {
@@ -143,7 +138,7 @@ export class FixieAgent extends FixieAgentBase {
       revision: {
         isCurrent,
         runtime: {
-          parametersSchema: runtimeParametersSchema,
+          parametersSchema: runtimeParametersSchema && JSON.stringify(runtimeParametersSchema),
         },
         deployment: {
           managed: {
@@ -151,7 +146,7 @@ export class FixieAgent extends FixieAgentBase {
             environmentVariables,
           },
         },
-        defaultRuntimeParameters,
+        defaultRuntimeParameters: defaultRuntimeParameters && JSON.stringify(defaultRuntimeParameters),
       },
     })) as { revision: AgentRevision };
     return result.revision;
@@ -236,11 +231,13 @@ export class FixieAgent extends FixieAgentBase {
     client,
     agentPath,
     environmentVariables = {},
+    defaultRuntimeParameters = {},
     teamId,
   }: {
     client: FixieClient;
     agentPath: string;
     environmentVariables: Record<string, string>;
+    defaultRuntimeParameters?: Record<string, unknown>;
     teamId?: string;
   }): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
@@ -274,7 +271,8 @@ export class FixieAgent extends FixieAgentBase {
     const revision = await agent.createManagedRevision({
       tarball,
       environmentVariables,
-      runtimeParametersSchema: JSON.stringify(runtimeParametersSchema),
+      runtimeParametersSchema: runtimeParametersSchema as Record<string, unknown>,
+      defaultRuntimeParameters,
     });
     spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl(client.url)}`);
     return revision;
@@ -287,6 +285,7 @@ export class FixieAgent extends FixieAgentBase {
     tunnel,
     port,
     environmentVariables,
+    defaultRuntimeParameters = {},
     debug,
     teamId,
   }: {
@@ -295,6 +294,7 @@ export class FixieAgent extends FixieAgentBase {
     tunnel?: boolean;
     port: number;
     environmentVariables: Record<string, string>;
+    defaultRuntimeParameters?: Record<string, unknown>;
     debug?: boolean;
     teamId?: string;
   }) {
@@ -430,7 +430,8 @@ export class FixieAgent extends FixieAgentBase {
         }
         currentRevision = await agent.createRevision({
           externalUrl: currentUrl,
-          runtimeParametersSchema: JSON.stringify(runtimeParametersSchema),
+          runtimeParametersSchema: runtimeParametersSchema as Record<string, unknown>,
+          defaultRuntimeParameters,
         });
         term('🥡 Created temporary agent revision ').green(currentRevision.revisionId)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl(client.url))('\n');

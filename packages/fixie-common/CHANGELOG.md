@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.12
+
+### Patch Changes
+
+- Added support for specifying default runtime parameters
+
 ## 1.0.11
 
 ### Patch Changes
