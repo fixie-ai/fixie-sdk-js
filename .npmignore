@@ -1,3 +1,5 @@
+# This file should have the same content as the .gitignore file in the root of the project, but without `dist`.
+
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -16,9 +18,7 @@ data
 .pnp.*
 
 *.log
-dist
 .turbo
 .vscode/settings.json
 
 .DS_Store
-packages/fixie/.env
