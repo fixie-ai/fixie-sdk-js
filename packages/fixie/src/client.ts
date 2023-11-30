@@ -14,7 +14,7 @@ import {
   MembershipRole,
   ChatManagerState,
   ChatManagerInit, // TODO Can we move this to the ChatManager interface?
-  ChatManager
+  ChatManager,
 } from './types.js';
 import { encode } from 'base64-arraybuffer';
 
