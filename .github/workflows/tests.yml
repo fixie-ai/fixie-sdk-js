@@ -1,48 +1,31 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Run tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
     steps:
-    - uses: actions/checkout@v2
-      with:
-        lfs: true
-        submodules: true
-
-    - uses: extractions/setup-just@v1
-
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-
-    - name: Install Poetry Action
-      uses: snok/install-poetry@v1.3.1
-
-    - name: Install dependencies
-      run: |
-        just install
-
-    - name: Run checks
-      run: |
-        just check
-
-    - name: Test main
-      env:
-        GOOGLE_CLOUD_PROJECT: ${{secrets.GCP_PROJECT}}
-        GOOGLE_APPLICATION_CREDENTIALS: service_account.json
-        SERVICE_ACCOUNT: ${{secrets.GCP_SERVICE_ACCOUNT}}
-      run: |
-        echo '${{secrets.GCP_SA_KEY}}' > service_account.json
-        just test
+      - uses: actions/checkout@v3
+      - run: curl https://get.volta.sh | bash
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
+      # - run: yarn set version 4
+      - run: ~/.volta/bin/volta list
+      # I added this to suppress this warning:
+      #     YN0018: typescript@patch:typescript@npm%3A5.1.3#optional!builtin<compat/typescript>::version=5.1.3&hash=5da071: The remote archive doesn't match the expected checksum
+      - run: YARN_CHECKSUM_BEHAVIOR=ignore ~/.volta/bin/yarn install --immutable
+        env:
+          OPENAI_API_KEY: 'FAKE-OPENAI-API-KEY'
+      - run: ~/.volta/bin/yarn test

@@ -1,0 +1,39 @@
+{
+  "name": "fixie-sdk-monorepo-root",
+  "version": "0.0.0",
+  "devDependencies": {
+    "@types/prettier": "^2",
+    "eslint": "^8.42.0",
+    "eslint-import-resolver-node": "^0.3.7",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
+    "prettier": "^2.8.8",
+    "turbo": "^1.10.16",
+    "typescript": "^5.1.3"
+  },
+  "type": "module",
+  "volta": {
+    "node": "18.16.0",
+    "yarn": "3.6.0"
+  },
+  "scripts": {
+    "format-for-turbo": "prettier --write .",
+    "format:check": "prettier . --check",
+    "format": "turbo format-for-turbo",
+    "test": "turbo test",
+    "build": "turbo build",
+    "demo:sidekick-github": "turbo run dev --scope sidekick-github",
+    "postinstall": "turbo build",
+    "publish-ai-jsx": "turbo test && turbo build && cd packages/ai-jsx && npm publish"
+  },
+  "private": true,
+  "prettier": {
+    "printWidth": 120,
+    "singleQuote": true
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/sandboxes/*"
+  ],
+  "packageManager": "yarn@3.6.0"
+}
