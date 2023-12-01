@@ -140,23 +140,3 @@ export interface TextMessage extends BaseMessage {
 
 export type Message = FunctionCall | FunctionResponse | TextMessage;
 
-/*******************************************************/
-//** Voice
-/*******************************************************/
-export enum VoiceSessionState {
-  IDLE = 'idle',
-  LISTENING = 'listening',
-  THINKING = 'thinking',
-  SPEAKING = 'speaking',
-}
-
-export interface VoiceSessionInit {
-  asrProvider: string;
-  ttsProvider: string;
-  model: string;
-  docs: boolean;
-  asrLanguage?: string;
-  ttsModel?: string;
-  ttsVoice?: string;
-  webrtcUrl?: string;
-}

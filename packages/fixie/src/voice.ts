@@ -1,6 +1,4 @@
 import {
-  VoiceSessionState,
-  VoiceSessionInit,
   AgentId,
   ConversationId,
 } from './types.js';
@@ -16,27 +14,51 @@ import {
   TrackEvent,
 } from 'livekit-client';
 
-  export class StreamAnalyzer {
-    source: MediaStreamAudioSourceNode;
-    analyzer: AnalyserNode;
-    constructor(context: AudioContext, stream: MediaStream) {
-      this.source = context.createMediaStreamSource(stream);
-      this.analyzer = context.createAnalyser();
-      this.source.connect(this.analyzer);
-    }
-    stop() {
-      this.source.disconnect();
-    }
-  }
 
 /**
- * Manages a single chat with a LLM, including speculative execution.
- * All RPCs are performed remotely, and audio is streamed to/from the server via WebRTC.
+ * Represents the state of a VoiceSession.
+ */
+export enum VoiceSessionState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+}
+
+export interface VoiceSessionInit {
+  asrProvider?: string;
+  asrLanguage?: string;
+  model?: string;
+  ttsProvider?: string;
+  ttsModel?: string;
+  ttsVoice?: string;
+  webrtcUrl?: string;
+}
+
+
+/**
+ * Web Audio AnalyserNode for an audio stream.
+ */
+export class StreamAnalyzer {
+  source: MediaStreamAudioSourceNode;
+  analyzer: AnalyserNode;
+  constructor(context: AudioContext, stream: MediaStream) {
+    this.source = context.createMediaStreamSource(stream);
+    this.analyzer = context.createAnalyser();
+    this.source.connect(this.analyzer);
+  }
+  stop() {
+    this.source.disconnect();
+  }
+}
+
+/**
+ * Manages a single voice session with a Fixie agent.
  */
 export class VoiceSession {
-  private agentId: AgentId = '';
-  private conversationId: ConversationId = '';
-  private params: VoiceSessionInit = { asrProvider: 'deepgram', ttsProvider: 'playht', model: 'gpt-4-1106-preview', docs: false };
+  private agentId: AgentId
+  private conversationId?: ConversationId;
+  private params?: VoiceSessionInit;
   private audioContext = new AudioContext();
   private audioElement = new Audio();
   private textEncoder = new TextEncoder();
@@ -47,20 +69,18 @@ export class VoiceSession {
   private localAudioTrack?: LocalAudioTrack;
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
-  private pinger?: NodeJS.Timer;
+  private pinger?: ReturnType<typeof setInterval>;
   onStateChange?: (state: VoiceSessionState) => void;
-  onInputChange?: (text: string, final: boolean, latency?: number) => void;
-  onOutputChange?: (text: string, final: boolean, latency: number) => void;
-  onAudioGenerate?: (latency: number) => void;
-  onAudioStart?: (latency: number) => void;
-  onAudioEnd?: () => void;
+  onInputChange?: (text: string, final: boolean) => void;
+  onOutputChange?: (text: string, final: boolean) => void;
+  onLatencyChange?: (metric: string, value: number) => void;
   onError?: () => void;
 
-  constructor(agentId: AgentId, conversationId: ConversationId, params?: VoiceSessionInit) {
-    if (params) {
-      this.params = params;
-    }
-
+  constructor(agentId: AgentId, conversationId?: ConversationId, params?: VoiceSessionInit) {
+    this.agentId = agentId;
+    this.conversationId = conversationId; 
+    this.params = params;
+    this.audioContext = new AudioContext();
     this.audioElement = new Audio();
     this.warmup();
   }
@@ -74,7 +94,7 @@ export class VoiceSession {
     return this.outAnalyzer?.analyzer;
   }
   warmup() {
-    const url = this.params.webrtcUrl || 'wss://wsapi.fixie.ai';
+    const url = this.params?.webrtcUrl || 'wss://wsapi.fixie.ai';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -96,8 +116,7 @@ export class VoiceSession {
   }
   async stop() {
     console.log('[chat] stopping');
-    // clearInterval(this.pinger);
-    clearInterval(this.pinger as unknown as number);
+    clearInterval(this.pinger);
     this.pinger = undefined;
     await this.room?.disconnect();
     this.room = undefined;
@@ -139,19 +158,18 @@ export class VoiceSession {
       type: 'init',
       params: {
         asr: {
-          provider: this.params.asrProvider,
-          language: this.params.asrLanguage,
+          provider: this.params?.asrProvider,
+          language: this.params?.asrLanguage,
         },
         tts: {
-          provider: this.params.ttsProvider,
-          model: this.params.ttsModel,
-          voice: this.params.ttsVoice,
+          provider: this.params?.ttsProvider,
+          model: this.params?.ttsModel,
+          voice: this.params?.ttsVoice,
         },
-        agent: {
-          model: this.params.model,
+        agent: {          
           agentId: this.agentId,
-          conversationId: this.conversationId,
-          docs: this.params.docs,
+          conversationId: this.conversationId,          
+          model: this.params?.model,
         },
       },
     };
@@ -165,8 +183,8 @@ export class VoiceSession {
         await this.room.connect(msg.roomUrl, msg.token);
         console.log('[chat] connected to room', msg.roomUrl);
         this.maybePublishLocalAudio();
-        this.room.on(RoomEvent.TrackSubscribed, (track) => this.handleTrackSubscribed(track));
-        this.room.on(RoomEvent.DataReceived, (payload, participant) => this.handleDataReceived(payload, participant));
+        this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
+        this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) => this.handleDataReceived(payload, participant));
         break;
       default:
         console.warn('unknown message type', msg.type);
@@ -179,7 +197,7 @@ export class VoiceSession {
     console.log(`[chat] subscribed to remote audio track ${track.sid}`);
     const audioTrack = track as RemoteAudioTrack;
     audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log(`[chat] audio playback started`));
-    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err) => console.error(`[chat] audio playback failed`, err));
+    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) => console.error(`[chat] audio playback failed`, err));
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
   }

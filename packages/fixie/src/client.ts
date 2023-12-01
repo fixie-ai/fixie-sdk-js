@@ -12,10 +12,9 @@ import {
   Team,
   Membership,
   MembershipRole,
-  VoiceSessionInit,
 } from './types.js';
 import { encode } from 'base64-arraybuffer';
-import { VoiceSession } from './voice.js';
+import { VoiceSession, VoiceSessionInit } from './voice.js';
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
@@ -668,35 +667,6 @@ export class FixieClient {
   }
 
   /**
-   * Create a new voice session.
-   * 
-   *  
-   */
-
-
-  // TODO
-  // return ChatManager (VoiceSession is new name)
-  // pass in: agentId, conversationId (both required)
-  // optional param for VoiceSessionInit to be passed in
-  createVoiceSession({ agentId, conversationId, init }: { agentId: AgentId; conversationId: ConversationId; init?: VoiceSessionInit }) {
-    return new VoiceSession(agentId, conversationId, init);
-    
-    // Instantiate VoiceSession
-    // Call start() on VoiceSession is done in client code by the developer
-  }
-
-  // Stream Analyzer -> have a new file with VoiceSession and this in there
-  // VoiceSession will be the new name for the WebRtcChatManager...don't need the interface
-  // voice.ts file to contain things
-  // 
-
-
-
-
-
-
-
-  /**
    * Get a conversation by ID.
    *
    * @param options.agentId The ID of the agent that the conversation belongs to.
@@ -792,6 +762,18 @@ export class FixieClient {
       undefined,
       'POST'
     );
+  }
+
+
+  /**
+   * Create a new voice session.
+   * 
+   * @param options.agentId The ID of the agent to start a conversation with.
+   * @param options.conversationId The ID of an existing conversation to attach to.
+   * @param options.init Various configuration parameters for the voice session.
+   */
+  createVoiceSession({ agentId, conversationId, init }: { agentId: AgentId; conversationId?: ConversationId; init?: VoiceSessionInit }) {
+    return new VoiceSession(agentId, conversationId, init);
   }
 
   /** Return information about a given user. */
