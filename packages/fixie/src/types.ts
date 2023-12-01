@@ -139,4 +139,3 @@ export interface TextMessage extends BaseMessage {
 }
 
 export type Message = FunctionCall | FunctionResponse | TextMessage;
-

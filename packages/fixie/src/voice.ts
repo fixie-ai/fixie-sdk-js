@@ -1,7 +1,4 @@
-import {
-  AgentId,
-  ConversationId,
-} from './types.js';
+import { AgentId, ConversationId } from './types.js';
 import {
   createLocalTracks,
   DataPacket_Kind,
@@ -13,7 +10,6 @@ import {
   Track,
   TrackEvent,
 } from 'livekit-client';
-
 
 /**
  * Represents the state of a VoiceSession.
@@ -35,7 +31,6 @@ export interface VoiceSessionInit {
   webrtcUrl?: string;
 }
 
-
 /**
  * Web Audio AnalyserNode for an audio stream.
  */
@@ -56,7 +51,7 @@ export class StreamAnalyzer {
  * Manages a single voice session with a Fixie agent.
  */
 export class VoiceSession {
-  private agentId: AgentId
+  private agentId: AgentId;
   private conversationId?: ConversationId;
   private params?: VoiceSessionInit;
   private audioContext = new AudioContext();
@@ -67,6 +62,8 @@ export class VoiceSession {
   private socket?: WebSocket;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
+  /** True when we should have entered speaking state but didn't due to analyzer not being ready. */
+  private delayedSpeakingState = false;
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: ReturnType<typeof setInterval>;
@@ -78,10 +75,8 @@ export class VoiceSession {
 
   constructor(agentId: AgentId, conversationId?: ConversationId, params?: VoiceSessionInit) {
     this.agentId = agentId;
-    this.conversationId = conversationId; 
+    this.conversationId = conversationId;
     this.params = params;
-    this.audioContext = new AudioContext();
-    this.audioElement = new Audio();
     this.warmup();
   }
   get state() {
@@ -112,7 +107,6 @@ export class VoiceSession {
       this.sendData(obj);
     }, 5000);
     this.maybePublishLocalAudio();
-    this.changeState(VoiceSessionState.LISTENING);
   }
   async stop() {
     console.log('[chat] stopping');
@@ -166,9 +160,9 @@ export class VoiceSession {
           model: this.params?.ttsModel,
           voice: this.params?.ttsVoice,
         },
-        agent: {          
+        agent: {
           agentId: this.agentId,
-          conversationId: this.conversationId,          
+          conversationId: this.conversationId,
           model: this.params?.model,
         },
       },
@@ -181,17 +175,30 @@ export class VoiceSession {
       case 'room_info':
         this.room = new Room();
         await this.room.connect(msg.roomUrl, msg.token);
-        console.log('[chat] connected to room', msg.roomUrl);
+        console.log('[chat] connected to room', this.room.name);
         this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
-        this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) => this.handleDataReceived(payload, participant));
+        this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
+          this.handleDataReceived(payload, participant)
+        );
         break;
       default:
         console.warn('unknown message type', msg.type);
     }
   }
   private handleSocketClose(event: CloseEvent) {
-    console.log(`[chat] socket closed, code=${event.code}, reason=${event.reason}`);
+    if (event.code === 1000) {
+      // We initiated this shutdown, so we've already cleaned up.
+      // Reconnect to prepare for the next session.
+      console.log('[chat] socket closed normally');
+      this.warmup();
+    } else if (event.code === 1006) {
+      // This occurs when running a Next.js app in debug mode and the ChatManager is
+      // initialized twice, the first socket will receive this error that we can ignore.
+    } else {
+      console.warn(`[chat] socket closed unexpectedly: ${event.code} ${event.reason}`);
+      this.onError?.();
+    }
   }
   private handleTrackSubscribed(track: RemoteTrack) {
     console.log(`[chat] subscribed to remote audio track ${track.sid}`);
@@ -200,6 +207,10 @@ export class VoiceSession {
     audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) => console.error(`[chat] audio playback failed`, err));
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
+    if (this.delayedSpeakingState) {
+      this.delayedSpeakingState = false;
+      this.changeState(VoiceSessionState.SPEAKING);
+    }
   }
   private handleDataReceived(payload: Uint8Array, participant: any) {
     const data = JSON.parse(this.textDecoder.decode(payload));
@@ -208,16 +219,32 @@ export class VoiceSession {
       console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
     } else if (data.type === 'state') {
       const newState = data.state;
-      this.changeState(newState);
+      if (newState === VoiceSessionState.SPEAKING && this.outAnalyzer === undefined) {
+        // Skip the first speaking state, before we've attached the audio element.
+        // handleTrackSubscribed will be called soon and will change the state.
+        this.delayedSpeakingState = true;
+      } else {
+        this.changeState(newState);
+      }
     } else if (data.type === 'transcript') {
-      const finalText = data.transcript.final ? ' FINAL' : '';
-      console.log(`[chat] input: ${data.transcript.text}${finalText}`);
+      this.handleInputChange(data.transcript.text, data.transcript.final);
     } else if (data.type === 'output') {
-      console.log(`[chat] output: ${data.text}`);
+      this.handleOutputChange(data.text, data.final);
+    } else if (data.type == 'latency') {
+      this.handleLatency(data.kind, data.value);
     }
   }
-}
-
-export function createVoiceSession(agentId: AgentId, conversationId: ConversationId, init?: VoiceSessionInit): VoiceSession {
-  return new VoiceSession(agentId, conversationId, init);
+  private handleInputChange(text: string, final: boolean) {
+    const finalText = final ? ' FINAL' : '';
+    console.log(`[chat] input: ${text}${finalText}`);
+    this.onInputChange?.(text, final);
+  }
+  private handleOutputChange(text: string, final: boolean) {
+    console.log(`[chat] output: ${text}`);
+    this.onOutputChange?.(text, final);
+  }
+  private handleLatency(metric: string, value: number) {
+    console.log(`[chat] latency: ${metric} ${value.toFixed(0)} ms`);
+    this.onLatencyChange?.(metric, value);
+  }
 }

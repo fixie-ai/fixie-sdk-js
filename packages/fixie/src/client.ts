@@ -764,15 +764,22 @@ export class FixieClient {
     );
   }
 
-
   /**
    * Create a new voice session.
-   * 
+   *
    * @param options.agentId The ID of the agent to start a conversation with.
    * @param options.conversationId The ID of an existing conversation to attach to.
    * @param options.init Various configuration parameters for the voice session.
    */
-  createVoiceSession({ agentId, conversationId, init }: { agentId: AgentId; conversationId?: ConversationId; init?: VoiceSessionInit }) {
+  createVoiceSession({
+    agentId,
+    conversationId,
+    init,
+  }: {
+    agentId: AgentId;
+    conversationId?: ConversationId;
+    init?: VoiceSessionInit;
+  }) {
     return new VoiceSession(agentId, conversationId, init);
   }
 
