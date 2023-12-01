@@ -139,3 +139,52 @@ export interface TextMessage extends BaseMessage {
 }
 
 export type Message = FunctionCall | FunctionResponse | TextMessage;
+
+/*******************************************************/
+//** Voice
+/*******************************************************/
+export enum ChatManagerState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+}
+
+export interface ChatManagerInit {
+  asrProvider: string;
+  ttsProvider: string;
+  model: string;
+  agentId: string;
+  docs: boolean;
+  asrLanguage?: string;
+  ttsModel?: string;
+  ttsVoice?: string;
+  webrtcUrl?: string;
+}
+
+/**
+ * Abstract interface for a voice-based LLM chat session.
+ */
+export interface ChatManager {
+  onStateChange?: (state: ChatManagerState) => void;
+  onInputChange?: (text: string, final: boolean, latency?: number) => void;
+  onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioGenerate?: (latency: number) => void;
+  onAudioStart?: (latency: number) => void;
+  onAudioEnd?: () => void;
+  onError?: () => void;
+
+  state: ChatManagerState;
+  inputAnalyzer?: AnalyserNode;
+  outputAnalyzer?: AnalyserNode;
+  start(initialMessage?: string): Promise<void>;
+  stop(): void;
+  interrupt(): void;
+}
+
+export interface VoiceConversation {
+  id: ConversationId;
+  sendMessage(message: string): Promise<void>;
+  stopGeneration(): void;
+  regenerate(agentId: AgentId, conversationId: ConversationId, messageId: string): Promise<void>;
+}
