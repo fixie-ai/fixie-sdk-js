@@ -12,11 +12,9 @@ import {
   Team,
   Membership,
   MembershipRole,
-  ChatManagerState,
-  ChatManagerInit, // TODO Can we move this to the ChatManager interface?
-  ChatManager,
 } from './types.js';
 import { encode } from 'base64-arraybuffer';
+import { VoiceSession } from './voice.js';
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
@@ -667,6 +665,35 @@ export class FixieClient {
       'POST'
     );
   }
+
+  /**
+   * Create a new voice session.
+   * 
+   *  
+   */
+
+
+  // TODO
+  // return ChatManager (VoiceSession is new name)
+  // pass in: agentId, conversationId (both required)
+  // optional param for VoiceSessionInit to be passed in
+  createVoiceSession({ agentId, conversationId, init }: { agentId: AgentId; conversationId: ConversationId; init?: VoiceSessionInit }) {
+    return new VoiceSession(agentId, conversationId, init);
+    
+    // Instantiate VoiceSession
+    // Call start() on VoiceSession is done in client code by the developer
+  }
+
+  // Stream Analyzer -> have a new file with VoiceSession and this in there
+  // VoiceSession will be the new name for the WebRtcChatManager...don't need the interface
+  // voice.ts file to contain things
+  // 
+
+
+
+
+
+
 
   /**
    * Get a conversation by ID.
