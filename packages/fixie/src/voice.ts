@@ -34,9 +34,9 @@ import {
  * All RPCs are performed remotely, and audio is streamed to/from the server via WebRTC.
  */
 export class VoiceSession {
-  private agentId: AgentId;
-  private conversationId: ConversationId;
-  private params: VoiceSessionInit;
+  private agentId: AgentId = '';
+  private conversationId: ConversationId = '';
+  private params: VoiceSessionInit = { asrProvider: 'deepgram', ttsProvider: 'playht', model: 'gpt-4-1106-preview', docs: false };
   private audioContext = new AudioContext();
   private audioElement = new Audio();
   private textEncoder = new TextEncoder();
@@ -57,7 +57,10 @@ export class VoiceSession {
   onError?: () => void;
 
   constructor(agentId: AgentId, conversationId: ConversationId, params?: VoiceSessionInit) {
-    this.params = params;
+    if (params) {
+      this.params = params;
+    }
+
     this.audioElement = new Audio();
     this.warmup();
   }

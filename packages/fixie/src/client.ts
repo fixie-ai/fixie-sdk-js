@@ -12,6 +12,7 @@ import {
   Team,
   Membership,
   MembershipRole,
+  VoiceSessionInit,
 } from './types.js';
 import { encode } from 'base64-arraybuffer';
 import { VoiceSession } from './voice.js';
