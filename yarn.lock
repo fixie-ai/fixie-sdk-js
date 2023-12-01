@@ -187,6 +187,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^1.3.0":
+  version: 1.5.0
+  resolution: "@bufbuild/protobuf@npm:1.5.0"
+  checksum: 705b3e4ce91ea5ad2f998a0f481c44f9d20d58ce1dc4d1e9e2d5bc1b1e1840abfa9a257d637a48d4224ba2078398bc47ff3ce3290a775200ad9a4c121fadee2b
+  languageName: node
+  linkType: hard
+
 "@cronvel/get-pixels@npm:^3.4.1":
   version: 3.4.1
   resolution: "@cronvel/get-pixels@npm:3.4.1"
@@ -2833,6 +2840,7 @@ __metadata:
     extract-files: ^13.0.0
     graphql: ^16.8.0
     js-yaml: ^4.1.0
+    livekit-client: ^1.15.2
     open: ^9.1.0
     ora: ^7.0.1
     prettier: ^3.0.0
@@ -3795,6 +3803,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"livekit-client@npm:^1.15.2":
+  version: 1.15.2
+  resolution: "livekit-client@npm:1.15.2"
+  dependencies:
+    "@bufbuild/protobuf": ^1.3.0
+    events: ^3.3.0
+    loglevel: ^1.8.0
+    sdp-transform: ^2.14.1
+    ts-debounce: ^4.0.0
+    tslib: 2.6.2
+    typed-emitter: ^2.1.0
+    webrtc-adapter: ^8.1.1
+  checksum: 09c2b539f8ee75c3aa9448356a0a3df7c232843e4514be19d21fe56163fdae557d5c11a435f6dc38062b8c52ad1182ac1eda4c6cca1ce0e352a27b97d833bd01
+  languageName: node
+  linkType: hard
+
 "locate-path@npm:^6.0.0":
   version: 6.0.0
   resolution: "locate-path@npm:6.0.0"
@@ -3832,6 +3856,13 @@ __metadata:
     chalk: ^5.0.0
     is-unicode-supported: ^1.1.0
   checksum: 7291b6e7f1b3df6865bdaeb9b59605c832668ac2fa0965c63b1e7dd3700349aec09c1d7d40c368d5041ff58b7f89461a56e4009471921301af7b3609cbff9a29
+  languageName: node
+  linkType: hard
+
+"loglevel@npm:^1.8.0":
+  version: 1.8.1
+  resolution: "loglevel@npm:1.8.1"
+  checksum: a1a62db40291aaeaef2f612334c49e531bff71cc1d01a2acab689ab80d59e092f852ab164a5aedc1a752fdc46b7b162cb097d8a9eb2cf0b299511106c29af61d
   languageName: node
   linkType: hard
 
@@ -4709,6 +4740,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rxjs@npm:*":
+  version: 7.8.1
+  resolution: "rxjs@npm:7.8.1"
+  dependencies:
+    tslib: ^2.1.0
+  checksum: de4b53db1063e618ec2eca0f7965d9137cabe98cf6be9272efe6c86b47c17b987383df8574861bcced18ebd590764125a901d5506082be84a8b8e364bf05f119
+  languageName: node
+  linkType: hard
+
 "safe-array-concat@npm:^1.0.1":
   version: 1.0.1
   resolution: "safe-array-concat@npm:1.0.1"
@@ -4752,6 +4792,22 @@ __metadata:
   version: 2.4.3
   resolution: "safe-stable-stringify@npm:2.4.3"
   checksum: 3aeb64449706ee1f5ad2459fc99648b131d48e7a1fbb608d7c628020177512dc9d94108a5cb61bbc953985d313d0afea6566d243237743e02870490afef04b43
+  languageName: node
+  linkType: hard
+
+"sdp-transform@npm:^2.14.1":
+  version: 2.14.1
+  resolution: "sdp-transform@npm:2.14.1"
+  bin:
+    sdp-verify: checker.js
+  checksum: 8b3179786db1a0f1ebfdacb1ac0dfe2833e63e8c64b638884cec212455061d53beaa8d9c8bf76fdbd5f844b7885f3892adec27e87734cfbc2b3e5c65e18a489b
+  languageName: node
+  linkType: hard
+
+"sdp@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "sdp@npm:3.2.0"
+  checksum: 227885bddab9a5845e56ae184ff51e43ec7bc155e7f1ed2f17ca1b012e6767011d5bd01b6c4064ded8e3b6f6bf3c9b26b2cf754b9c8662285988ed27b54f37b1
   languageName: node
   linkType: hard
 
@@ -5141,11 +5197,11 @@ __metadata:
   linkType: hard
 
 "tiny-readdir@npm:^2.2.0":
-  version: 2.2.1
-  resolution: "tiny-readdir@npm:2.2.1"
+  version: 2.3.0
+  resolution: "tiny-readdir@npm:2.3.0"
   dependencies:
     promise-make-naked: ^2.1.1
-  checksum: 36ed97b7c3d818cb3490244ce205038c05643ef5df102a6b86d0015c5034e422eff6126f2d68eae8a9b0b5b0119fb7766fa9e6c1cc0477a151adb59f413ad6bc
+  checksum: 236513f2a02d19ba2488fe0133e05ad3885a91c7127893aa6a57cc65ce6b622aed198b40f23a8ab15d89339836e19031a038a3a824cafa2d646c98e37e2d1986
   languageName: node
   linkType: hard
 
@@ -5183,6 +5239,13 @@ __metadata:
   version: 0.8.1
   resolution: "tree-kit@npm:0.8.1"
   checksum: 1f74f40028967485b7fe09ebdbc6516e63912c57fedc5242c30c15726a903405095c2adba985eb8308e49261b96c9b1dd6db3f3090bac53a80905fa15f519e20
+  languageName: node
+  linkType: hard
+
+"ts-debounce@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "ts-debounce@npm:4.0.0"
+  checksum: e1e509632c5aa09c40d3fa315b3a95b2c2e8813ccc706a400aa08e41f691e658061f34b42a1e8a578a043540d6db198e6ecf3ce26a5356a02a0940985fb1e379
   languageName: node
   linkType: hard
 
@@ -5245,17 +5308,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:2.6.2, tslib@npm:^2.1.0, tslib@npm:^2.3.0":
+  version: 2.6.2
+  resolution: "tslib@npm:2.6.2"
+  checksum: 329ea56123005922f39642318e3d1f0f8265d1e7fcb92c633e0809521da75eeaca28d2cf96d7248229deb40e5c19adf408259f4b9640afd20d13aecc1430f3ad
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^1.8.1":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
-  languageName: node
-  linkType: hard
-
-"tslib@npm:^2.1.0, tslib@npm:^2.3.0":
-  version: 2.6.2
-  resolution: "tslib@npm:2.6.2"
-  checksum: 329ea56123005922f39642318e3d1f0f8265d1e7fcb92c633e0809521da75eeaca28d2cf96d7248229deb40e5c19adf408259f4b9640afd20d13aecc1430f3ad
   languageName: node
   linkType: hard
 
@@ -5408,6 +5471,18 @@ __metadata:
     for-each: ^0.3.3
     is-typed-array: ^1.1.9
   checksum: 2228febc93c7feff142b8c96a58d4a0d7623ecde6c7a24b2b98eb3170e99f7c7eff8c114f9b283085cd59dcd2bd43aadf20e25bba4b034a53c5bb292f71f8956
+  languageName: node
+  linkType: hard
+
+"typed-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "typed-emitter@npm:2.1.0"
+  dependencies:
+    rxjs: "*"
+  dependenciesMeta:
+    rxjs:
+      optional: true
+  checksum: 95821a9e05784b972cc9d152891fd12a56cb4b1a7c57e768c02bea6a8984da7aff8f19404a7b69eea11fae2a3b6c0c510a4c510f575f50162c759ae9059f2520
   languageName: node
   linkType: hard
 
@@ -5569,6 +5644,15 @@ __metadata:
     stubborn-fs: ^1.2.5
     tiny-readdir: ^2.2.0
   checksum: 4275bb54cf399f99661f0fc6d8aee8fc4519f9651ea140ca297876764a7dbc144f7834b87f601985e0970f80547049e1a91cac2c1ec946bb289b555977bf0b8e
+  languageName: node
+  linkType: hard
+
+"webrtc-adapter@npm:^8.1.1":
+  version: 8.2.3
+  resolution: "webrtc-adapter@npm:8.2.3"
+  dependencies:
+    sdp: ^3.2.0
+  checksum: 8239c9452c489c9aad2584b5d00af22462c3e0f1b7885c6e4036b518d2b9411d94c00d2ceadbed987459a3647cfc4ce04c0eb75dd5ae7c3d7df9b810525e6a07
   languageName: node
   linkType: hard
 

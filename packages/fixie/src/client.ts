@@ -12,11 +12,9 @@ import {
   Team,
   Membership,
   MembershipRole,
-  ChatManagerState,
-  ChatManagerInit, // TODO Can we move this to the ChatManager interface?
-  ChatManager,
 } from './types.js';
 import { encode } from 'base64-arraybuffer';
+import { VoiceSession, VoiceSessionInit } from './voice.js';
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
@@ -764,6 +762,25 @@ export class FixieClient {
       undefined,
       'POST'
     );
+  }
+
+  /**
+   * Create a new voice session.
+   *
+   * @param options.agentId The ID of the agent to start a conversation with.
+   * @param options.conversationId The ID of an existing conversation to attach to.
+   * @param options.init Various configuration parameters for the voice session.
+   */
+  createVoiceSession({
+    agentId,
+    conversationId,
+    init,
+  }: {
+    agentId: AgentId;
+    conversationId?: ConversationId;
+    init?: VoiceSessionInit;
+  }) {
+    return new VoiceSession(agentId, conversationId, init);
   }
 
   /** Return information about a given user. */

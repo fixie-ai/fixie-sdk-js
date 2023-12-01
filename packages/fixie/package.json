@@ -33,6 +33,7 @@
     "extract-files": "^13.0.0",
     "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",
+    "livekit-client": "^1.15.2",
     "open": "^9.1.0",
     "ora": "^7.0.1",
     "terminal-kit": "^3.0.0",
