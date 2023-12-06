@@ -643,6 +643,21 @@ export class FixieClient {
   }
 
   /**
+   * Create a new short-lived token that can be used as an API key to permit interactions with the
+   * given agent. You must own the agent.
+   *
+   * This is useful for example in the voice context where your client will connect directly to Fixie
+   * servers to stream audio. Your client can supply one of these delegated tokens created by your
+   * server to avoid leaking your API key to your client.
+   *
+   * @param options.agentId The ID of the agent to create a delegated token for.
+   */
+  async getDelegatedAccessToken({ agentId }: { agentId: string }): Promise<String> {
+    const response = (await this.requestJson(`/api/v1/agents/${agentId}/delegate-access`, {})) as { token: string };
+    return response?.token;
+  }
+
+  /**
    * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
    * message, the agent may.)
    *

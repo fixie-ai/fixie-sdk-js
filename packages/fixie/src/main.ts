@@ -637,6 +637,17 @@ agent
     })
   );
 
+agent
+  .command('delegateAccess <agentId>')
+  .description('Create a new short-lived API key that allows interactions with the given agent.')
+  .action(
+    catchErrors(async (agentId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.getDelegatedAccessToken({ agentId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
 registerDeployCommand(agent);
 registerServeCommand(agent);
 
