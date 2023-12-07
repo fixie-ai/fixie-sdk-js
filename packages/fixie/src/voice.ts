@@ -21,6 +21,7 @@ export enum VoiceSessionState {
   SPEAKING = 'speaking',
 }
 
+/** Initialization parameters for a VoiceSession. */
 export interface VoiceSessionInit {
   asrProvider?: string;
   asrLanguage?: string;
@@ -51,65 +52,110 @@ export class StreamAnalyzer {
  * Manages a single voice session with a Fixie agent.
  */
 export class VoiceSession {
-  private agentId: AgentId;
-  private conversationId?: ConversationId;
-  private params?: VoiceSessionInit;
-  private audioContext = new AudioContext();
-  private audioElement = new Audio();
-  private textEncoder = new TextEncoder();
-  private textDecoder = new TextDecoder();
+  private readonly audioContext = new AudioContext();
+  private readonly audioElement = new Audio();
+  private readonly textEncoder = new TextEncoder();
+  private readonly textDecoder = new TextDecoder();
   private _state = VoiceSessionState.IDLE;
   private socket?: WebSocket;
+  private _audioStarted = false;
+  private _started = false;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
-  /** True when we should have entered speaking state but didn't due to analyzer not being ready. */
+  // True when we should have entered speaking state but didn't due to analyzer not being ready.
   private delayedSpeakingState = false;
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: ReturnType<typeof setInterval>;
+
+  /** Called when this VoiceSession changes its state. */
   onStateChange?: (state: VoiceSessionState) => void;
+
+  /** Called when the input changes. */
   onInputChange?: (text: string, final: boolean) => void;
+
+  /** Called when the output changes. */
   onOutputChange?: (text: string, final: boolean) => void;
+
+  /** Called when new latency data is available. */
   onLatencyChange?: (metric: string, value: number) => void;
+
+  /** Called when an error occurs. */
   onError?: () => void;
 
-  constructor(agentId: AgentId, conversationId?: ConversationId, params?: VoiceSessionInit) {
-    this.agentId = agentId;
-    this.conversationId = conversationId;
-    this.params = params;
+  constructor(
+    private readonly agentId: AgentId,
+    private readonly conversationId?: ConversationId,
+    private readonly params?: VoiceSessionInit
+  ) {
+    console.log('[voiceSession] creating VoiceSession');
     this.warmup();
   }
-  get state() {
+
+  /** Returns the current state of this VoiceSession. */
+  get state(): VoiceSessionState {
     return this._state;
   }
-  get inputAnalyzer() {
+
+  /** Returns an AnalyserNode that can be used to analyze the input audio signal. */
+  get inputAnalyzer(): AnalyserNode | undefined {
     return this.inAnalyzer?.analyzer;
   }
-  get outputAnalyzer() {
+
+  /** Returns an AnalyserNode that can be used to analyze the output audio signal. */
+  get outputAnalyzer(): AnalyserNode | undefined {
     return this.outAnalyzer?.analyzer;
   }
-  warmup() {
-    const url = this.params?.webrtcUrl || 'wss://wsapi.fixie.ai';
+
+  /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
+  warmup(): void {
+    console.log('[voiceSession] warming up');
+    this._audioStarted = false;
+    this._started = false;
+    const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
     this.socket.onclose = (event) => this.handleSocketClose(event);
   }
-  async start() {
-    console.log('[chat] starting');
+
+  /** Start the audio channels associated with this VoiceSession. This will request microphone permissions from the user. */
+  async startAudio() {
+    console.log('[voiceSession] startAudio');
+    this.audioContext.resume();
     this.audioElement.play();
     const localTracks = await createLocalTracks({ audio: true, video: false });
     this.localAudioTrack = localTracks[0] as LocalAudioTrack;
-    console.log('[chat] got mic stream');
+    console.log('[voiceSession] got mic stream');
     this.inAnalyzer = new StreamAnalyzer(this.audioContext, this.localAudioTrack!.mediaStream!);
     this.pinger = setInterval(() => {
       const obj = { type: 'ping', timestamp: performance.now() };
       this.sendData(obj);
     }, 5000);
+    this._audioStarted = true;
+  }
+
+  /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
+  async start() {
+    console.log('[voiceSession] starting');
+    if (this._started) {
+      console.warn('[voiceSession - start] Already started!');
+      return;
+    }
+    if (!this._audioStarted) {
+      await this.startAudio();
+    }
+    this._started = true;
     this.maybePublishLocalAudio();
   }
+
+  /** Stop this VoiceSession. */
   async stop() {
-    console.log('[chat] stopping');
+    console.log('[voiceSession] stopping');
+    if (!this._started) {
+      console.warn('[voiceSession - stop] Not started!');
+      return;
+    }
     clearInterval(this.pinger);
     this.pinger = undefined;
     await this.room?.disconnect();
@@ -123,31 +169,48 @@ export class VoiceSession {
     this.socket?.close();
     this.socket = undefined;
     this.changeState(VoiceSessionState.IDLE);
+    this._started = false;
   }
+
+  /** Interrupt this VoiceSession. */
   interrupt() {
-    console.log('[chat] interrupting');
+    console.log('[voiceSession] interrupting');
+    if (!this._started) {
+      console.warn('[voiceSession - interrupt] Not started!');
+      return;
+    }
     const obj = { type: 'interrupt' };
     this.sendData(obj);
   }
+
   private changeState(state: VoiceSessionState) {
     if (state != this._state) {
-      console.log(`[chat] ${this._state} -> ${state}`);
+      console.log(`[voiceSession] ${this._state} -> ${state}`);
       this._state = state;
       this.onStateChange?.(state);
     }
   }
+
   private maybePublishLocalAudio() {
-    if (this.room && this.room.state == 'connected' && this.localAudioTrack) {
-      console.log(`[chat] publishing local audio track`);
+    if (this._started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
+      console.log('[voiceSession] publishing local audio track');
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
+    } else {
+      console.warn(
+        `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
+          this.localAudioTrack != null
+        }`
+      );
     }
   }
+
   private sendData(obj: any) {
     this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
   }
+
   private handleSocketOpen() {
-    console.log('[chat] socket opened');
+    console.log('[voiceSession] socket opened');
     const obj = {
       type: 'init',
       params: {
@@ -169,13 +232,14 @@ export class VoiceSession {
     };
     this.socket?.send(JSON.stringify(obj));
   }
+
   private async handleSocketMessage(event: MessageEvent) {
     const msg = JSON.parse(event.data);
     switch (msg.type) {
       case 'room_info':
         this.room = new Room();
         await this.room.connect(msg.roomUrl, msg.token);
-        console.log('[chat] connected to room', this.room.name);
+        console.log(`[voiceSession] connected to room ${this.room.name}`);
         this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
@@ -186,25 +250,31 @@ export class VoiceSession {
         console.warn('unknown message type', msg.type);
     }
   }
+
   private handleSocketClose(event: CloseEvent) {
+    console.log(`[voiceSession] socket closed: ${event.code} ${event.reason}`);
     if (event.code === 1000) {
       // We initiated this shutdown, so we've already cleaned up.
       // Reconnect to prepare for the next session.
-      console.log('[chat] socket closed normally');
+      console.log('[voiceSession] socket closed normally - calling warmup again');
       this.warmup();
     } else if (event.code === 1006) {
-      // This occurs when running a Next.js app in debug mode and the ChatManager is
+      // This occurs when running a Next.js app in debug mode and the VoiceSession is
       // initialized twice, the first socket will receive this error that we can ignore.
+      console.log('[voiceSession] got event 1006');
     } else {
-      console.warn(`[chat] socket closed unexpectedly: ${event.code} ${event.reason}`);
+      console.warn(`[voiceSession] socket closed unexpectedly: ${event.code} ${event.reason}`);
       this.onError?.();
     }
   }
+
   private handleTrackSubscribed(track: RemoteTrack) {
-    console.log(`[chat] subscribed to remote audio track ${track.sid}`);
+    console.log(`[voiceSession] subscribed to remote audio track ${track.sid}`);
     const audioTrack = track as RemoteAudioTrack;
-    audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log(`[chat] audio playback started`));
-    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) => console.error(`[chat] audio playback failed`, err));
+    audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log('[voiceSession] audio playback started'));
+    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) =>
+      console.error('[voiceSession] audio playback failed', err)
+    );
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
     if (this.delayedSpeakingState) {
@@ -212,13 +282,14 @@ export class VoiceSession {
       this.changeState(VoiceSessionState.SPEAKING);
     }
   }
-  private handleDataReceived(payload: Uint8Array, participant: any) {
-    const data = JSON.parse(this.textDecoder.decode(payload));
-    if (data.type === 'pong') {
-      const elapsed_ms = performance.now() - data.timestamp;
-      console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
-    } else if (data.type === 'state') {
-      const newState = data.state;
+
+  private handleDataReceived(payload: Uint8Array, _participant: any) {
+    const recData = JSON.parse(this.textDecoder.decode(payload));
+    if (recData.type === 'pong') {
+      const elapsed_ms = performance.now() - recData.timestamp;
+      console.debug(`[voiceSession] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
+    } else if (recData.type === 'state') {
+      const newState = recData.state;
       if (newState === VoiceSessionState.SPEAKING && this.outAnalyzer === undefined) {
         // Skip the first speaking state, before we've attached the audio element.
         // handleTrackSubscribed will be called soon and will change the state.
@@ -226,25 +297,28 @@ export class VoiceSession {
       } else {
         this.changeState(newState);
       }
-    } else if (data.type === 'transcript') {
-      this.handleInputChange(data.transcript.text, data.transcript.final);
-    } else if (data.type === 'output') {
-      this.handleOutputChange(data.text, data.final);
-    } else if (data.type == 'latency') {
-      this.handleLatency(data.kind, data.value);
+    } else if (recData.type === 'transcript') {
+      this.handleInputChange(recData.transcript.text, recData.transcript.final);
+    } else if (recData.type === 'output') {
+      this.handleOutputChange(recData.text, recData.final);
+    } else if (recData.type == 'latency') {
+      this.handleLatency(recData.kind, recData.value);
     }
   }
+
   private handleInputChange(text: string, final: boolean) {
     const finalText = final ? ' FINAL' : '';
-    console.log(`[chat] input: ${text}${finalText}`);
+    console.log(`[voiceSession] input: ${text}${finalText}`);
     this.onInputChange?.(text, final);
   }
+
   private handleOutputChange(text: string, final: boolean) {
-    console.log(`[chat] output: ${text}`);
+    console.log(`[voiceSession] output: ${text}`);
     this.onOutputChange?.(text, final);
   }
+
   private handleLatency(metric: string, value: number) {
-    console.log(`[chat] latency: ${metric} ${value.toFixed(0)} ms`);
+    console.log(`[voiceSession] latency: ${metric} ${value.toFixed(0)} ms`);
     this.onLatencyChange?.(metric, value);
   }
 }
