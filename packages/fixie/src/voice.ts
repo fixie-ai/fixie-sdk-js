@@ -58,8 +58,8 @@ export class VoiceSession {
   private readonly textDecoder = new TextDecoder();
   private _state = VoiceSessionState.IDLE;
   private socket?: WebSocket;
-  private _audioStarted = false;
-  private _started = false;
+  private audioStarted = false;
+  private started = false;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
   // True when we should have entered speaking state but didn't due to analyzer not being ready.
@@ -110,8 +110,8 @@ export class VoiceSession {
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
-    this._audioStarted = false;
-    this._started = false;
+    this.audioStarted = false;
+    this.started = false;
     const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
@@ -132,30 +132,26 @@ export class VoiceSession {
       const obj = { type: 'ping', timestamp: performance.now() };
       this.sendData(obj);
     }, 5000);
-    this._audioStarted = true;
+    this.audioStarted = true;
   }
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
   async start() {
     console.log('[voiceSession] starting');
-    if (this._started) {
+    if (this.started) {
       console.warn('[voiceSession - start] Already started!');
       return;
     }
-    if (!this._audioStarted) {
+    if (!this.audioStarted) {
       await this.startAudio();
     }
-    this._started = true;
+    this.started = true;
     this.maybePublishLocalAudio();
   }
 
   /** Stop this VoiceSession. */
   async stop() {
     console.log('[voiceSession] stopping');
-    if (!this._started) {
-      console.warn('[voiceSession - stop] Not started!');
-      return;
-    }
     clearInterval(this.pinger);
     this.pinger = undefined;
     await this.room?.disconnect();
@@ -169,13 +165,14 @@ export class VoiceSession {
     this.socket?.close();
     this.socket = undefined;
     this.changeState(VoiceSessionState.IDLE);
-    this._started = false;
+    this.audioStarted = false;
+    this.started = false;
   }
 
   /** Interrupt this VoiceSession. */
   interrupt() {
     console.log('[voiceSession] interrupting');
-    if (!this._started) {
+    if (!this.started) {
       console.warn('[voiceSession - interrupt] Not started!');
       return;
     }
@@ -192,12 +189,12 @@ export class VoiceSession {
   }
 
   private maybePublishLocalAudio() {
-    if (this._started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
+    if (this.started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
       console.log('[voiceSession] publishing local audio track');
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
     } else {
-      console.warn(
+      console.log(
         `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
           this.localAudioTrack != null
         }`
@@ -284,12 +281,12 @@ export class VoiceSession {
   }
 
   private handleDataReceived(payload: Uint8Array, _participant: any) {
-    const recData = JSON.parse(this.textDecoder.decode(payload));
-    if (recData.type === 'pong') {
-      const elapsed_ms = performance.now() - recData.timestamp;
+    const msg = JSON.parse(this.textDecoder.decode(payload));
+    if (msg.type === 'pong') {
+      const elapsed_ms = performance.now() - msg.timestamp;
       console.debug(`[voiceSession] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
-    } else if (recData.type === 'state') {
-      const newState = recData.state;
+    } else if (msg.type === 'state') {
+      const newState = msg.state;
       if (newState === VoiceSessionState.SPEAKING && this.outAnalyzer === undefined) {
         // Skip the first speaking state, before we've attached the audio element.
         // handleTrackSubscribed will be called soon and will change the state.
@@ -297,12 +294,12 @@ export class VoiceSession {
       } else {
         this.changeState(newState);
       }
-    } else if (recData.type === 'transcript') {
-      this.handleInputChange(recData.transcript.text, recData.transcript.final);
-    } else if (recData.type === 'output') {
-      this.handleOutputChange(recData.text, recData.final);
-    } else if (recData.type == 'latency') {
-      this.handleLatency(recData.kind, recData.value);
+    } else if (msg.type === 'transcript') {
+      this.handleInputChange(msg.transcript.text, msg.transcript.final);
+    } else if (msg.type === 'output') {
+      this.handleOutputChange(msg.text, msg.final);
+    } else if (msg.type == 'latency') {
+      this.handleLatency(msg.kind, msg.value);
     }
   }
 
