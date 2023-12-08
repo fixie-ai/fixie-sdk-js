@@ -110,8 +110,6 @@ export class VoiceSession {
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
-    this.audioStarted = false;
-    this.started = false;
     const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
