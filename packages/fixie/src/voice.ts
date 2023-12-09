@@ -295,7 +295,11 @@ export class VoiceSession {
         this.changeState(newState);
       }
     } else if (msg.type === 'transcript') {
-      this.handleInputChange(msg.transcript.text, msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp, msg.transcript.final);
+      this.handleInputChange(
+        msg.transcript.text,
+        msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
+        msg.transcript.final
+      );
     } else if (msg.type === 'output') {
       this.handleOutputChange(msg.text, msg.final);
     } else if (msg.type == 'latency') {
