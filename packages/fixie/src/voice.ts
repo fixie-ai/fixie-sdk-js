@@ -1,3 +1,5 @@
+/** This file defines the Fixie Voice SDK. */
+
 import { AgentId, ConversationId } from './types.js';
 import {
   createLocalTracks,
@@ -11,10 +13,12 @@ import {
   TrackEvent,
 } from 'livekit-client';
 
-/**
- * Represents the state of a VoiceSession.
- */
+/** Represents the state of a VoiceSession. */
 export enum VoiceSessionState {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  AUDIO_STARTED = 'audio_started',
   IDLE = 'idle',
   LISTENING = 'listening',
   THINKING = 'thinking',
@@ -32,9 +36,7 @@ export interface VoiceSessionInit {
   webrtcUrl?: string;
 }
 
-/**
- * Web Audio AnalyserNode for an audio stream.
- */
+/** Web Audio AnalyserNode for an audio stream. */
 export class StreamAnalyzer {
   source: MediaStreamAudioSourceNode;
   analyzer: AnalyserNode;
@@ -48,15 +50,20 @@ export class StreamAnalyzer {
   }
 }
 
-/**
- * Manages a single voice session with a Fixie agent.
- */
+export class VoiceSessionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'VoiceSessionError';
+  }
+}
+
+/** Manages a single voice session with a Fixie agent. */
 export class VoiceSession {
   private readonly audioContext = new AudioContext();
   private readonly audioElement = new Audio();
   private readonly textEncoder = new TextEncoder();
   private readonly textDecoder = new TextDecoder();
-  private _state = VoiceSessionState.IDLE;
+  private _state = VoiceSessionState.DISCONNECTED;
   private socket?: WebSocket;
   private audioStarted = false;
   private started = false;
@@ -81,7 +88,7 @@ export class VoiceSession {
   onLatencyChange?: (metric: string, value: number) => void;
 
   /** Called when an error occurs. */
-  onError?: () => void;
+  onError?: (error: VoiceSessionError) => void;
 
   constructor(
     private readonly agentId: AgentId,
@@ -89,7 +96,6 @@ export class VoiceSession {
     private readonly params?: VoiceSessionInit
   ) {
     console.log('[voiceSession] creating VoiceSession');
-    this.warmup();
   }
 
   /** Returns the current state of this VoiceSession. */
@@ -110,13 +116,20 @@ export class VoiceSession {
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
+    this.changeState(VoiceSessionState.CONNECTING);
     this.audioStarted = false;
     this.started = false;
-    const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
-    this.socket = new WebSocket(url);
-    this.socket.onopen = () => this.handleSocketOpen();
-    this.socket.onmessage = (event) => this.handleSocketMessage(event);
-    this.socket.onclose = (event) => this.handleSocketClose(event);
+    try {
+      const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
+      this.socket = new WebSocket(url);
+      this.socket.onopen = () => this.handleSocketOpen();
+      this.socket.onmessage = (event) => this.handleSocketMessage(event);
+      this.socket.onclose = (event) => this.handleSocketClose(event);
+      this.changeState(VoiceSessionState.CONNECTED);
+    } catch (e: Error) {
+      console.error('[voiceSession] failed to create socket', e);
+      this.onError?.(new VoiceSessionError(`Failed to create socket: ${e.message}`));
+    }
   }
 
   /** Start the audio channels associated with this VoiceSession. This will request microphone permissions from the user. */
@@ -133,6 +146,7 @@ export class VoiceSession {
       this.sendData(obj);
     }, 5000);
     this.audioStarted = true;
+    this.changeState(VoiceSessionState.AUDIO_STARTED);
   }
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
@@ -147,6 +161,7 @@ export class VoiceSession {
     }
     this.started = true;
     this.maybePublishLocalAudio();
+    this.changeState(VoiceSessionState.IDLE);
   }
 
   /** Stop this VoiceSession. */
@@ -164,9 +179,9 @@ export class VoiceSession {
     this.localAudioTrack = undefined;
     this.socket?.close();
     this.socket = undefined;
-    this.changeState(VoiceSessionState.IDLE);
     this.audioStarted = false;
     this.started = false;
+    this.changeState(VoiceSessionState.DISCONNECTED);
   }
 
   /** Interrupt this VoiceSession. */
@@ -253,15 +268,14 @@ export class VoiceSession {
     if (event.code === 1000) {
       // We initiated this shutdown, so we've already cleaned up.
       // Reconnect to prepare for the next session.
-      console.log('[voiceSession] socket closed normally - calling warmup again');
-      this.warmup();
+      console.log('[voiceSession] socket closed normally');
     } else if (event.code === 1006) {
       // This occurs when running a Next.js app in debug mode and the VoiceSession is
       // initialized twice, the first socket will receive this error that we can ignore.
       console.log('[voiceSession] got event 1006');
     } else {
       console.warn(`[voiceSession] socket closed unexpectedly: ${event.code} ${event.reason}`);
-      this.onError?.();
+      this.onError?.(new VoiceSessionError(`Socket closed unexpectedly: ${event.code} ${event.reason}`));
     }
   }
 
@@ -269,9 +283,10 @@ export class VoiceSession {
     console.log(`[voiceSession] subscribed to remote audio track ${track.sid}`);
     const audioTrack = track as RemoteAudioTrack;
     audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log('[voiceSession] audio playback started'));
-    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) =>
-      console.error('[voiceSession] audio playback failed', err)
-    );
+    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) => {
+      console.error('[voiceSession] audio playback failed', err);
+      this.onError?.(new VoiceSessionError(`Audio playback failed: ${err}`));
+    });
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
     if (this.delayedSpeakingState) {
