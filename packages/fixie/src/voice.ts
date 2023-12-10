@@ -295,7 +295,11 @@ export class VoiceSession {
         this.changeState(newState);
       }
     } else if (msg.type === 'transcript') {
-      this.handleInputChange(msg.transcript.text, msg.transcript.final);
+      this.handleInputChange(
+        msg.transcript.text,
+        msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
+        msg.transcript.final
+      );
     } else if (msg.type === 'output') {
       this.handleOutputChange(msg.text, msg.final);
     } else if (msg.type == 'latency') {
@@ -303,9 +307,10 @@ export class VoiceSession {
     }
   }
 
-  private handleInputChange(text: string, final: boolean) {
+  private handleInputChange(text: string, voiceEnded: boolean, final: boolean) {
+    const vadText = voiceEnded ? ' VAD' : '';
     const finalText = final ? ' FINAL' : '';
-    console.log(`[voiceSession] input: ${text}${finalText}`);
+    console.log(`[voiceSession] input: ${text}${vadText}${finalText}`);
     this.onInputChange?.(text, final);
   }
 
