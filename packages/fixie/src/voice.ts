@@ -18,7 +18,6 @@ export enum VoiceSessionState {
   DISCONNECTED = 'disconnected',
   CONNECTING = 'connecting',
   CONNECTED = 'connected',
-  AUDIO_STARTED = 'audio_started',
   IDLE = 'idle',
   LISTENING = 'listening',
   THINKING = 'thinking',
@@ -90,6 +89,9 @@ export class VoiceSession {
   /** Called when an error occurs. */
   onError?: (error: VoiceSessionError) => void;
 
+  /** Called when audio starts. */
+  onAudioStart?: () => void;
+
   constructor(
     private readonly agentId: AgentId,
     private readonly conversationId?: ConversationId,
@@ -125,10 +127,10 @@ export class VoiceSession {
       this.socket.onopen = () => this.handleSocketOpen();
       this.socket.onmessage = (event) => this.handleSocketMessage(event);
       this.socket.onclose = (event) => this.handleSocketClose(event);
-      this.changeState(VoiceSessionState.CONNECTED);
-    } catch (e: Error) {
+    } catch (e) {
+      const err = e as Error;
       console.error('[voiceSession] failed to create socket', e);
-      this.onError?.(new VoiceSessionError(`Failed to create socket: ${e.message}`));
+      this.onError?.(new VoiceSessionError(`Failed to create socket: ${err.message}`));
     }
   }
 
@@ -146,7 +148,7 @@ export class VoiceSession {
       this.sendData(obj);
     }, 5000);
     this.audioStarted = true;
-    this.changeState(VoiceSessionState.AUDIO_STARTED);
+    this.onAudioStart?.();
   }
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
@@ -223,6 +225,7 @@ export class VoiceSession {
 
   private handleSocketOpen() {
     console.log('[voiceSession] socket opened');
+    this.changeState(VoiceSessionState.CONNECTED);
     const obj = {
       type: 'init',
       params: {
@@ -265,6 +268,7 @@ export class VoiceSession {
 
   private handleSocketClose(event: CloseEvent) {
     console.log(`[voiceSession] socket closed: ${event.code} ${event.reason}`);
+    this.changeState(VoiceSessionState.DISCONNECTED);
     if (event.code === 1000) {
       // We initiated this shutdown, so we've already cleaned up.
       // Reconnect to prepare for the next session.
@@ -285,7 +289,6 @@ export class VoiceSession {
     audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log('[voiceSession] audio playback started'));
     audioTrack.on(TrackEvent.AudioPlaybackFailed, (err: any) => {
       console.error('[voiceSession] audio playback failed', err);
-      this.onError?.(new VoiceSessionError(`Audio playback failed: ${err}`));
     });
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
