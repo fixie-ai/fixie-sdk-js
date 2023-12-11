@@ -89,9 +89,6 @@ export class VoiceSession {
   /** Called when an error occurs. */
   onError?: (error: VoiceSessionError) => void;
 
-  /** Called when audio starts. */
-  onAudioStart?: () => void;
-
   constructor(
     private readonly agentId: AgentId,
     public conversationId?: ConversationId,
@@ -148,7 +145,6 @@ export class VoiceSession {
       this.sendData(obj);
     }, 5000);
     this.audioStarted = true;
-    this.onAudioStart?.();
   }
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
