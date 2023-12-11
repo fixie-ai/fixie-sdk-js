@@ -89,11 +89,7 @@ export class VoiceSession {
   /** Called when an error occurs. */
   onError?: (error: VoiceSessionError) => void;
 
-  constructor(
-    private readonly agentId: AgentId,
-    public conversationId?: ConversationId,
-    private readonly params?: VoiceSessionInit
-  ) {
+  constructor(readonly agentId: AgentId, public conversationId?: ConversationId, readonly params?: VoiceSessionInit) {
     console.log('[voiceSession] creating VoiceSession');
   }
 
