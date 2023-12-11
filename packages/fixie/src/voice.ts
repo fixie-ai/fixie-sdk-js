@@ -163,7 +163,6 @@ export class VoiceSession {
     }
     this.started = true;
     this.maybePublishLocalAudio();
-    this.changeState(VoiceSessionState.IDLE);
   }
 
   /** Stop this VoiceSession. */
@@ -210,6 +209,7 @@ export class VoiceSession {
       console.log('[voiceSession] publishing local audio track');
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
+      this.changeState(VoiceSessionState.IDLE);
     } else {
       console.log(
         `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
