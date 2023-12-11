@@ -118,7 +118,6 @@ export class VoiceSession {
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
-    this.changeState(VoiceSessionState.CONNECTING);
     this.audioStarted = false;
     this.started = false;
     try {
@@ -127,6 +126,7 @@ export class VoiceSession {
       this.socket.onopen = () => this.handleSocketOpen();
       this.socket.onmessage = (event) => this.handleSocketMessage(event);
       this.socket.onclose = (event) => this.handleSocketClose(event);
+      this.changeState(VoiceSessionState.CONNECTING);
     } catch (e) {
       const err = e as Error;
       console.error('[voiceSession] failed to create socket', e);
