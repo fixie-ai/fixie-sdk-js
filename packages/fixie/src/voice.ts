@@ -94,8 +94,8 @@ export class VoiceSession {
 
   constructor(
     private readonly agentId: AgentId,
-    private readonly conversationId?: ConversationId,
-    private readonly params?: VoiceSessionInit
+    private readonly params?: VoiceSessionInit,
+    public conversationId?: ConversationId,
   ) {
     console.log('[voiceSession] creating VoiceSession');
   }
@@ -214,7 +214,7 @@ export class VoiceSession {
       console.log(
         `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
           this.localAudioTrack != null
-        }`
+        }`,
       );
     }
   }
@@ -258,7 +258,7 @@ export class VoiceSession {
         this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
-          this.handleDataReceived(payload, participant)
+          this.handleDataReceived(payload, participant),
         );
         break;
       default:
@@ -318,6 +318,8 @@ export class VoiceSession {
       this.handleOutputChange(msg.text, msg.final);
     } else if (msg.type == 'latency') {
       this.handleLatency(msg.kind, msg.value);
+    } else if (msg.type == 'conversation_created') {
+      this.conversationId = msg.conversationId;
     }
   }
 
