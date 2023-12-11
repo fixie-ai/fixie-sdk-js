@@ -94,8 +94,8 @@ export class VoiceSession {
 
   constructor(
     private readonly agentId: AgentId,
-    private readonly params?: VoiceSessionInit,
     public conversationId?: ConversationId,
+    private readonly params?: VoiceSessionInit
   ) {
     console.log('[voiceSession] creating VoiceSession');
   }
@@ -214,7 +214,7 @@ export class VoiceSession {
       console.log(
         `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
           this.localAudioTrack != null
-        }`,
+        }`
       );
     }
   }
@@ -258,7 +258,7 @@ export class VoiceSession {
         this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
-          this.handleDataReceived(payload, participant),
+          this.handleDataReceived(payload, participant)
         );
         break;
       default:
