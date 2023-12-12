@@ -111,8 +111,6 @@ export class VoiceSession {
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
-    this.audioStarted = false;
-    this.started = false;
     try {
       const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
       this.socket = new WebSocket(url);
@@ -136,10 +134,6 @@ export class VoiceSession {
     this.localAudioTrack = localTracks[0] as LocalAudioTrack;
     console.log('[voiceSession] got mic stream');
     this.inAnalyzer = new StreamAnalyzer(this.audioContext, this.localAudioTrack!.mediaStream!);
-    this.pinger = setInterval(() => {
-      const obj = { type: 'ping', timestamp: performance.now() };
-      this.sendData(obj);
-    }, 5000);
     this.audioStarted = true;
   }
 
@@ -196,6 +190,13 @@ export class VoiceSession {
     }
   }
 
+  private startPinger() {
+    this.pinger = setInterval(() => {
+      const obj = { type: 'ping', timestamp: performance.now() };
+      this.sendData(obj);
+    }, 5000);
+  }
+
   private maybePublishLocalAudio() {
     if (this.started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
       console.log('[voiceSession] publishing local audio track');
@@ -245,13 +246,14 @@ export class VoiceSession {
     switch (msg.type) {
       case 'room_info':
         this.room = new Room();
-        await this.room.connect(msg.roomUrl, msg.token);
-        console.log(`[voiceSession] connected to room ${this.room.name}`);
-        this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
           this.handleDataReceived(payload, participant)
         );
+        await this.room.connect(msg.roomUrl, msg.token);
+        console.log(`[voiceSession] connected to room ${this.room.name}`);
+        this.startPinger();
+        this.maybePublishLocalAudio();
         break;
       default:
         console.warn('unknown message type', msg.type);
