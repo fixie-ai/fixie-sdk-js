@@ -319,6 +319,7 @@ export class VoiceSession {
       this.handleLatency(msg.kind, msg.value);
     } else if (msg.type == 'conversation_created') {
       this.conversationId = msg.conversationId;
+      this.onConversationIdChange?.(msg.conversationId);
     }
   }
 
