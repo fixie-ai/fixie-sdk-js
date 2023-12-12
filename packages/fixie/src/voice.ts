@@ -236,14 +236,14 @@ export class VoiceSession {
     switch (msg.type) {
       case 'room_info':
         this.room = new Room();
-        await this.room.connect(msg.roomUrl, msg.token);
-        console.log(`[voiceSession] connected to room ${this.room.name}`);
-        this.startPinger();
-        this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
           this.handleDataReceived(payload, participant)
         );
+        await this.room.connect(msg.roomUrl, msg.token);
+        console.log(`[voiceSession] connected to room ${this.room.name}`);
+        this.startPinger();
+        this.maybePublishLocalAudio();
         break;
       default:
         console.warn('unknown message type', msg.type);
