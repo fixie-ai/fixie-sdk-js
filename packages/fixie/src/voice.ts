@@ -108,6 +108,11 @@ export class VoiceSession {
     return this.outAnalyzer?.analyzer;
   }
 
+  /** Returns the Room ID currently in use by this VoiceSession. */
+  get roomId() : string | undefined {
+    return this.room?.name;
+  }
+
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
     console.log('[voiceSession] warming up');
