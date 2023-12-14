@@ -108,8 +108,8 @@ export class VoiceSession {
     return this.outAnalyzer?.analyzer;
   }
 
-  /** Returns the Room ID currently in use by this VoiceSession. */
-  get roomId() : string | undefined {
+  /** Returns the Room Name currently in use by this VoiceSession. */
+  get roomName() : string | undefined {
     return this.room?.name;
   }
 
