@@ -109,7 +109,7 @@ export class VoiceSession {
   }
 
   /** Returns the Room Name currently in use by this VoiceSession. */
-  get roomName() : string | undefined {
+  get roomName(): string | undefined {
     return this.room?.name;
   }
 
