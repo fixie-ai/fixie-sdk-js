@@ -272,10 +272,6 @@ export class VoiceSession {
       // We initiated this shutdown, so we've already cleaned up.
       // Reconnect to prepare for the next session.
       console.log('[voiceSession] socket closed normally');
-    } else if (event.code === 1006) {
-      // This occurs when running a Next.js app in debug mode and the VoiceSession is
-      // initialized twice, the first socket will receive this error that we can ignore.
-      console.log('[voiceSession] got event 1006');
     } else {
       console.warn(`[voiceSession] socket closed unexpectedly: ${event.code} ${event.reason}`);
       this.onError?.(new VoiceSessionError(`Socket closed unexpectedly: ${event.code} ${event.reason}`));
