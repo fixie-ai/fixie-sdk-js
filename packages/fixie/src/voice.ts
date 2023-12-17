@@ -28,6 +28,7 @@ export enum VoiceSessionState {
 export interface VoiceSessionInit {
   asrProvider?: string;
   asrLanguage?: string;
+  asrKeywords?: string[];
   model?: string;
   ttsProvider?: string;
   ttsModel?: string;
@@ -224,6 +225,7 @@ export class VoiceSession {
         asr: {
           provider: this.params?.asrProvider,
           language: this.params?.asrLanguage,
+          keywords: this.params?.asrKeywords,
         },
         tts: {
           provider: this.params?.ttsProvider,
