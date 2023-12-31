@@ -22,14 +22,14 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "types": "./index.d.ts",
-  "browser": "./index.js",
+  "types": "dist/index.d.ts",
+  "browser": "dist/index.js",
   "dependencies": {
-    "fixie-common": "workspace:*",
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
     "apollo-upload-client": "^17.0.0",
     "base64-arraybuffer": "^1.0.2",
+    "fixie-common": "workspace:*",
     "type-fest": "^4.3.1"
   },
   "devDependencies": {
