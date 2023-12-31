@@ -23,6 +23,7 @@
     "format-for-turbo": "prettier --write .",
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",
+    "lint": "turbo lint",
     "test": "turbo test",
     "build": "turbo build"
   },
