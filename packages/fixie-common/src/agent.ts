@@ -32,12 +32,15 @@ export interface AgentLogEntry {
 }
 
 /**
- * This class provides an interface to the Fixie Agent API.
+ * Base class providing access to the Fixie Agent API.
+ * The 'fixie' and 'fixie-web' packages provide implementations
+ * for NodeJS and web clients, respectively.
  */
-export class FixieAgent {
+export class FixieAgentBase {
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClientBase, public metadata: AgentMetadata) {}
+  protected constructor(protected readonly client: FixieClientBase, public metadata: AgentMetadata) {}
 
+  /** Return the handle for this agent. */
   public get handle(): string {
     return this.metadata.handle;
   }
@@ -61,7 +64,7 @@ export class FixieAgent {
     client: FixieClientBase;
     agentId?: string;
     handle?: string;
-  }): Promise<FixieAgent> {
+  }): Promise<FixieAgentBase> {
     if (!agentId && !handle) {
       throw new Error('Must specify either agentId or handle');
     }
@@ -70,15 +73,15 @@ export class FixieAgent {
     }
     let metadata: AgentMetadata;
     if (agentId) {
-      metadata = await FixieAgent.getAgentById(client, agentId);
+      metadata = await FixieAgentBase.getAgentById(client, agentId);
     } else {
-      metadata = await FixieAgent.getAgentByHandle(client, handle!);
+      metadata = await FixieAgentBase.getAgentByHandle(client, handle!);
     }
-    return new FixieAgent(client, metadata);
+    return new FixieAgentBase(client, metadata);
   }
 
   /** Return all agents visible to the user. */
-  public static async ListAgents(client: FixieClientBase): Promise<FixieAgent[]> {
+  public static async ListAgents(client: FixieClientBase): Promise<FixieAgentBase[]> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
       query: gql`
@@ -94,7 +97,7 @@ export class FixieAgent {
     );
   }
 
-  /** Return the metadata associated with the given agent by ID. */
+  /** Return the metadata associated with the given agent. */
   private static async getAgentById(client: FixieClientBase, agentId: string): Promise<AgentMetadata> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
@@ -199,7 +202,7 @@ export class FixieAgent {
     description?: string;
     moreInfoUrl?: string;
     published?: boolean;
-  }): Promise<FixieAgent> {
+  }): Promise<FixieAgentBase> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgent(
@@ -234,7 +237,7 @@ export class FixieAgent {
       },
     });
     const agentId = result.data.createAgent.agent.uuid;
-    return FixieAgent.GetAgent({ client, agentId });
+    return FixieAgentBase.GetAgent({ client, agentId });
   }
 
   /** Delete this agent. */
@@ -301,7 +304,7 @@ export class FixieAgent {
         published,
       },
     });
-    this.metadata = await FixieAgent.getAgentById(this.client, this.metadata.uuid);
+    this.metadata = await FixieAgentBase.getAgentById(this.client, this.metadata.uuid);
   }
 
   /** Return logs for this Agent. Returns the last 15 minutes of agent logs. */

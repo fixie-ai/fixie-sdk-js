@@ -1,3 +1,3 @@
+export * from 'fixie-common';
+export * from './agent.js';
 export * from './client.js';
-export * from './fixie-embed.js';
-export * from './types.js';

@@ -34,13 +34,29 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
-    "@types/apollo-upload-client": "^17.0.2",
+    "@types/react": "^18.2.22",
+    "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "prettier": "^3.0.0",
     "typescript": "5.1.3"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0  || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.8.0  || ^17.0.0 || ^18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/react-dom": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"

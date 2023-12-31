@@ -8,7 +8,6 @@ import { VoiceSession, VoiceSessionInit } from './voice.js';
  * applications, use the 'fixie' package.
  */
 export class FixieClient extends FixieClientBase {
-
   /**
    * Create a new voice session.
    *

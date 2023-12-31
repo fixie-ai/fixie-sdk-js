@@ -4,11 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'nth'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [
-      path.join(__dirname, 'tsconfig.json'),
-      path.join(__dirname, 'scripts', 'tsconfig.json'),
-      path.join(__dirname, 'test', 'tsconfig.json'),
-    ],
+    project: [path.join(__dirname, 'tsconfig.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
@@ -50,7 +46,7 @@ module.exports = {
     'brace-style': 'off',
 
     // Add additional strictness beyond the recommended set
-    '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
+    //    '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
     '@typescript-eslint/prefer-readonly': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
     '@typescript-eslint/no-base-to-string': 'error',

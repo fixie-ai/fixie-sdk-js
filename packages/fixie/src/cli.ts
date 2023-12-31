@@ -4,14 +4,14 @@
  * This is a command-line tool to interact with the Fixie platform.
  */
 
-import { Command, Option, program } from 'commander';
+import { Command, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
-import { FixieClientError } from './client.js';
+import { FixieClientError } from 'fixie-common';
 
 const [major] = process.version
   .slice(1)
