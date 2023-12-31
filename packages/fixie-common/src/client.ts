@@ -648,7 +648,7 @@ export class FixieClientBase {
    */
   async getDelegatedAccessToken({ agentId }: { agentId: string }): Promise<String> {
     const response = (await this.requestJson(`/api/v1/agents/${agentId}/delegate-access`, {})) as { token: string };
-    return response?.token;
+    return response.token;
   }
 
   /**

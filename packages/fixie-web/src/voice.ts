@@ -203,7 +203,7 @@ export class VoiceSession {
   }
 
   private maybePublishLocalAudio() {
-    if (this.started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
+    if (this.started && this.room && this.room.state === 'connected' && this.localAudioTrack) {
       console.log('[voiceSession] publishing local audio track');
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);

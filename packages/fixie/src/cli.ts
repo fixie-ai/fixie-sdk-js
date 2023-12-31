@@ -773,7 +773,7 @@ team
   .command('remove <teamId> <userId>')
   .description('Remove a member from a team')
   .action(
-    catchErrors(async (teamId: string, userId: string, opts) => {
+    catchErrors(async (teamId: string, userId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.removeTeamMember({
         teamId,
