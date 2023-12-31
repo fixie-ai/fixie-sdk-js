@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client/core/index.js';
-import { FixieClient } from './client.js';
+import { FixieClientBase } from './client.js';
 
 /** Represents metadata about an agent managed by the Fixie service. */
 export interface AgentMetadata {
@@ -36,7 +36,7 @@ export interface AgentLogEntry {
  */
 export class FixieAgent {
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClient, public metadata: AgentMetadata) {}
+  private constructor(readonly client: FixieClientBase, public metadata: AgentMetadata) {}
 
   public get handle(): string {
     return this.metadata.handle;
@@ -58,7 +58,7 @@ export class FixieAgent {
     agentId,
     handle,
   }: {
-    client: FixieClient;
+    client: FixieClientBase;
     agentId?: string;
     handle?: string;
   }): Promise<FixieAgent> {
@@ -78,7 +78,7 @@ export class FixieAgent {
   }
 
   /** Return all agents visible to the user. */
-  public static async ListAgents(client: FixieClient): Promise<FixieAgent[]> {
+  public static async ListAgents(client: FixieClientBase): Promise<FixieAgent[]> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
       query: gql`
@@ -95,7 +95,7 @@ export class FixieAgent {
   }
 
   /** Return the metadata associated with the given agent by ID. */
-  private static async getAgentById(client: FixieClient, agentId: string): Promise<AgentMetadata> {
+  private static async getAgentById(client: FixieClientBase, agentId: string): Promise<AgentMetadata> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
       query: gql`
@@ -139,7 +139,7 @@ export class FixieAgent {
   }
 
   /** Return the metadata associated with the given agent handle. */
-  private static async getAgentByHandle(client: FixieClient, handle: string): Promise<AgentMetadata> {
+  private static async getAgentByHandle(client: FixieClientBase, handle: string): Promise<AgentMetadata> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
       query: gql`
@@ -192,7 +192,7 @@ export class FixieAgent {
     moreInfoUrl,
     published,
   }: {
-    client: FixieClient;
+    client: FixieClientBase;
     handle: string;
     teamId?: string;
     name?: string;

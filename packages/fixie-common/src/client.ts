@@ -30,11 +30,11 @@ export class FixieClientError extends Error {
 }
 
 /**
- * A client to the Fixie AI platform.
- *
- * This client can be used on the web or in NodeJS.
+ * Common base class for Fixie client implementations.
+ * The 'fixie' and 'fixie-web' packages provide implementations
+ * tailored for NodeJS and browser clients, repsectively.
  */
-export class FixieClient {
+export class FixieClientBase {
   /**
    * The API key to use for requests.
    */

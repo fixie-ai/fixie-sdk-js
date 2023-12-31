@@ -2,6 +2,7 @@
   "name": "fixie-common",
   "description": "Node and browser common code for the Fixie platform SDK.",
   "version": "1.0.0-rc1",
+  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,8 +23,8 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "types": "./index.d.ts",
-  "main": "./index.js",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
@@ -39,9 +40,6 @@
     "eslint-config-nth": "^2.0.1",
     "prettier": "^3.0.0",
     "typescript": "5.1.3"
-  },
-  "publishConfig": {
-    "access": "private"
   },
   "engines": {
     "node": ">=18.0.0"
