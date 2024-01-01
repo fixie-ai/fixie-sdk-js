@@ -9,5 +9,7 @@ const config: Config.InitialOptions = {
   // not from compiled JS code.
   testPathIgnorePatterns: ['^dist/'],
   testMatch: ['**/tests/*.test.ts'],
+  automock: false,
+  setupFiles: ['./tests/setup.js'],
 };
 export default config;

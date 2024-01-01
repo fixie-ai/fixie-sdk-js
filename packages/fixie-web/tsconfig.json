@@ -15,5 +15,6 @@
     "lib": ["dom", "dom.iterable", "ES2022"]
   },
   "include": ["src/**/*"],
-  "exclude": []
+  "exclude": [],
+  "types": ["jest", "node"]
 }

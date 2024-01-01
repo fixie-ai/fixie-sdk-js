@@ -12,8 +12,9 @@
     "outDir": "dist",
     "rootDir": ".",
     "declaration": true,
-    "lib": ["dom", "dom.iterable", "ES2022"]
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
-  "exclude": []
+  "exclude": [],
 }
