@@ -1,6 +1,10 @@
+/**
+ * @fileoverview This module provides a NodeJS interface to the Fixie
+ * Agent API, as well as utilities for deploying and serving Fixie Agents.
+ */
+
 import { FixieAgentBase, AgentMetadata, AgentRevision } from 'fixie-common';
 import { FixieClient } from './client.js';
-
 import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -12,12 +16,10 @@ import path from 'path';
 import { execa } from 'execa';
 import Watcher from 'watcher';
 import net from 'node:net';
-
 import * as TJS from 'typescript-json-schema';
+import { MergeExclusive } from 'type-fest';
 
 const { terminal: term } = terminal;
-
-import { MergeExclusive } from 'type-fest';
 
 /** Represents the contents of an agent.yaml configuration file. */
 export interface AgentConfig {

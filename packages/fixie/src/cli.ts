@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * This is a command-line tool to interact with the Fixie platform.
+ * @fileoverview This module defines a NodeJS-based CLI to the Fixie
+ * platform. Run `npx fixie@latest --help` for usage information.
  */
 
 import { Command, program } from 'commander';

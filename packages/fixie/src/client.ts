@@ -1,3 +1,8 @@
+/**
+ * @fileoverview This module defines the FixieClient class,
+ * which is a NodeJS client to the Fixie AI platform.
+ */
+
 import { FixieClientBase } from 'fixie-common';
 
 /**
