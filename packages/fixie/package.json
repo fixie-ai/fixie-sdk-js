@@ -11,7 +11,7 @@
     "start": "node --no-warnings dist/cli.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
-    "test": "yarn node --experimental-vm-modules $(yarn bin jest --verbose)",
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest) --clearCache && yarn node --experimental-vm-modules $(yarn bin jest) --verbose",
     "lint": "eslint .",
     "prepack": "yarn build"
   },

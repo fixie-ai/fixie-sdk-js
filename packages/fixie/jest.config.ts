@@ -13,7 +13,7 @@ const config: Config.InitialOptions = {
   // This is necessary so that Jest can deal with an import of a
   // TS file as ".js" as required by TypeScript and ESM.
   moduleNameMapper: {
-    "(.+)\\.js": "$1"
+    '(.+)\\.js': '$1',
   },
 };
 export default config;
