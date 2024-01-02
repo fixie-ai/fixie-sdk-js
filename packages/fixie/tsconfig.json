@@ -10,9 +10,10 @@
     "jsx": "react",
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "declaration": true,
-    "lib": ["dom", "dom.iterable", "ES2022"]
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*"],
   "exclude": []

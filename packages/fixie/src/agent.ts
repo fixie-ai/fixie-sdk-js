@@ -18,6 +18,7 @@ import Watcher from 'watcher';
 import net from 'node:net';
 import * as TJS from 'typescript-json-schema';
 import { MergeExclusive } from 'type-fest';
+import _ from 'lodash';
 
 const { terminal: term } = terminal;
 
@@ -42,18 +43,14 @@ export class FixieAgent extends FixieAgentBase {
   /** Load an agent configuration from the given directory. */
   public static LoadConfig(agentPath: string): AgentConfig {
     const fullPath = path.resolve(path.join(agentPath, 'agent.yaml'));
-    const config = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
+    const rawConfig = yaml.load(fs.readFileSync(fullPath, 'utf8')) as Partial<AgentConfig>;
+    const config: Partial<AgentConfig> = {};
+    Object.keys(rawConfig).forEach((key: string) => {
+      config[_.camelCase(key) as keyof Partial<AgentConfig>] = rawConfig[key as keyof Partial<AgentConfig>];
+    });
 
     // Warn if any fields are present in config that are not supported.
-    const validKeys = [
-      'handle',
-      'name',
-      'description',
-      'moreInfoUrl',
-      'more_info_url',
-      'deploymentUrl',
-      'deployment_url',
-    ];
+    const validKeys = ['handle', 'name', 'description', 'moreInfoUrl', 'deploymentUrl'];
     const invalidKeys = Object.keys(config).filter((key) => !validKeys.includes(key));
     for (const key of invalidKeys) {
       term('❓ Ignoring invalid key ').yellow(key)(' in agent.yaml\n');

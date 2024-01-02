@@ -3,9 +3,9 @@
 This is a monorepo providing a TypeScript / JavaScript SDK to the
 [Fixie](https://fixie.ai) platform. It contains the following packages:
 
-* `fixie`: A NodeJS SDK and CLI.
-* `fixie-web`: A browser-based SDK.
-* `fixie-common`: A shared package containing code used by both the
+- `fixie`: A NodeJS SDK and CLI.
+- `fixie-web`: A browser-based SDK.
+- `fixie-common`: A shared package containing code used by both the
   NodeJS and browser SDKs.
 
 Full documentation is provided at [https://fixie.ai/docs](https://fixie.ai/docs).

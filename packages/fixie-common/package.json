@@ -22,8 +22,8 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "types": "dist/index.d.ts",
-  "main": "dist/index.js",
+  "types": "dist/src/index.d.ts",
+  "main": "dist/src/index.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",

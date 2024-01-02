@@ -90,11 +90,7 @@ export class VoiceSession {
   /** Called when an error occurs. */
   onError?: (error: VoiceSessionError) => void;
 
-  constructor(
-    readonly agentId: AgentId,
-    public conversationId?: ConversationId,
-    readonly params?: VoiceSessionInit,
-  ) {
+  constructor(readonly agentId: AgentId, public conversationId?: ConversationId, readonly params?: VoiceSessionInit) {
     console.log('[voiceSession] creating VoiceSession');
   }
 
@@ -217,7 +213,7 @@ export class VoiceSession {
       console.log(
         `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
           this.localAudioTrack != null
-        }`,
+        }`
       );
     }
   }
@@ -258,7 +254,7 @@ export class VoiceSession {
         this.room = new Room();
         this.room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload: Uint8Array, participant: any) =>
-          this.handleDataReceived(payload, participant),
+          this.handleDataReceived(payload, participant)
         );
         await this.room.connect(msg.roomUrl, msg.token);
         console.log(`[voiceSession] connected to room ${this.room.name}`);
@@ -316,7 +312,7 @@ export class VoiceSession {
       this.handleInputChange(
         msg.transcript.text,
         msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
-        msg.transcript.final,
+        msg.transcript.final
       );
     } else if (msg.type === 'output') {
       this.handleOutputChange(msg.text, msg.final);
