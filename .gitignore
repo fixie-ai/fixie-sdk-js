@@ -22,3 +22,5 @@ dist
 
 .DS_Store
 packages/fixie/.env
+
+.env
