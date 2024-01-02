@@ -673,7 +673,17 @@ export class FixieClient {
    * @see stopGeneration
    * @see regenerate
    */
-  startConversation({ agentId, message, metadata, stream }: { agentId: AgentId; message?: string; metadata?: Metadata, stream?: boolean }) {
+  startConversation({
+    agentId,
+    message,
+    metadata,
+    stream,
+  }: {
+    agentId: AgentId;
+    message?: string;
+    metadata?: Metadata;
+    stream?: boolean;
+  }) {
     return this.requestJsonLines<Conversation>(
       `/api/v1/agents/${agentId}/conversations`,
       message ? { message, metadata, stream } : undefined,
