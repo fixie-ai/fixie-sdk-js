@@ -10,5 +10,10 @@ const config: Config.InitialOptions = {
   testPathIgnorePatterns: ['^dist/'],
   testMatch: ['**/tests/*.test.ts'],
   automock: false,
+  // This is necessary so that Jest can deal with an import of a
+  // TS file as ".js" as required by TypeScript and ESM.
+  moduleNameMapper: {
+    "(.+)\\.js": "$1"
+  },
 };
 export default config;
