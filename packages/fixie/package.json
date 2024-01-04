@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node --no-warnings dist/cli.js",
+    "start": "node --no-warnings dist/src/cli.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
     "test": "yarn node --experimental-vm-modules $(yarn bin jest) --clearCache && yarn node --experimental-vm-modules $(yarn bin jest) --verbose",
