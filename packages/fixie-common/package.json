@@ -1,8 +1,7 @@
 {
-  "name": "fixie-common",
+  "name": "@fixieai/fixie-common",
   "description": "Node and browser common code for the Fixie platform SDK.",
   "version": "1.0.0-rc1",
-  "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",

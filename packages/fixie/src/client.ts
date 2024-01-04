@@ -3,7 +3,7 @@
  * which is a NodeJS client to the Fixie AI platform.
  */
 
-import { FixieClientBase } from 'fixie-common';
+import { FixieClientBase } from '@fixieai/fixie-common';
 
 /**
  * A NodeJS client to the Fixie AI platform.

@@ -1,4 +1,4 @@
-import { FixieClientBase, AgentId, ConversationId } from 'fixie-common';
+import { FixieClientBase, AgentId, ConversationId } from '@fixieai/fixie-common';
 import { VoiceSession, VoiceSessionInit } from './voice.js';
 
 /**

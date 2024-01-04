@@ -3,7 +3,7 @@
  * Agent API, as well as utilities for deploying and serving Fixie Agents.
  */
 
-import { FixieAgentBase, AgentMetadata, AgentRevision } from 'fixie-common';
+import { FixieAgentBase, AgentMetadata, AgentRevision } from '@fixieai/fixie-common';
 import { FixieClient } from './client.js';
 import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';

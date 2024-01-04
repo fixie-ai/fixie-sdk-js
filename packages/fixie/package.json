@@ -22,11 +22,11 @@
   "types": "dist/src/index.d.ts",
   "dependencies": {
     "@apollo/client": "^3.8.1",
+    "@fixieai/fixie-common": "workspace:*",
     "axios": "^1.6.3",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
     "extract-files": "^13.0.0",
-    "fixie-common": "workspace:*",
     "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",

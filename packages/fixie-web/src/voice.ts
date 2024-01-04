@@ -1,6 +1,6 @@
 /** This file defines the Fixie Voice SDK. */
 
-import { AgentId, ConversationId } from 'fixie-common';
+import { AgentId, ConversationId } from '@fixieai/fixie-common';
 import {
   createLocalTracks,
   ConnectionState,

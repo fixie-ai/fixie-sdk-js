@@ -12,7 +12,7 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
-import { FixieClientError } from 'fixie-common';
+import { FixieClientError } from '@fixieai/fixie-common';
 
 const [major] = process.version
   .slice(1)
