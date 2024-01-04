@@ -637,6 +637,7 @@ export class FixieClientBase {
    * @param options.agentId The ID of the agent to start a conversation with.
    * @param options.message The initial message to send to the agent, if any.
    * @param options.metadata Any metadata to attach to the message.
+   * @param options.stream Whether responses should be streaming.
    *
    * @returns {Promise<ReadableStream<Conversation>>} A stream of Conversation objects. Each member of the stream is
    * the latest value of the conversation as the agent streams its response. So, if you're driving a UI with thisresponse,
@@ -646,10 +647,20 @@ export class FixieClientBase {
    * @see stopGeneration
    * @see regenerate
    */
-  startConversation({ agentId, message, metadata }: { agentId: AgentId; message?: string; metadata?: Metadata }) {
+  startConversation({
+    agentId,
+    message,
+    metadata,
+    stream,
+  }: {
+    agentId: AgentId;
+    message?: string;
+    metadata?: Metadata;
+    stream?: boolean;
+  }) {
     return this.requestJsonLines<Conversation>(
       `/api/v1/agents/${agentId}/conversations`,
-      message ? { message, metadata } : undefined,
+      message ? { message, metadata, stream } : undefined,
       'POST'
     );
   }

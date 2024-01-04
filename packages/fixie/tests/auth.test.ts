@@ -1,7 +1,5 @@
 /** Unit tests for auth.ts. */
 
-//console.log("MDW INIT auth.test.ts");
-
 import { jest, afterEach, describe, expect, it } from '@jest/globals';
 import { loadConfig, Authenticate } from '../src/auth';
 
@@ -15,7 +13,6 @@ const mockFetch = (response: any) => {
         json: () => response,
       } as Response);
     });
-  console.log('MDW mockFetch: ', mock);
   global.fetch = mock;
   return mock;
 };
