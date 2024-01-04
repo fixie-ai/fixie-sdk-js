@@ -37,7 +37,7 @@ Please submit a `changeset` file along with your PR, which is used to automatica
 versions and publish to `npm`. To do this, run:
 
 ```bash
-$ yarn changeset 
+$ yarn changeset
 ```
 
 at the root of this tree, and follow the instructions to select which packages should
