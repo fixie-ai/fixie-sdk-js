@@ -825,7 +825,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fixieai/fixie-common@workspace:*, @fixieai/fixie-common@workspace:packages/fixie-common":
+"@fixieai/fixie-common@^1.0.0-rc1, @fixieai/fixie-common@workspace:packages/fixie-common":
   version: 0.0.0-use.local
   resolution: "@fixieai/fixie-common@workspace:packages/fixie-common"
   dependencies:
@@ -3845,7 +3845,7 @@ __metadata:
   resolution: "fixie-web@workspace:packages/fixie-web"
   dependencies:
     "@apollo/client": ^3.8.1
-    "@fixieai/fixie-common": "workspace:*"
+    "@fixieai/fixie-common": ^1.0.0-rc1
     "@tsconfig/node18": ^2.0.1
     "@types/react": ^18.2.22
     "@types/react-dom": ^18.2.7
@@ -3877,7 +3877,7 @@ __metadata:
   resolution: "fixie@workspace:packages/fixie"
   dependencies:
     "@apollo/client": ^3.8.1
-    "@fixieai/fixie-common": "workspace:*"
+    "@fixieai/fixie-common": ^1.0.0-rc1
     "@tsconfig/node18": ^2.0.1
     "@types/extract-files": ^8.1.1
     "@types/jest": ^29.5.11

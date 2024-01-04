@@ -26,7 +26,7 @@
   "browser": "dist/index.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
-    "@fixieai/fixie-common": "workspace:*",
+    "@fixieai/fixie-common": "^1.0.0-rc1",
     "apollo-upload-client": "^17.0.0",
     "base64-arraybuffer": "^1.0.2",
     "livekit-client": "^1.15.2",
