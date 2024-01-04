@@ -62,7 +62,7 @@ describe('FixieClientBase user tests', () => {
           fullName: 'Frank McBeef',
         },
         updateMask: 'fullName',
-      })
+      }),
     );
   });
 });
@@ -115,7 +115,7 @@ describe('FixieClientBase corpus tests', () => {
           display_name: 'Test Corpus',
           description: 'Fake Corpus description',
         },
-      })
+      }),
     );
   });
 
@@ -144,7 +144,7 @@ describe('FixieClientBase corpus tests', () => {
           displayName: 'Test Corpus',
         },
         updateMask: 'displayName',
-      })
+      }),
     );
   });
 
@@ -161,7 +161,7 @@ describe('FixieClientBase corpus tests', () => {
     expect(result.results).toStrictEqual([]);
 
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/corpora/fake-corpus-id:query'
+      'https://fake.api.fixie.ai/api/v1/corpora/fake-corpus-id:query',
     );
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('POST');
     expect(mock.mock.calls[0][1]?.body).toBe(
@@ -169,7 +169,7 @@ describe('FixieClientBase corpus tests', () => {
         corpus_id: 'fake-corpus-id',
         query: 'Some random query',
         max_chunks: 25,
-      })
+      }),
     );
   });
 

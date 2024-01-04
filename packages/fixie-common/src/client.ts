@@ -92,7 +92,7 @@ export class FixieClientBase {
         res.status,
         res.statusText,
         `Error accessing Fixie API: ${url}`,
-        await res.text()
+        await res.text(),
       );
     }
     return res;
@@ -106,7 +106,7 @@ export class FixieClientBase {
   async requestJsonLines<T = Jsonifiable>(
     path: string,
     bodyData?: unknown,
-    method?: string
+    method?: string,
   ): Promise<ReadableStream<T>> {
     const response = await this.request(path, bodyData, method);
     if (response.body === null) {
@@ -114,7 +114,7 @@ export class FixieClientBase {
         new URL(path, this.url),
         response.status,
         response.statusText,
-        'Response body was null'
+        'Response body was null',
       );
     }
 
@@ -137,7 +137,7 @@ export class FixieClientBase {
             }
           }
         },
-      })
+      }),
     );
   }
 
@@ -424,7 +424,7 @@ export class FixieClientBase {
                 filename: file.filename,
                 mime_type: file.mimeType,
                 contents: encode(await file.contents.arrayBuffer()),
-              }))
+              })),
             ),
           },
         },
@@ -589,7 +589,7 @@ export class FixieClientBase {
     limit?: number;
   }): Promise<Jsonifiable> {
     return this.requestJson(
-      `/api/v1/corpora/${corpusId}/sources/${sourceId}/documents?offset=${offset}&limit=${limit}`
+      `/api/v1/corpora/${corpusId}/sources/${sourceId}/documents?offset=${offset}&limit=${limit}`,
     );
   }
 
@@ -658,7 +658,7 @@ export class FixieClientBase {
     return this.requestJsonLines<Conversation>(
       `/api/v1/agents/${agentId}/conversations`,
       message ? { message, metadata, stream } : undefined,
-      'POST'
+      'POST',
     );
   }
 
@@ -703,7 +703,7 @@ export class FixieClientBase {
     return this.requestJsonLines<AssistantConversationTurn>(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages`,
       { message, metadata },
-      'POST'
+      'POST',
     );
   }
 
@@ -726,7 +726,7 @@ export class FixieClientBase {
     return this.request(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/stop`,
       undefined,
-      'POST'
+      'POST',
     );
   }
 
@@ -756,7 +756,7 @@ export class FixieClientBase {
     return this.requestJsonLines<AssistantConversationTurn>(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`,
       undefined,
-      'POST'
+      'POST',
     );
   }
 
