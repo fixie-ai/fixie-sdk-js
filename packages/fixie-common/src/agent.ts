@@ -41,7 +41,7 @@ export class FixieAgentBase {
     client: FixieClientBase;
     agentId: AgentId;
   }): Promise<FixieAgentBase> {
-    const agent = await FixieAgentBase.getAgentById(client, agentId) as { agent: Agent };
+    const agent = (await FixieAgentBase.getAgentById(client, agentId)) as { agent: Agent };
     return new FixieAgentBase(client, agent.agent);
   }
 
@@ -205,10 +205,11 @@ export class FixieAgentBase {
   }
 
   /** Get the specified agent revision. */
-  public getRevision(revisionId: AgentRevisionId): Promise<AgentRevision | null> {
-    return this.client.requestJson(
+  public async getRevision(revisionId: AgentRevisionId): Promise<AgentRevision | null> {
+    const result = await this.client.requestJson(
       `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
-    ) as Promise<AgentRevision>;
+    ) as { revision: AgentRevision };
+    return result.revision;
   }
 
   /** Get the current agent revision. */
