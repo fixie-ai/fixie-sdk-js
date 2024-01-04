@@ -8,7 +8,10 @@ import { Agent, AgentId, AgentLogEntry, AgentRevision, AgentRevisionId } from '.
  */
 export class FixieAgentBase {
   /** Use GetAgent or CreateAgent instead. */
-  protected constructor(protected readonly client: FixieClientBase, public metadata: Agent) {}
+  protected constructor(
+    protected readonly client: FixieClientBase,
+    public metadata: Agent,
+  ) {}
 
   /** Return the ID for this agent. */
   public get id(): AgentId {
@@ -61,16 +64,22 @@ export class FixieAgentBase {
       const result = (await client.requestJson(
         `/api/v1/agents?offset=${requestOffset}&limit=${requestLimit}${
           teamId !== undefined ? `&team_id=${teamId}` : ''
-        } `
+        } `,
       )) as {
         agents: Agent[];
       };
+      console.log('RESULT');
+      console.log(result.agents);
       agentList.concat(result.agents);
+      console.log('AGENT LIST');
+      console.log(agentList);
       if (result.agents.length < requestLimit) {
         break;
       }
       requestOffset += requestLimit;
     }
+    console.log('AGENT LIST');
+    console.log(agentList);
     return agentList.map((agent: Agent) => new FixieAgentBase(client, agent));
   }
 
@@ -204,7 +213,7 @@ export class FixieAgentBase {
   /** Get the specified agent revision. */
   public getRevision(revisionId: AgentRevisionId): Promise<AgentRevision | null> {
     return this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`
+      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
     ) as Promise<AgentRevision>;
   }
 
@@ -225,7 +234,7 @@ export class FixieAgentBase {
     limit?: number;
   }): Promise<AgentRevision[]> {
     const revisionList = (await this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions?offset=${offset}&limit=${limit}`
+      `/api/v1/agents/${this.metadata.agentId}/revisions?offset=${offset}&limit=${limit}`,
     )) as {
       revisions: AgentRevision[];
     };
@@ -241,7 +250,7 @@ export class FixieAgentBase {
     return this.client.requestJson(
       `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
       undefined,
-      'DELETE'
+      'DELETE',
     );
   }
 }

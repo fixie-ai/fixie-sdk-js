@@ -527,9 +527,10 @@ agent
   .description('List all agents.')
   .option('--teamId <string>', 'The team ID to list agents for. If unspecified, the current user will be used.')
   .action(
-    catchErrors(async () => {
+    catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await FixieAgent.ListAgents({ client, teamId: program.opts().teamId });
+      const result = await FixieAgent.ListAgents({ client, teamId: opts.teamId });
+      console.log(result);
       showResult(await Promise.all(result.map((agent) => agent.metadata)), program.opts().raw);
     })
   );

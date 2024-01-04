@@ -76,6 +76,8 @@ export class FixieClientBase {
     }
     const url = new URL(path, this.url);
 
+    console.log(`Sending ${fetchMethod} request to ${url}`);
+
     const res = await fetch(url, {
       ...options,
       method: fetchMethod,
