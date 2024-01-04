@@ -1,10 +1,10 @@
-/** This file defines types exposed by the Fixie service API. */
+/** This file defines types exposed by the Fixie Platform API. */
 
 // TODO: Autogenerate this from our proto or OpenAPI specs.
 
 import { Jsonifiable } from 'type-fest';
 
-/** Represents metadata about the currently logged-in user. */
+/** Represents metadata about a single user. */
 export interface User {
   userId: string;
   email: string;
@@ -42,6 +42,50 @@ export interface Team {
   modified: Date;
 }
 
+/** Represents an owner of an object, which can be a User or a Team. */
+export interface Principal {
+  user?: User;
+  team?: Team;
+}
+
+/** Represents an agent ID. */
+export type AgentId = string;
+
+/** Represents an agent revision ID. */
+export type AgentRevisionId = string;
+
+/** Represents metadata about an agent managed by the Fixie service. */
+export interface Agent {
+  agentId: AgentId;
+  owner: Principal;
+  handle: string;
+  displayName?: string;
+  description?: string;
+  moreInfoUrl?: string;
+  created: Date;
+  currentRevisionId?: AgentRevisionId;
+  modified: Date;
+  published?: boolean;
+  branded?: boolean;
+}
+
+/** Represents metadata about an agent revision. */
+export interface AgentRevision {
+  agentId: AgentId;
+  revisionId: AgentRevisionId;
+  created: Date;
+  isCurrent: boolean;
+}
+
+/** Represents an Agent Log entry. */
+export interface AgentLogEntry {
+  timestamp: Date;
+  traceId?: string;
+  spanId?: string;
+  severity?: number;
+  message?: string;
+}
+
 /** Represents a pending invitation for a user to join a team. */
 export interface Invitation {
   inviteCode: string;
@@ -51,9 +95,6 @@ export interface Invitation {
   role: MembershipRole;
   created: Date;
 }
-
-/** Represents an agent ID. */
-export type AgentId = string;
 
 /** Represents a conversation ID. */
 export type ConversationId = string;
@@ -66,10 +107,11 @@ export interface BaseConversationTurn<Role extends string> {
   timestamp: string;
   id: string;
 
-  /** Any metadata the client or server would like to attach to the message.
-  For instance, the client might include UI state from the host app,
-  or the server might include debugging info.
-  */
+  /**
+   * Any metadata the client or server would like to attach to the message.
+   * For instance, the client might include UI state from the host app,
+   * or the server might include debugging info.
+   */
   metadata?: Jsonifiable;
 
   state: State;

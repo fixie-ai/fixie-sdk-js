@@ -3,9 +3,8 @@
  * Agent API, as well as utilities for deploying and serving Fixie Agents.
  */
 
-import { FixieAgentBase, AgentMetadata, AgentRevision } from '@fixieai/fixie-common';
+import { FixieAgentBase, Agent, AgentRevision } from '@fixieai/fixie-common';
 import { FixieClient } from './client.js';
-import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
@@ -36,7 +35,7 @@ export interface AgentConfig {
  */
 export class FixieAgent extends FixieAgentBase {
   /** Use GetAgent or CreateAgent instead of calling this constructor. */
-  protected constructor(protected readonly client: FixieClient, public metadata: AgentMetadata) {
+  protected constructor(protected readonly client: FixieClient, public metadata: Agent) {
     super(client, metadata);
   }
 
@@ -117,38 +116,8 @@ export class FixieAgent extends FixieAgentBase {
   ): Promise<AgentRevision> {
     const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
 
-    const result = await this.client.gqlClient().mutate({
-      mutation: gql`
-        mutation CreateAgentRevision(
-          $agentUuid: UUID!
-          $metadata: [RevisionMetadataKeyValuePairInput!]!
-          $makeCurrent: Boolean!
-          $externalDeployment: ExternalDeploymentInput
-          $managedDeployment: ManagedDeploymentInput
-          $defaultRuntimeParameters: JSONString
-        ) {
-          createAgentRevision(
-            agentUuid: $agentUuid
-            makeCurrent: $makeCurrent
-            revision: {
-              metadata: $metadata
-              externalDeployment: $externalDeployment
-              managedDeployment: $managedDeployment
-              defaultRuntimeParameters: $defaultRuntimeParameters
-            }
-          ) {
-            revision {
-              id
-              created
-            }
-          }
-        }
-      `,
-      variables: {
-        agentUuid: this.metadata.uuid,
-        metadata: [],
-        makeCurrent: true,
-        defaultRuntimeParameters: JSON.stringify(opts.defaultRuntimeParameters),
+    const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
+      revision: {
         externalDeployment: opts.externalUrl && {
           url: opts.externalUrl,
           runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
@@ -162,24 +131,34 @@ export class FixieAgent extends FixieAgentBase {
             })),
             runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
           },
+        defaultRuntimeParameters: opts.defaultRuntimeParameters,
       },
-      fetchPolicy: 'no-cache',
-    });
-
-    return result.data.createAgentRevision.revision;
+    })) as { revision: AgentRevision };
+    return result.revision;
   }
 
   /** Ensure that the agent is created or updated. */
-  private static async ensureAgent(client: FixieClient, config: AgentConfig): Promise<FixieAgent> {
-    let agent: FixieAgent;
-    try {
-      agent = (await FixieAgent.GetAgent({ client, handle: config.handle })) as FixieAgent;
+  private static async ensureAgent({
+    client,
+    config,
+    teamId,
+  }: {
+    client: FixieClient;
+    config: AgentConfig;
+    teamId?: string;
+  }): Promise<FixieAgent> {
+    let agent: FixieAgentBase | null;
+    // The API does not currently provide a way to return an agent by its handle, so we scan
+    // to see if the agent with the same handle already exists.
+    const agentList = await FixieAgentBase.ListAgents({ client, teamId });
+    agent = agentList.find((agent) => agent.metadata.handle === config.handle) || null;
+    if (agent) {
       await agent.update({
         name: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
       });
-    } catch (e) {
+    } else {
       // Try to create the agent instead.
       term('🦊 Creating new agent ').green(config.handle)('...\n');
       agent = (await FixieAgent.CreateAgent({
@@ -190,7 +169,7 @@ export class FixieAgent extends FixieAgentBase {
         moreInfoUrl: config.moreInfoUrl,
       })) as FixieAgent;
     }
-    return agent;
+    return agent as FixieAgent;
   }
 
   static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>) {
@@ -259,7 +238,7 @@ export class FixieAgent extends FixieAgentBase {
       );
     }
 
-    const agent = await this.ensureAgent(client, config);
+    const agent = await this.ensureAgent({ client, config });
     const runtimeParametersSchema = this.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
@@ -366,26 +345,26 @@ export class FixieAgent extends FixieAgentBase {
       })();
     }
 
-    const agent = await this.ensureAgent(client, config);
+    const agent = await this.ensureAgent({ client, config });
     const originalRevision = await agent.getCurrentRevision();
     if (originalRevision) {
-      term('🥡 Replacing current agent revision ').green(originalRevision.id)('\n');
+      term('🥡 Replacing current agent revision ').green(originalRevision.revisionId)('\n');
     }
     let currentRevision: AgentRevision | null = null;
     const doCleanup = async () => {
       watcher.close();
       if (originalRevision) {
         try {
-          await agent.setCurrentRevision(originalRevision.id);
-          term('🥡 Restoring original agent revision ').green(originalRevision.id)('\n');
+          await agent.setCurrentRevision(originalRevision.revisionId);
+          term('🥡 Restoring original agent revision ').green(originalRevision.revisionId)('\n');
         } catch (e: any) {
           term('🥡 Failed to restore original agent revision: ').red(e.message)('\n');
         }
       }
       if (currentRevision) {
         try {
-          await agent.deleteRevision(currentRevision.id);
-          term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
+          await agent.deleteRevision(currentRevision.revisionId);
+          term('🥡 Deleting temporary agent revision ').green(currentRevision.revisionId)('\n');
         } catch (e: any) {
           term('🥡 Failed to delete temporary agent revision: ').red(e.message)('\n');
         }
@@ -407,12 +386,12 @@ export class FixieAgent extends FixieAgentBase {
       term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
         if (currentRevision) {
-          term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
-          await agent.deleteRevision(currentRevision.id);
+          term('🥡 Deleting temporary agent revision ').green(currentRevision.revisionId)('\n');
+          await agent.deleteRevision(currentRevision.revisionId);
           currentRevision = null;
         }
         currentRevision = await agent.createRevision({ externalUrl: currentUrl, runtimeParametersSchema });
-        term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
+        term('🥡 Created temporary agent revision ').green(currentRevision.revisionId)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl(client.url))('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');

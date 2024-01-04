@@ -529,7 +529,7 @@ agent
   .action(
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await FixieAgent.ListAgents(client);
+      const result = await FixieAgent.ListAgents({ client, teamId: program.opts().teamId });
       showResult(await Promise.all(result.map((agent) => agent.metadata)), program.opts().raw);
     })
   );
@@ -540,24 +540,18 @@ agent
   .action(
     catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      try {
-        const result = await FixieAgent.GetAgent({ client, agentId });
-        showResult(result.metadata, program.opts().raw);
-      } catch (e) {
-        // Try again with the agent handle.
-        const result = await FixieAgent.GetAgent({ client, handle: agentId });
-        showResult(result.metadata, program.opts().raw);
-      }
+      const result = await FixieAgent.GetAgent({ client, agentId });
+      showResult(result.metadata, program.opts().raw);
     })
   );
 
 agent
-  .command('delete <agentHandle>')
+  .command('delete <agentId>')
   .description('Delete the given agent.')
   .action(
-    catchErrors(async (agentHandle: string) => {
+    catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = agent.delete();
       showResult(result, program.opts().raw);
     })
@@ -567,9 +561,9 @@ agent
   .command('publish <agentId>')
   .description('Publish the given agent.')
   .action(
-    catchErrors(async (agentHandle: string) => {
+    catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = agent.update({ published: true });
       showResult(result, program.opts().raw);
     })
@@ -579,9 +573,9 @@ agent
   .command('unpublish <agentId>')
   .description('Unpublish the given agent.')
   .action(
-    catchErrors(async (agentHandle: string) => {
+    catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = agent.update({ published: false });
       showResult(result, program.opts().raw);
     })
@@ -658,10 +652,13 @@ revision.alias('revisions');
 revision
   .command('list <agentId>')
   .description('List all revisions for the given agent.')
+  .option('--limit <number>', 'Max number of results to return')
+  .option('--offset <number>', 'Starting offset of results to return')
   .action(
-    catchErrors(async (agentId: string) => {
+    catchErrors(async (agentId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = (await FixieAgent.GetAgent({ client, agentId })).metadata.allRevisions;
+      const agent = await FixieAgent.GetAgent({ client, agentId });
+      const result = agent.listAgentRevisions({ limit: opts.limit, offset: opts.offset });
       showResult(result, program.opts().raw);
     })
   );

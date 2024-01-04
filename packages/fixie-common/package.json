@@ -24,9 +24,6 @@
   "types": "dist/src/index.d.ts",
   "main": "dist/src/index.js",
   "dependencies": {
-    "@apollo/client": "^3.8.1",
-    "@types/apollo-upload-client": "^17.0.2",
-    "apollo-upload-client": "^17.0.0",
     "base64-arraybuffer": "^1.0.2",
     "type-fest": "^4.3.1"
   },
