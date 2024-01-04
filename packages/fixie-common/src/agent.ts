@@ -54,7 +54,7 @@ export class FixieAgentBase {
     offset?: number;
     limit?: number;
   }): Promise<FixieAgentBase[]> {
-    const agentList: Agent[] = [];
+    let agentList: Agent[] = [];
     let requestOffset = offset;
     while (true) {
       const requestLimit = Math.min(limit - agentList.length, 100);
@@ -65,18 +65,12 @@ export class FixieAgentBase {
       )) as {
         agents: Agent[];
       };
-      console.log('RESULT');
-      console.log(result.agents);
-      agentList.concat(result.agents);
-      console.log('AGENT LIST');
-      console.log(agentList);
+      agentList = agentList.concat(result.agents);
       if (result.agents.length < requestLimit) {
         break;
       }
       requestOffset += requestLimit;
     }
-    console.log('AGENT LIST');
-    console.log(agentList);
     return agentList.map((agent: Agent) => new FixieAgentBase(client, agent));
   }
 

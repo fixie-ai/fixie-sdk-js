@@ -530,7 +530,6 @@ agent
     catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.ListAgents({ client, teamId: opts.teamId });
-      console.log(result);
       showResult(await Promise.all(result.map((agent) => agent.metadata)), program.opts().raw);
     })
   );

@@ -75,9 +75,6 @@ export class FixieClientBase {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
     const url = new URL(path, this.url);
-
-    console.log(`Sending ${fetchMethod} request to ${url}`);
-
     const res = await fetch(url, {
       ...options,
       method: fetchMethod,
