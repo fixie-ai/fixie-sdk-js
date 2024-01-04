@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "7.0.0-rc2",
+  "version": "7.0.0",
   "license": "MIT",
   "repository": "fixie-ai/fixie-sdk",
   "bugs": "https://github.com/fixie-ai/fixie-sdk/issues",
@@ -21,13 +21,11 @@
   "bin": "dist/src/cli.js",
   "types": "dist/src/index.d.ts",
   "dependencies": {
-    "@apollo/client": "^3.8.1",
-    "@fixieai/fixie-common": "^1.0.0-rc1",
+    "@fixieai/fixie-common": "^1.0.0",
     "axios": "^1.6.3",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
     "extract-files": "^13.0.0",
-    "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "open": "^9.1.0",

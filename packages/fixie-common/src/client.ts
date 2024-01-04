@@ -1,6 +1,3 @@
-import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
-import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
-import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import type { Jsonifiable } from 'type-fest';
 import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata, User, Team } from './types.js';
 import { encode } from 'base64-arraybuffer';
@@ -64,27 +61,6 @@ export class FixieClientBase {
     this.headers = headers ?? {};
   }
 
-  /**
-   * Return a GraphQL client to issue queries against the Fixie API service.
-   * Note that we are moving away from GraphQL and this will eventually be removed,
-   * with any GQL-based APIs being replaced by REST endpoints.
-   */
-  public gqlClient(): ApolloClient<any> {
-    // For GraphQL operations, we use an ApolloClient with the apollo-upload-client
-    // extension to allow for file uploads.
-    return new ApolloClient({
-      cache: new InMemoryCache(),
-      // We're using the apollo-upload-client extension to allow for file uploads.
-      link: createUploadLink({
-        uri: `${this.url}/graphql`,
-        headers: {
-          ...this.headers,
-          ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
-        },
-      }),
-    });
-  }
-
   /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
@@ -99,7 +75,6 @@ export class FixieClientBase {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
     const url = new URL(path, this.url);
-
     const res = await fetch(url, {
       ...options,
       method: fetchMethod,

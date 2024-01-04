@@ -1,35 +1,5 @@
-import { gql } from '@apollo/client/core/index.js';
 import { FixieClientBase } from './client.js';
-
-/** Represents metadata about an agent managed by the Fixie service. */
-export interface AgentMetadata {
-  uuid: string;
-  handle: string;
-  name?: string;
-  description?: string;
-  moreInfoUrl?: string;
-  published?: boolean;
-  created: Date;
-  modified: Date;
-  currentRevision?: AgentRevision;
-  allRevisions?: AgentRevision[];
-}
-
-/** Represents metadata about an agent revision. */
-export interface AgentRevision {
-  id: string;
-  created: Date;
-  isCurrent: boolean;
-}
-
-/** Represents an Agent Log entry. */
-export interface AgentLogEntry {
-  timestamp: Date;
-  traceId?: string;
-  spanId?: string;
-  severity?: number;
-  message?: string;
-}
+import { Agent, AgentId, AgentLogEntry, AgentRevision, AgentRevisionId } from './types.js';
 
 /**
  * Base class providing access to the Fixie Agent API.
@@ -38,7 +8,12 @@ export interface AgentLogEntry {
  */
 export class FixieAgentBase {
   /** Use GetAgent or CreateAgent instead. */
-  protected constructor(protected readonly client: FixieClientBase, public metadata: AgentMetadata) {}
+  protected constructor(protected readonly client: FixieClientBase, public metadata: Agent) {}
+
+  /** Return the ID for this agent. */
+  public get id(): AgentId {
+    return this.metadata.agentId;
+  }
 
   /** Return the handle for this agent. */
   public get handle(): string {
@@ -47,7 +22,7 @@ export class FixieAgentBase {
 
   /** Return the URL for this agent's page on Fixie. */
   public agentUrl(baseUrl?: string): string {
-    const url = new URL(`agents/${this.metadata.uuid}`, baseUrl ?? 'https://api.fixie.ai');
+    const url = new URL(`agents/${this.metadata.agentId}`, baseUrl ?? 'https://api.fixie.ai');
     // If using the default API host, change it to the console host.
     if (url.hostname === 'api.fixie.ai') {
       url.hostname = 'console.fixie.ai';
@@ -55,137 +30,55 @@ export class FixieAgentBase {
     return url.toString();
   }
 
-  /** Get the agent with the given agent ID or handle. */
+  /** Get the agent with the given ID. */
   public static async GetAgent({
     client,
     agentId,
-    handle,
   }: {
     client: FixieClientBase;
-    agentId?: string;
-    handle?: string;
+    agentId: AgentId;
   }): Promise<FixieAgentBase> {
-    if (!agentId && !handle) {
-      throw new Error('Must specify either agentId or handle');
-    }
-    if (agentId && handle) {
-      throw new Error('Must specify either agentId or handle, not both');
-    }
-    let metadata: AgentMetadata;
-    if (agentId) {
-      metadata = await FixieAgentBase.getAgentById(client, agentId);
-    } else {
-      metadata = await FixieAgentBase.getAgentByHandle(client, handle!);
-    }
-    return new FixieAgentBase(client, metadata);
+    const agent = (await FixieAgentBase.getAgentById(client, agentId)) as { agent: Agent };
+    return new FixieAgentBase(client, agent.agent);
   }
 
-  /** Return all agents visible to the user. */
-  public static async ListAgents(client: FixieClientBase): Promise<FixieAgentBase[]> {
-    const result = await client.gqlClient().query({
-      fetchPolicy: 'no-cache',
-      query: gql`
-        {
-          allAgentsForUser {
-            uuid
-          }
-        }
-      `,
-    });
-    return Promise.all(
-      result.data.allAgentsForUser.map((agent: any) => this.GetAgent({ client, agentId: agent.uuid }))
-    );
+  /** List agents. */
+  public static async ListAgents({
+    client,
+    teamId,
+    offset = 0,
+    limit = 1000,
+  }: {
+    client: FixieClientBase;
+    teamId?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<FixieAgentBase[]> {
+    let agentList: Agent[] = [];
+    let requestOffset = offset;
+    while (true) {
+      const requestLimit = Math.min(limit - agentList.length, 100);
+      const result = (await client.requestJson(
+        `/api/v1/agents?offset=${requestOffset}&limit=${requestLimit}${
+          teamId !== undefined ? `&team_id=${teamId}` : ''
+        } `
+      )) as {
+        agents: Agent[];
+      };
+      agentList = agentList.concat(result.agents);
+      if (result.agents.length < requestLimit) {
+        break;
+      }
+      requestOffset += requestLimit;
+    }
+    return agentList.map((agent: Agent) => new FixieAgentBase(client, agent));
   }
 
   /** Return the metadata associated with the given agent. */
-  private static async getAgentById(client: FixieClientBase, agentId: string): Promise<AgentMetadata> {
-    const result = await client.gqlClient().query({
-      fetchPolicy: 'no-cache',
-      query: gql`
-        query GetAgentById($agentId: String!) {
-          agent: agentById(agentId: $agentId) {
-            agentId
-            uuid
-            handle
-            name
-            description
-            moreInfoUrl
-            created
-            modified
-            published
-            currentRevision {
-              id
-              created
-            }
-            allRevisions {
-              id
-              created
-            }
-          }
-        }
-      `,
-      variables: { agentId },
-    });
-
-    return {
-      uuid: result.data.agent.uuid,
-      handle: result.data.agent.handle,
-      name: result.data.agent.name,
-      description: result.data.agent.description,
-      moreInfoUrl: result.data.agent.moreInfoUrl,
-      published: result.data.agent.published,
-      created: new Date(result.data.agent.created),
-      modified: new Date(result.data.agent.modified),
-      currentRevision: result.data.agent.currentRevision,
-      allRevisions: result.data.agent.allRevisions,
-    };
+  private static getAgentById(client: FixieClientBase, agentId: string): Promise<any> {
+    return client.requestJson(`/api/v1/agents/${agentId}`);
   }
 
-  /** Return the metadata associated with the given agent handle. */
-  private static async getAgentByHandle(client: FixieClientBase, handle: string): Promise<AgentMetadata> {
-    const result = await client.gqlClient().query({
-      fetchPolicy: 'no-cache',
-      query: gql`
-        query GetAgentByHandle($handle: String!) {
-          agent: agentByHandle(handle: $handle) {
-            agentId
-            uuid
-            handle
-            name
-            description
-            moreInfoUrl
-            created
-            modified
-            published
-            currentRevision {
-              id
-              created
-            }
-            allRevisions {
-              id
-              created
-            }
-          }
-        }
-      `,
-      variables: { handle },
-    });
-
-    return {
-      uuid: result.data.agent.uuid,
-      handle: result.data.agent.handle,
-      name: result.data.agent.name,
-      description: result.data.agent.description,
-      moreInfoUrl: result.data.agent.moreInfoUrl,
-      published: result.data.agent.published,
-      created: new Date(result.data.agent.created),
-      modified: new Date(result.data.agent.modified),
-      currentRevision: result.data.agent.currentRevision,
-      allRevisions: result.data.agent.allRevisions,
-    };
-  }
-
-  /** Create a new Agent. */
   public static async CreateAgent({
     client,
     handle,
@@ -203,58 +96,22 @@ export class FixieAgentBase {
     moreInfoUrl?: string;
     published?: boolean;
   }): Promise<FixieAgentBase> {
-    const result = await client.gqlClient().mutate({
-      mutation: gql`
-        mutation CreateAgent(
-          $handle: String!
-          $teamId: String
-          $description: String
-          $moreInfoUrl: String
-          $published: Boolean
-        ) {
-          createAgent(
-            agentData: {
-              handle: $handle
-              teamId: $teamId
-              description: $description
-              moreInfoUrl: $moreInfoUrl
-              published: $published
-            }
-          ) {
-            agent {
-              uuid
-            }
-          }
-        }
-      `,
-      variables: {
+    const agent = (await client.requestJson('/api/v1/agents', {
+      agent: {
         handle,
-        teamId,
-        name,
+        displayName: name,
         description,
         moreInfoUrl,
-        published: published ?? true,
+        published,
       },
-    });
-    const agentId = result.data.createAgent.agent.uuid;
-    return FixieAgentBase.GetAgent({ client, agentId });
+      teamId,
+    })) as { agent: Agent };
+    return new FixieAgentBase(client, agent.agent);
   }
 
   /** Delete this agent. */
   delete() {
-    return this.client.gqlClient().mutate({
-      mutation: gql`
-        mutation DeleteAgent($uuid: UUID!) {
-          deleteAgent(agentData: { uuid: $uuid }) {
-            agent {
-              uuid
-              handle
-            }
-          }
-        }
-      `,
-      variables: { uuid: this.metadata.uuid },
-    });
+    return this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}`, undefined, 'DELETE');
   }
 
   /** Update this agent. */
@@ -263,51 +120,38 @@ export class FixieAgentBase {
     description,
     moreInfoUrl,
     published,
+    currentRevisionId,
   }: {
     name?: string;
     description?: string;
     moreInfoUrl?: string;
     published?: boolean;
+    currentRevisionId?: AgentRevisionId;
   }) {
-    await this.client.gqlClient().mutate({
-      mutation: gql`
-        mutation UpdateAgent(
-          $uuid: UUID!
-          $handle: String
-          $name: String
-          $description: String
-          $moreInfoUrl: String
-          $published: Boolean
-        ) {
-          updateAgent(
-            agentData: {
-              uuid: $uuid
-              handle: $handle
-              name: $name
-              description: $description
-              moreInfoUrl: $moreInfoUrl
-              published: $published
-            }
-          ) {
-            agent {
-              uuid
-            }
-          }
-        }
-      `,
-      variables: {
-        uuid: this.metadata.uuid,
-        handle: this.handle,
-        name,
+    // `updateMask` is a string that contains the names of the non-null fields provided by the
+    // caller. This is used by the server to determine which fields to update.
+    const updateMask = Object.entries({ name, description, moreInfoUrl, published, currentRevisionId })
+      .filter(([_, y]) => y !== undefined)
+      .map(([x, _]) => x)
+      .join(',');
+    const request = {
+      agent: {
+        ...this.metadata,
+        displayName: name,
         description,
         moreInfoUrl,
         published,
+        currentRevisionId,
       },
-    });
-    this.metadata = await FixieAgentBase.getAgentById(this.client, this.metadata.uuid);
+      updateMask,
+    };
+    const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}`, request, 'PUT')) as {
+      agent: Agent;
+    };
+    this.metadata = result.agent;
   }
 
-  /** Return logs for this Agent. Returns the last 15 minutes of agent logs. */
+  /** Return logs for this Agent. */
   async getLogs({
     start,
     end,
@@ -349,7 +193,7 @@ export class FixieAgentBase {
     if (messageId) {
       url.searchParams.append('messageId', messageId);
     }
-    const retval = await this.client.request(`/api/v1/agents/${this.metadata.uuid}/logs${url.search}`);
+    const retval = await this.client.request(`/api/v1/agents/${this.metadata.agentId}/logs${url.search}`);
     if (retval.status !== 200) {
       return [];
     }
@@ -357,59 +201,48 @@ export class FixieAgentBase {
     return logs.logs;
   }
 
+  /** Get the specified agent revision. */
+  public async getRevision(revisionId: AgentRevisionId): Promise<AgentRevision | null> {
+    const result = (await this.client.requestJson(
+      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`
+    )) as { revision: AgentRevision };
+    return result.revision;
+  }
+
   /** Get the current agent revision. */
-  public async getCurrentRevision(): Promise<AgentRevision | null> {
-    const result = await this.client.gqlClient().query({
-      fetchPolicy: 'no-cache',
-      query: gql`
-        query GetRevisionId($agentId: String!) {
-          agentById(agentId: $agentId) {
-            currentRevision {
-              id
-              created
-            }
-          }
-        }
-      `,
-      variables: { agentId: this.metadata.uuid },
-    });
-    return result.data.agentById.currentRevision as AgentRevision;
+  public getCurrentRevision(): Promise<AgentRevision | null> {
+    if (this.metadata.currentRevisionId === undefined) {
+      return Promise.resolve(null);
+    }
+    return this.getRevision(this.metadata.currentRevisionId);
+  }
+
+  /** List agent revisions. */
+  public async listAgentRevisions({
+    offset = 0,
+    limit = 100,
+  }: {
+    offset?: number;
+    limit?: number;
+  }): Promise<AgentRevision[]> {
+    const revisionList = (await this.client.requestJson(
+      `/api/v1/agents/${this.metadata.agentId}/revisions?offset=${offset}&limit=${limit}`
+    )) as {
+      revisions: AgentRevision[];
+    };
+    return revisionList.revisions;
   }
 
   /** Set the current agent revision. */
-  public async setCurrentRevision(revisionId: string): Promise<AgentRevision> {
-    const result = await this.client.gqlClient().mutate({
-      mutation: gql`
-        mutation SetCurrentAgentRevision($agentUuid: UUID!, $currentRevisionId: ID!) {
-          updateAgent(agentData: { uuid: $agentUuid, currentRevisionId: $currentRevisionId }) {
-            agent {
-              currentRevision {
-                id
-                created
-              }
-            }
-          }
-        }
-      `,
-      variables: { agentUuid: this.metadata.uuid, currentRevisionId: revisionId },
-      fetchPolicy: 'no-cache',
-    });
-    return result.data.updateAgent.agent.currentRevision as AgentRevision;
+  public setCurrentRevision(revisionId: string) {
+    this.update({ currentRevisionId: revisionId });
   }
 
-  public async deleteRevision(revisionId: string): Promise<void> {
-    await this.client.gqlClient().mutate({
-      mutation: gql`
-        mutation DeleteAgentRevision($agentUuid: UUID!, $revisionId: ID!) {
-          deleteAgentRevision(agentUuid: $agentUuid, revisionId: $revisionId) {
-            agent {
-              agentId
-            }
-          }
-        }
-      `,
-      variables: { agentUuid: this.metadata.uuid, revisionId },
-      fetchPolicy: 'no-cache',
-    });
+  public deleteRevision(revisionId: string): Promise<void> {
+    return this.client.requestJson(
+      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
+      undefined,
+      'DELETE'
+    );
   }
 }
