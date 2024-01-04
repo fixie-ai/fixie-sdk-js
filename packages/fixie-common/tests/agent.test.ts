@@ -61,7 +61,7 @@ describe('FixieAgentBase Agent tests', () => {
     });
     const agents = await FixieAgentBase.ListAgents({ client });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents?offset=0&limit=100',
+      'https://fake.api.fixie.ai/api/v1/agents?offset=0&limit=100'
     );
     expect(agents.length).toBe(4);
     expect(agents[0].id).toBe('fake-agent-id-1');
@@ -125,7 +125,7 @@ describe('FixieAgentBase Agent tests', () => {
           description: 'Test agent description',
         },
         updateMask: 'description',
-      }),
+      })
     );
     expect(agent.id).toBe('fake-agent-id');
   });
@@ -154,7 +154,7 @@ describe('FixieAgentBase logs tests', () => {
     });
     const logs = await agent.getLogs({});
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/logs',
+      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/logs'
     );
     expect(logs.length).toBe(1);
     expect(logs[0].timestamp).toBe('2021-08-31T18:00:00.000Z');
@@ -185,7 +185,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     });
     const revision = await agent.getRevision('fake-revision-id');
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id',
+      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id'
     );
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('GET');
     expect(revision?.agentId).toBe('fake-agent-id');
@@ -213,7 +213,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     });
     const revision = await agent.getCurrentRevision();
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id',
+      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id'
     );
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('GET');
     expect(revision?.agentId).toBe('fake-agent-id');
@@ -234,9 +234,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     expect(agent.metadata.currentRevisionId).toBe('fake-revision-id');
     const mock = mockFetch({});
     agent.setCurrentRevision('second-revision-id');
-    expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id',
-    );
+    expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/agents/fake-agent-id');
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('PUT');
     expect(mock.mock.calls[0][1]?.body).toStrictEqual(
       JSON.stringify({
@@ -246,7 +244,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
           currentRevisionId: 'second-revision-id',
         },
         updateMask: 'currentRevisionId',
-      }),
+      })
     );
   });
   it('deleteRevision works', async () => {
@@ -263,7 +261,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     const mock = mockFetch({});
     agent.deleteRevision('fake-revision-id');
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
-      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id',
+      'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions/fake-revision-id'
     );
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('DELETE');
   });

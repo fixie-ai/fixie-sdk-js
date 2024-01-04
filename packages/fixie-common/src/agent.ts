@@ -8,10 +8,7 @@ import { Agent, AgentId, AgentLogEntry, AgentRevision, AgentRevisionId } from '.
  */
 export class FixieAgentBase {
   /** Use GetAgent or CreateAgent instead. */
-  protected constructor(
-    protected readonly client: FixieClientBase,
-    public metadata: Agent,
-  ) {}
+  protected constructor(protected readonly client: FixieClientBase, public metadata: Agent) {}
 
   /** Return the ID for this agent. */
   public get id(): AgentId {
@@ -64,7 +61,7 @@ export class FixieAgentBase {
       const result = (await client.requestJson(
         `/api/v1/agents?offset=${requestOffset}&limit=${requestLimit}${
           teamId !== undefined ? `&team_id=${teamId}` : ''
-        } `,
+        } `
       )) as {
         agents: Agent[];
       };
@@ -206,9 +203,9 @@ export class FixieAgentBase {
 
   /** Get the specified agent revision. */
   public async getRevision(revisionId: AgentRevisionId): Promise<AgentRevision | null> {
-    const result = await this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
-    ) as { revision: AgentRevision };
+    const result = (await this.client.requestJson(
+      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`
+    )) as { revision: AgentRevision };
     return result.revision;
   }
 
@@ -229,7 +226,7 @@ export class FixieAgentBase {
     limit?: number;
   }): Promise<AgentRevision[]> {
     const revisionList = (await this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions?offset=${offset}&limit=${limit}`,
+      `/api/v1/agents/${this.metadata.agentId}/revisions?offset=${offset}&limit=${limit}`
     )) as {
       revisions: AgentRevision[];
     };
@@ -245,7 +242,7 @@ export class FixieAgentBase {
     return this.client.requestJson(
       `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
       undefined,
-      'DELETE',
+      'DELETE'
     );
   }
 }
