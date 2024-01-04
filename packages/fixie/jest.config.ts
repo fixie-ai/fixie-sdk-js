@@ -1,9 +1,6 @@
 import type { Config } from '@jest/types';
 
 const config: Config.InitialOptions = {
-  // The following preset allows Jest to use ts-jest to process Typescript
-  // files, and to support ESM modules.
-  preset: 'ts-jest/presets/default-esm',
   verbose: true,
   // We only want tests to run directly from the 'tests' directory,
   // not from compiled JS code.
@@ -14,6 +11,18 @@ const config: Config.InitialOptions = {
   // TS file as ".js" as required by TypeScript and ESM.
   moduleNameMapper: {
     '(.+)\\.js': '$1',
+  },
+  // The below is necessary to ensure ts-jest will work properly with ESM.
+  extensionsToTreatAsEsm: ['.ts', '.tsx', '.mts'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+        // This is necessary to prevent ts-jest from hanging on certain TS errors.
+        isolatedModules: true,
+      },
+    ],
   },
 };
 export default config;

@@ -3897,6 +3897,7 @@ __metadata:
     fixie-common: "workspace:*"
     graphql: ^16.8.0
     jest: ^29.7.0
+    jest-fetch-mock: ^3.0.3
     js-yaml: ^4.1.0
     lodash: ^4.17.21
     open: ^9.1.0
