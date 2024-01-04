@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "devDependencies": {
     "@types/prettier": "^2",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
     "eslint": "^8.42.0",
+    "eslint-config-nth": "^2.0.1",
     "eslint-import-resolver-node": "^0.3.7",
     "eslint-import-resolver-typescript": "^3.5.5",
     "eslint-plugin-import": "^2.27.5",
@@ -20,11 +23,9 @@
     "format-for-turbo": "prettier --write .",
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",
+    "lint": "turbo lint",
     "test": "turbo test",
-    "build": "turbo build",
-    "demo:sidekick-github": "turbo run dev --scope sidekick-github",
-    "postinstall": "turbo build",
-    "publish-ai-jsx": "turbo test && turbo build && cd packages/ai-jsx && npm publish"
+    "build": "turbo build"
   },
   "private": true,
   "prettier": {
@@ -32,8 +33,10 @@
     "singleQuote": true
   },
   "workspaces": [
-    "packages/*",
-    "packages/sandboxes/*"
+    "packages/*"
   ],
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.0",
+  "dependencies": {
+    "@changesets/cli": "^2.27.1"
+  }
 }

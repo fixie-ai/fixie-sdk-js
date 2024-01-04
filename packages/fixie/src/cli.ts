@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 
 /**
- * This is a command-line tool to interact with the Fixie platform.
+ * @fileoverview This module defines a NodeJS-based CLI to the Fixie
+ * platform. Run `npx fixie@latest --help` for usage information.
  */
 
-import { Command, Option, program } from 'commander';
+import { Command, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
-import { FixieClientError } from './client.js';
+import { FixieClientError } from '@fixieai/fixie-common';
 
 const [major] = process.version
   .slice(1)
@@ -105,7 +106,7 @@ function registerServeCommand(command: Command) {
 
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = path.resolve(currentPath, path.join('..', 'package.json'));
+const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 function errorHandler(error: any) {
@@ -773,7 +774,7 @@ team
   .command('remove <teamId> <userId>')
   .description('Remove a member from a team')
   .action(
-    catchErrors(async (teamId: string, userId: string, opts) => {
+    catchErrors(async (teamId: string, userId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.removeTeamMember({
         teamId,

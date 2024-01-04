@@ -1,0 +1,4 @@
+handle: test-agent
+description: Test agent description
+more_info_url: 'http://fake.url.com/'
+bogusField: Whatever, dude!

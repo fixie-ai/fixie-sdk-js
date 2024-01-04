@@ -1,3 +1,8 @@
+/**
+ * @fileoverview This module defines utility functions for the
+ * `fixie` CLI to authenticate to the Fixie platform.
+ */
+
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
@@ -8,10 +13,9 @@ import open from 'open';
 import http from 'http';
 import crypto from 'crypto';
 import net from 'net';
+import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
-
-import { FixieClient } from './client.js';
 
 /** Represents contents of the Fixie CLI config file. */
 export interface FixieConfig {
@@ -19,7 +23,10 @@ export interface FixieConfig {
   apiKey?: string;
 }
 
+/** The default API URL for the Fixie platform. */
 export const FIXIE_API_URL = 'https://api.fixie.ai';
+
+/** The file where the Fixie CLI stores its configuration. */
 export const FIXIE_CONFIG_FILE = '~/.config/fixie/config.yaml';
 
 /** Load the client configuration from the given file. */

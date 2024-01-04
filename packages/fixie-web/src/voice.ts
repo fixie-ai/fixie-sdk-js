@@ -1,8 +1,9 @@
 /** This file defines the Fixie Voice SDK. */
 
-import { AgentId, ConversationId } from './types.js';
+import { AgentId, ConversationId } from '@fixieai/fixie-common';
 import {
   createLocalTracks,
+  ConnectionState,
   DataPacket_Kind,
   LocalAudioTrack,
   RemoteAudioTrack,
@@ -203,7 +204,7 @@ export class VoiceSession {
   }
 
   private maybePublishLocalAudio() {
-    if (this.started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
+    if (this.started && this.room && this.room.state === ConnectionState.Connected && this.localAudioTrack) {
       console.log('[voiceSession] publishing local audio track');
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
