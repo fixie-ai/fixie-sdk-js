@@ -117,12 +117,14 @@ export class FixieAgentBase {
   /** Update this agent. */
   async update({
     name,
+    handle,
     description,
     moreInfoUrl,
     published,
     currentRevisionId,
   }: {
     name?: string;
+    handle?: string;
     description?: string;
     moreInfoUrl?: string;
     published?: boolean;
@@ -137,6 +139,7 @@ export class FixieAgentBase {
     const request = {
       agent: {
         ...this.metadata,
+        handle,
         displayName: name,
         description,
         moreInfoUrl,
@@ -232,6 +235,39 @@ export class FixieAgentBase {
     };
     return revisionList.revisions;
   }
+
+  /**
+   * Create a new agent revision. This versionn does not allow uploading
+   * of new tarballs; please use the `fixie` package.
+   */
+  private async createRevision(
+      opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }> & {
+        defaultRuntimeParameters?: Record<string, unknown> | null;
+        runtimeParametersSchema?: TJS.Definition | null;
+      }
+    ): Promise<AgentRevision> {
+      const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
+  
+      const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
+        revision: {
+          externalDeployment: opts.externalUrl && {
+            url: opts.externalUrl,
+            runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
+          },
+          managedDeployment: opts.tarball &&
+            uploadFile && {
+              codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
+              environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
+                name: key,
+                value,
+              })),
+              runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
+            },
+          defaultRuntimeParameters: opts.defaultRuntimeParameters,
+        },
+      })) as { revision: AgentRevision };
+      return result.revision;
+    }
 
   /** Set the current agent revision. */
   public setCurrentRevision(revisionId: string) {
