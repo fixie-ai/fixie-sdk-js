@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.1
+
+### Patch Changes
+
+- 3ba32cb: Export FixieAgent from the fixie-web package.
+
 ## 1.0.0
 
 ### Patch Changes
