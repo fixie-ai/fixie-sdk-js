@@ -8,7 +8,7 @@ import { Agent, AgentId, AgentLogEntry, AgentRevision, AgentRevisionId } from '.
  */
 export class FixieAgentBase {
   /** Use GetAgent or CreateAgent instead. */
-  protected constructor(protected readonly client: FixieClientBase, public metadata: Agent) {}
+  protected constructor(protected readonly client: FixieClientBase, protected agentMetadata: Agent) {}
 
   /** Return the ID for this agent. */
   public get id(): AgentId {
@@ -18,6 +18,10 @@ export class FixieAgentBase {
   /** Return the handle for this agent. */
   public get handle(): string {
     return this.metadata.handle;
+  }
+
+  public get metadata(): Agent {
+    return this.agentMetadata;
   }
 
   /** Return the URL for this agent's page on Fixie. */
@@ -38,8 +42,8 @@ export class FixieAgentBase {
     client: FixieClientBase;
     agentId: AgentId;
   }): Promise<FixieAgentBase> {
-    const agent = (await FixieAgentBase.getAgentById(client, agentId)) as { agent: Agent };
-    return new FixieAgentBase(client, agent.agent);
+    const metadata = await FixieAgentBase.getAgentById(client, agentId);
+    return new FixieAgentBase(client, metadata);
   }
 
   /** List agents. */
@@ -75,8 +79,9 @@ export class FixieAgentBase {
   }
 
   /** Return the metadata associated with the given agent. */
-  private static getAgentById(client: FixieClientBase, agentId: string): Promise<any> {
-    return client.requestJson(`/api/v1/agents/${agentId}`);
+  protected static async getAgentById(client: FixieClientBase, agentId: string): Promise<Agent> {
+    const result = await client.requestJson(`/api/v1/agents/${agentId}`);
+    return (result as any as { agent: Agent }).agent;
   }
 
   public static async CreateAgent({
@@ -132,26 +137,26 @@ export class FixieAgentBase {
   }) {
     // `updateMask` is a string that contains the names of the non-null fields provided by the
     // caller. This is used by the server to determine which fields to update.
-    const updateMask = Object.entries({ name, description, moreInfoUrl, published, currentRevisionId })
+    const updateMask = Object.entries({ name, handle, description, moreInfoUrl, published, currentRevisionId })
       .filter(([_, y]) => y !== undefined)
       .map(([x, _]) => x)
       .join(',');
     const request = {
       agent: {
         ...this.metadata,
-        handle,
-        displayName: name,
-        description,
-        moreInfoUrl,
-        published,
-        currentRevisionId,
+        ...(handle ? { handle } : {}),
+        ...(name ? { displayName: name } : {}),
+        ...(description ? { description } : {}),
+        ...(moreInfoUrl ? { moreInfoUrl } : {}),
+        ...(published !== undefined ? { published } : {}),
+        ...(currentRevisionId ? { currentRevisionId } : {}),
       },
       updateMask,
     };
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}`, request, 'PUT')) as {
       agent: Agent;
     };
-    this.metadata = result.agent;
+    this.agentMetadata = result.agent;
   }
 
   /** Return logs for this Agent. */
@@ -237,37 +242,55 @@ export class FixieAgentBase {
   }
 
   /**
-   * Create a new agent revision. This versionn does not allow uploading
-   * of new tarballs; please use the `fixie` package.
+   * Create a new agent revision. This code only supports creating an
+   * agent revision from an external URL or using the Default Agent Runtime.
+   * If you need to support custom runtimes, please use the `FixieAgent`
+   * class from the `fixie` package.
+   *
+   * @param defaultRuntimeParameters The default runtime parameters for the agent.
+   * @param externalUrl The URL of the agent's external deployment, if any.
+   * @param runtimeParametersSchema The JSON-encoded schema for the agent's runtime parameters.
+   *  May only be specified if `externalUrl` is also specified.
+   * @param isCurrent Whether this revision should be the current revision.
+   *
+   * @returns The newly created agent revision.
    */
-  private async createRevision(
-      opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }> & {
-        defaultRuntimeParameters?: Record<string, unknown> | null;
-        runtimeParametersSchema?: TJS.Definition | null;
-      }
-    ): Promise<AgentRevision> {
-      const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
-  
-      const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
-        revision: {
-          externalDeployment: opts.externalUrl && {
-            url: opts.externalUrl,
-            runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
-          },
-          managedDeployment: opts.tarball &&
-            uploadFile && {
-              codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
-              environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
-                name: key,
-                value,
-              })),
-              runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
-            },
-          defaultRuntimeParameters: opts.defaultRuntimeParameters,
-        },
-      })) as { revision: AgentRevision };
-      return result.revision;
+  public async createRevision({
+    defaultRuntimeParameters,
+    externalUrl,
+    runtimeParametersSchema,
+    isCurrent = true,
+  }: {
+    defaultRuntimeParameters?: Record<string, unknown>;
+    externalUrl?: string;
+    runtimeParametersSchema?: string;
+    isCurrent?: boolean;
+  }): Promise<AgentRevision> {
+    if (externalUrl === undefined && defaultRuntimeParameters === undefined) {
+      throw new Error('Must specify either externalUrl or defaultRuntimeParameters');
     }
+
+    if (runtimeParametersSchema && externalUrl === undefined) {
+      throw new Error('runtimeParametersSchema is only supported for external deployments');
+    }
+    let externalDeployment = undefined;
+    if (externalUrl !== undefined) {
+      externalDeployment = {
+        url: externalUrl,
+        runtimeParametersSchema,
+      };
+    }
+    const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
+      revision: {
+        isCurrent,
+        deployment: {
+          external: externalDeployment,
+        },
+        defaultRuntimeParameters,
+      },
+    })) as { revision: AgentRevision };
+    return result.revision;
+  }
 
   /** Set the current agent revision. */
   public setCurrentRevision(revisionId: string) {
