@@ -1,5 +1,13 @@
 # fixie-web
 
+## 1.0.2
+
+### Patch Changes
+
+- cb3c636: Add support for creating agent revisions.
+- Updated dependencies [cb3c636]
+  - @fixieai/fixie-common@1.0.1
+
 ## 1.0.1
 
 ### Patch Changes
