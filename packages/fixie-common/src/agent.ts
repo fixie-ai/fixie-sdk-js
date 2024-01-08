@@ -219,7 +219,7 @@ export class FixieAgentBase {
 
   /** Get the current agent revision. */
   public getCurrentRevision(): Promise<AgentRevision | null> {
-    if (this.metadata.currentRevisionId === undefined) {
+    if (!this.metadata.currentRevisionId) {
       return Promise.resolve(null);
     }
     return this.getRevision(this.metadata.currentRevisionId);

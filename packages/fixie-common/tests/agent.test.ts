@@ -243,6 +243,48 @@ describe('FixieAgentBase AgentRevision tests', () => {
     expect(revision?.isCurrent).toBe(true);
   });
 
+  it('getCurrentRevision returns null for undefined currentRevision', async () => {
+    const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
+    mockFetch({
+      agent: {
+        agentId: 'fake-agent-id',
+        handle: 'fake-agent-handle',
+        currentRevisionId: undefined,
+      },
+    });
+    const agent = await FixieAgentBase.GetAgent({ client, agentId: 'fake-agent-id' });
+    const revision = await agent.getCurrentRevision();
+    expect(revision).toBe(null);
+  });
+
+  it('getCurrentRevision returns null for null currentRevision', async () => {
+    const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
+    mockFetch({
+      agent: {
+        agentId: 'fake-agent-id',
+        handle: 'fake-agent-handle',
+        currentRevisionId: null,
+      },
+    });
+    const agent = await FixieAgentBase.GetAgent({ client, agentId: 'fake-agent-id' });
+    const revision = await agent.getCurrentRevision();
+    expect(revision).toBe(null);
+  });
+
+  it('getCurrentRevision returns null for empty currentRevision', async () => {
+    const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
+    mockFetch({
+      agent: {
+        agentId: 'fake-agent-id',
+        handle: 'fake-agent-handle',
+        currentRevisionId: '',
+      },
+    });
+    const agent = await FixieAgentBase.GetAgent({ client, agentId: 'fake-agent-id' });
+    const revision = await agent.getCurrentRevision();
+    expect(revision).toBe(null);
+  });
+
   it('setCurrentRevision works', async () => {
     expect(agent.metadata.currentRevisionId).toBe('initial-revision-id');
     const mock = mockFetch({});
