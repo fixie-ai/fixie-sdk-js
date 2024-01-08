@@ -75,6 +75,7 @@ export interface AgentRevision {
   revisionId: AgentRevisionId;
   created: Date;
   isCurrent: boolean;
+  defaultRuntimeParameters?: string;
 }
 
 /** Represents an Agent Log entry. */
