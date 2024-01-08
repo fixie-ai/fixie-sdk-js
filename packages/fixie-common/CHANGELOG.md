@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.2
+
+### Patch Changes
+
+- 6583acd: Support null response from getCurrentRevision.
+
 ## 1.0.1
 
 ### Patch Changes
