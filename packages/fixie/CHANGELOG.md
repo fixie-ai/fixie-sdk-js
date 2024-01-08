@@ -1,5 +1,11 @@
 # fixie
 
+## 7.0.2
+
+### Patch Changes
+
+- Bump fixie-common dependency to 1.0.2.
+
 ## 7.0.1
 
 ### Patch Changes
