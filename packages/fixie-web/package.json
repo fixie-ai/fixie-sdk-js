@@ -1,7 +1,7 @@
 {
   "name": "fixie-web",
   "description": "Browser-based SDK for the Fixie platform.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
   "types": "dist/index.d.ts",
   "browser": "dist/index.js",
   "dependencies": {
-    "@fixieai/fixie-common": "^1.0.2",
+    "@fixieai/fixie-common": "^1.0.3",
     "base64-arraybuffer": "^1.0.2",
     "livekit-client": "^1.15.2",
     "type-fest": "^4.3.1"

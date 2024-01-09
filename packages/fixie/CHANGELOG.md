@@ -1,5 +1,13 @@
 # fixie
 
+## 7.0.3
+
+### Patch Changes
+
+- Add additional deployment parameters to Fixie types.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.3
+
 ## 7.0.2
 
 ### Patch Changes
