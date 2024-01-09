@@ -211,6 +211,11 @@ describe('FixieAgentBase AgentRevision tests', () => {
         created: '2021-08-31T18:00:00.000Z',
         isCurrent: true,
         defaultRuntimeParameters: '{"foo": "bar"}',
+        deployment: {
+          external: {
+            url: 'https://fake.url',
+          },
+        },
       },
     });
     const revision = await agent.getRevision('fake-revision-id');
@@ -223,6 +228,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     expect(revision?.created).toBe('2021-08-31T18:00:00.000Z');
     expect(revision?.isCurrent).toBe(true);
     expect(revision?.defaultRuntimeParameters).toBe('{"foo": "bar"}');
+    expect(revision?.deployment?.external?.url).toBe('https://fake.url');
   });
 
   it('getCurrentRevision works', async () => {
