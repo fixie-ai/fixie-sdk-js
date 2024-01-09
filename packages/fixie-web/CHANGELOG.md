@@ -1,5 +1,13 @@
 # fixie-web
 
+## 1.0.5
+
+### Patch Changes
+
+- Fix createRevision.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.4
+
 ## 1.0.4
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # fixie
 
+## 7.0.4
+
+### Patch Changes
+
+- Fix createRevision.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.4
+
 ## 7.0.3
 
 ### Patch Changes
