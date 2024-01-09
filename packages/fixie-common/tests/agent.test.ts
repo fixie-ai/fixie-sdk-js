@@ -346,7 +346,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
               url: 'https://fake.url',
             },
           },
-          defaultRuntimeParameters: { foo: 'bar' },
+          defaultRuntimeParameters: '{"foo":"bar"}',
         },
       })
     );

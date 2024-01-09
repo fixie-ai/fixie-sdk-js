@@ -286,7 +286,8 @@ export class FixieAgentBase {
         deployment: {
           external: externalDeployment,
         },
-        defaultRuntimeParameters,
+        // The API expects this field to be pre-JSON-encoded.
+        defaultRuntimeParameters: JSON.stringify(defaultRuntimeParameters),
       },
     })) as { revision: AgentRevision };
     return result.revision;
