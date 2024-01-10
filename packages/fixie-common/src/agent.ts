@@ -88,7 +88,7 @@ export class FixieAgentBase {
     client,
     handle,
     teamId,
-    name,
+    displayName,
     description,
     moreInfoUrl,
     published,
@@ -96,7 +96,7 @@ export class FixieAgentBase {
     client: FixieClientBase;
     handle: string;
     teamId?: string;
-    name?: string;
+    displayName?: string;
     description?: string;
     moreInfoUrl?: string;
     published?: boolean;
@@ -104,7 +104,7 @@ export class FixieAgentBase {
     const agent = (await client.requestJson('/api/v1/agents', {
       agent: {
         handle,
-        displayName: name,
+        displayName,
         description,
         moreInfoUrl,
         published,
@@ -121,14 +121,14 @@ export class FixieAgentBase {
 
   /** Update this agent. */
   async update({
-    name,
+    displayName,
     handle,
     description,
     moreInfoUrl,
     published,
     currentRevisionId,
   }: {
-    name?: string;
+    displayName?: string;
     handle?: string;
     description?: string;
     moreInfoUrl?: string;
@@ -137,7 +137,7 @@ export class FixieAgentBase {
   }) {
     // `updateMask` is a string that contains the names of the non-null fields provided by the
     // caller. This is used by the server to determine which fields to update.
-    const updateMask = Object.entries({ name, handle, description, moreInfoUrl, published, currentRevisionId })
+    const updateMask = Object.entries({ displayName, handle, description, moreInfoUrl, published, currentRevisionId })
       .filter(([_, y]) => y !== undefined)
       .map(([x, _]) => x)
       .join(',');
@@ -145,7 +145,7 @@ export class FixieAgentBase {
       agent: {
         ...this.metadata,
         ...(handle ? { handle } : {}),
-        ...(name ? { displayName: name } : {}),
+        ...(displayName ? { displayName } : {}),
         ...(description ? { description } : {}),
         ...(moreInfoUrl ? { moreInfoUrl } : {}),
         ...(published !== undefined ? { published } : {}),
