@@ -595,7 +595,7 @@ agent
         client,
         handle: agentHandle,
         teamId: opts.teamId,
-        name: opts.name,
+        displayName: opts.name,
         description: opts.description,
         moreInfoUrl: opts.url,
       });

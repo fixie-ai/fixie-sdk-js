@@ -200,7 +200,7 @@ export class FixieAgent extends FixieAgentBase {
     agent = agentList.find((agent) => agent.metadata.handle === config.handle) ?? null;
     if (agent) {
       await agent.update({
-        name: config.name,
+        displayName: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
       });
@@ -210,7 +210,7 @@ export class FixieAgent extends FixieAgentBase {
       agent = (await FixieAgent.CreateAgent({
         client,
         handle: config.handle,
-        name: config.name,
+        displayName: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
       })) as FixieAgent;
