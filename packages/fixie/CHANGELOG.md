@@ -1,5 +1,13 @@
 # fixie
 
+## 7.0.6
+
+### Patch Changes
+
+- Log voice worker latency.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.6
+
 ## 7.0.5
 
 ### Patch Changes

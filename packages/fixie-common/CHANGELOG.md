@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.6
+
+### Patch Changes
+
+- Log voice worker latency.
+
 ## 1.0.5
 
 ### Patch Changes
