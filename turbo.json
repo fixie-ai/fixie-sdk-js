@@ -13,6 +13,9 @@
     "lint": {},
     "test": {
       "dependsOn": ["build", "//#format:check", "lint"]
+    },
+    "fixie#test": {
+      "dependsOn": ["@fixieai/fixie-common#test"]
     }
   }
 }
