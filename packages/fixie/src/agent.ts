@@ -3,7 +3,7 @@
  * Agent API, as well as utilities for deploying and serving Fixie Agents.
  */
 
-import { FixieAgentBase, Agent, AgentRevision } from '@fixieai/fixie-common';
+import { FixieAgentBase, Agent, AgentRevision, AgentId } from '@fixieai/fixie-common';
 import { FixieClient } from './client.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
@@ -16,7 +16,6 @@ import { execa } from 'execa';
 import Watcher from 'watcher';
 import net from 'node:net';
 import * as TJS from 'typescript-json-schema';
-import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
 
 const { terminal: term } = terminal;
@@ -35,8 +34,14 @@ export interface AgentConfig {
  */
 export class FixieAgent extends FixieAgentBase {
   /** Use GetAgent or CreateAgent instead of calling this constructor. */
-  protected constructor(protected readonly client: FixieClient, public metadata: Agent) {
-    super(client, metadata);
+  protected constructor(protected readonly client: FixieClient, protected agentMetadata: Agent) {
+    super(client, agentMetadata);
+  }
+
+  /** Get the agent with the given ID. */
+  public static async GetAgent({ client, agentId }: { client: FixieClient; agentId: AgentId }): Promise<FixieAgent> {
+    const metadata = await FixieAgentBase.getAgentById(client, agentId);
+    return new FixieAgent(client, metadata);
   }
 
   /** Load an agent configuration from the given directory. */
@@ -107,31 +112,72 @@ export class FixieAgent extends FixieAgentBase {
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
-  /** Create a new agent revision, which deploys the agent. */
-  private async createRevision(
-    opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }> & {
-      defaultRuntimeParameters?: Record<string, unknown> | null;
-      runtimeParametersSchema?: TJS.Definition | null;
+  /**
+   * Create a new agent revision.
+   *
+   * @param defaultRuntimeParameters The default runtime parameters for the agent.
+   * @param externalUrl The URL of the agent's external deployment, if any.
+   * @param runtimeParametersSchema The JSON-encoded schema for the agent's runtime parameters.
+   *   May only be specified if `externalUrl` is also specified.
+   * @param isCurrent Whether this revision should be the current revision.
+   * @param tarball The path to the tarball containing the agent code.
+   * @param environmentVariables The environment variables to set for the agent.
+   *   May only be specified if `tarball` is also specified.
+   *
+   * @returns The created agent revision.
+   */
+  public async createRevision({
+    defaultRuntimeParameters,
+    externalUrl,
+    runtimeParametersSchema,
+    tarball,
+    environmentVariables,
+    isCurrent = true,
+  }: {
+    defaultRuntimeParameters?: Record<string, unknown>;
+    externalUrl?: string;
+    runtimeParametersSchema?: string;
+    tarball?: string;
+    environmentVariables?: Record<string, string>;
+    isCurrent?: boolean;
+  }): Promise<AgentRevision> {
+    if (externalUrl === undefined && defaultRuntimeParameters === undefined && tarball === undefined) {
+      throw new Error('Must specify either externalUrl, defaultRuntimeParameters, or tarball');
     }
-  ): Promise<AgentRevision> {
-    const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
+    if (externalUrl && (tarball || environmentVariables)) {
+      throw Error('Cannot specify both externalUrl and either tarball or environmentVariables');
+    }
+    if (environmentVariables && !tarball) {
+      throw Error('Cannot specify environmentVariables without also specifying tarball');
+    }
+    if (!tarball) {
+      // Our base class handles this case.
+      return super.createRevision({
+        defaultRuntimeParameters,
+        externalUrl,
+        runtimeParametersSchema,
+        isCurrent,
+      });
+    }
+
+    const tarballData = fs.readFileSync(fs.realpathSync(tarball));
+    const codePackage = tarballData.toString('base64');
+
+    const envVars = environmentVariables
+      ? Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value }))
+      : undefined;
 
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
       revision: {
-        externalDeployment: opts.externalUrl && {
-          url: opts.externalUrl,
-          runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
-        },
-        managedDeployment: opts.tarball &&
-          uploadFile && {
-            codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
-            environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
-              name: key,
-              value,
-            })),
-            runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
+        isCurrent,
+        deployment: {
+          managed: {
+            codePackage,
+            environmentVariables: envVars,
+            runtimeParametersSchema,
           },
-        defaultRuntimeParameters: opts.defaultRuntimeParameters,
+        },
+        defaultRuntimeParameters,
       },
     })) as { revision: AgentRevision };
     return result.revision;
@@ -151,7 +197,7 @@ export class FixieAgent extends FixieAgentBase {
     // The API does not currently provide a way to return an agent by its handle, so we scan
     // to see if the agent with the same handle already exists.
     const agentList = await FixieAgentBase.ListAgents({ client, teamId });
-    agent = agentList.find((agent) => agent.metadata.handle === config.handle) || null;
+    agent = agentList.find((agent) => agent.metadata.handle === config.handle) ?? null;
     if (agent) {
       await agent.update({
         name: config.name,
@@ -242,7 +288,11 @@ export class FixieAgent extends FixieAgentBase {
     const runtimeParametersSchema = this.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
-    const revision = await agent.createRevision({ tarball, environmentVariables, runtimeParametersSchema });
+    const revision = await agent.createRevision({
+      tarball,
+      environmentVariables,
+      runtimeParametersSchema: JSON.stringify(runtimeParametersSchema),
+    });
     spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl(client.url)}`);
     return revision;
   }
@@ -390,7 +440,10 @@ export class FixieAgent extends FixieAgentBase {
           await agent.deleteRevision(currentRevision.revisionId);
           currentRevision = null;
         }
-        currentRevision = await agent.createRevision({ externalUrl: currentUrl, runtimeParametersSchema });
+        currentRevision = await agent.createRevision({
+          externalUrl: currentUrl,
+          runtimeParametersSchema: JSON.stringify(runtimeParametersSchema),
+        });
         term('🥡 Created temporary agent revision ').green(currentRevision.revisionId)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl(client.url))('\n');
       } catch (e: any) {
