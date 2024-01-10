@@ -298,7 +298,7 @@ export class VoiceSession {
     const msg = JSON.parse(this.textDecoder.decode(payload));
     if (msg.type === 'pong') {
       const elapsed_ms = performance.now() - msg.timestamp;
-      console.debug(`[voiceSession] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
+      this.handleLatency('workerRtt', elapsed_ms);
     } else if (msg.type === 'state') {
       const newState = msg.state;
       if (newState === VoiceSessionState.SPEAKING && this.outAnalyzer === undefined) {
