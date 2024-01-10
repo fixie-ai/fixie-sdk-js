@@ -1,5 +1,13 @@
 # fixie-web
 
+## 1.0.6
+
+### Patch Changes
+
+- Fix problem with FixieAgentBase.update using wrong field name.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.5
+
 ## 1.0.5
 
 ### Patch Changes
