@@ -75,6 +75,31 @@ export interface AgentRevision {
   revisionId: AgentRevisionId;
   created: Date;
   isCurrent: boolean;
+  defaultRuntimeParameters?: string;
+  runtime?: AgentRuntime;
+  deployment?: AgentDeployment;
+}
+
+/** Agent runtime parameters. */
+export interface AgentRuntime {
+  parametersSchema: string;
+}
+
+/** Agent deployment settings. */
+export interface AgentDeployment {
+  external?: ExternalDeployment;
+  managed?: ManagedDeployment;
+}
+
+/** Represents an externally-hosted Agent. */
+export interface ExternalDeployment {
+  url: string;
+}
+
+/** Represents a Fixie-managed Agent. */
+export interface ManagedDeployment {
+  environmentVariables?: Record<string, string>;
+  codePackage?: string;
 }
 
 /** Represents an Agent Log entry. */

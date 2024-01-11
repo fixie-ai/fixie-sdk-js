@@ -1,5 +1,37 @@
 # fixie-web
 
+## 1.0.7
+
+### Patch Changes
+
+- Log voice worker latency.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.6
+
+## 1.0.6
+
+### Patch Changes
+
+- Fix problem with FixieAgentBase.update using wrong field name.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.5
+
+## 1.0.5
+
+### Patch Changes
+
+- Fix createRevision.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.4
+
+## 1.0.4
+
+### Patch Changes
+
+- Add additional deployment parameters to Fixie types.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.3
+
 ## 1.0.3
 
 ### Patch Changes

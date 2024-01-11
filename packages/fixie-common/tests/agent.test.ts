@@ -75,6 +75,7 @@ describe('FixieAgentBase Agent tests', () => {
     const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
     const mock = mockFetch({
       agent: {
+        displayName: 'Test agent',
         agentId: 'fake-agent-id',
         handle: 'fake-agent-handle',
       },
@@ -82,6 +83,7 @@ describe('FixieAgentBase Agent tests', () => {
     const agent = await FixieAgentBase.CreateAgent({ client, handle: 'fake-agent-handle' });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/agents');
     expect(agent.id).toBe('fake-agent-id');
+    expect(agent.metadata.displayName).toBe('Test agent');
     expect(agent.handle).toBe('fake-agent-handle');
     expect(agent.agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id');
   });
@@ -120,10 +122,10 @@ describe('FixieAgentBase Agent tests', () => {
         agentId: 'fake-agent-id',
         handle: 'fake-agent-handle',
         description: 'Test agent description',
-        moreInfoUrl: 'https://fake.url',
+        moreInfoUrl: 'https://fake.url.2',
       },
     });
-    agent.update({ description: 'Test agent description' });
+    agent.update({ description: 'Test agent description', moreInfoUrl: 'https://fake.url.2' });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/agents/fake-agent-id');
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('PUT');
     expect(mock.mock.calls[0][1]?.body).toStrictEqual(
@@ -131,10 +133,10 @@ describe('FixieAgentBase Agent tests', () => {
         agent: {
           agentId: 'fake-agent-id',
           handle: 'fake-agent-handle',
-          moreInfoUrl: 'https://fake.url',
+          moreInfoUrl: 'https://fake.url.2',
           description: 'Test agent description',
         },
-        updateMask: 'description',
+        updateMask: 'description,moreInfoUrl',
       })
     );
     expect(agent.id).toBe('fake-agent-id');
@@ -210,6 +212,12 @@ describe('FixieAgentBase AgentRevision tests', () => {
         revisionId: 'fake-revision-id',
         created: '2021-08-31T18:00:00.000Z',
         isCurrent: true,
+        defaultRuntimeParameters: '{"foo": "bar"}',
+        deployment: {
+          external: {
+            url: 'https://fake.url',
+          },
+        },
       },
     });
     const revision = await agent.getRevision('fake-revision-id');
@@ -221,6 +229,8 @@ describe('FixieAgentBase AgentRevision tests', () => {
     expect(revision?.revisionId).toBe('fake-revision-id');
     expect(revision?.created).toBe('2021-08-31T18:00:00.000Z');
     expect(revision?.isCurrent).toBe(true);
+    expect(revision?.defaultRuntimeParameters).toBe('{"foo": "bar"}');
+    expect(revision?.deployment?.external?.url).toBe('https://fake.url');
   });
 
   it('getCurrentRevision works', async () => {
@@ -338,7 +348,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
               url: 'https://fake.url',
             },
           },
-          defaultRuntimeParameters: { foo: 'bar' },
+          defaultRuntimeParameters: '{"foo":"bar"}',
         },
       })
     );
