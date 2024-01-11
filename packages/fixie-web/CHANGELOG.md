@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.8
+
+### Patch Changes
+
+- Fix 'main' field in package.json.
+
 ## 1.0.7
 
 ### Patch Changes
