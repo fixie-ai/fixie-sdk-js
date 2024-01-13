@@ -329,11 +329,15 @@ describe('FixieAgentBase AgentRevision tests', () => {
         revisionId: 'new-revision-id',
         created: '2021-08-31T18:00:00.000Z',
         isCurrent: true,
+        runtime: {
+          parametersSchema: '{"type":"object"}',
+        },
       },
     });
     const revision = await agent.createRevision({
       defaultRuntimeParameters: { foo: 'bar' },
       externalUrl: 'https://fake.url',
+      runtimeParametersSchema: '{"type":"object"}',
     });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions'
@@ -347,6 +351,9 @@ describe('FixieAgentBase AgentRevision tests', () => {
             external: {
               url: 'https://fake.url',
             },
+          },
+          runtime: {
+            parametersSchema: '{"type":"object"}',
           },
           defaultRuntimeParameters: '{"foo":"bar"}',
         },

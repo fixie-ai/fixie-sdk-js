@@ -170,11 +170,13 @@ export class FixieAgent extends FixieAgentBase {
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
       revision: {
         isCurrent,
+        runtime: {
+          parametersSchema: runtimeParametersSchema,
+        },
         deployment: {
           managed: {
             codePackage,
             environmentVariables: envVars,
-            runtimeParametersSchema,
           },
         },
         defaultRuntimeParameters,

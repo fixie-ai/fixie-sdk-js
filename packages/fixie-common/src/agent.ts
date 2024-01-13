@@ -277,7 +277,6 @@ export class FixieAgentBase {
     if (externalUrl !== undefined) {
       externalDeployment = {
         url: externalUrl,
-        runtimeParametersSchema,
       };
     }
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
@@ -285,6 +284,9 @@ export class FixieAgentBase {
         isCurrent,
         deployment: {
           external: externalDeployment,
+        },
+        runtime: {
+          parametersSchema: runtimeParametersSchema,
         },
         // The API expects this field to be pre-JSON-encoded.
         defaultRuntimeParameters: JSON.stringify(defaultRuntimeParameters),
