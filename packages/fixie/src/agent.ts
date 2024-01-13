@@ -326,6 +326,9 @@ export class FixieAgent extends FixieAgentBase {
 
     // Infer the runtime parameters schema. We'll create a generator that yields whenever the schema changes.
     let runtimeParametersSchema = FixieAgent.inferRuntimeParametersSchema(agentPath);
+
+    console.log(`🌱 Runtime parameters schema: ${JSON.stringify(runtimeParametersSchema)}`);
+
     const { iterator: schemaGenerator, push: pushToSchemaGenerator } =
       this.createAsyncIterable<TJS.Definition | null>();
     pushToSchemaGenerator(runtimeParametersSchema);
