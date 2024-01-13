@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.7
+
+### Patch Changes
+
+- Fix createRevision and agent deployment.
+
 ## 1.0.6
 
 ### Patch Changes
