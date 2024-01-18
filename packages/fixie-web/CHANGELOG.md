@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.10
+
+### Patch Changes
+
+- Automatically warm up voice session in start()
+
 ## 1.0.8
 
 ### Patch Changes

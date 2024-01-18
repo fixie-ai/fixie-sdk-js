@@ -116,6 +116,10 @@ export class VoiceSession {
 
   /** Warm up the VoiceSession by making network connections. This is called automatically when the VoiceSession object is created. */
   warmup(): void {
+    // No-op if already warming/warmed.
+    if (this._state != VoiceSessionState.DISCONNECTED) {
+      return;
+    }
     console.log('[voiceSession] warming up');
     try {
       const url = this.params?.webrtcUrl ?? 'wss://wsapi.fixie.ai';
@@ -145,6 +149,7 @@ export class VoiceSession {
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
   async start() {
+    this.warmup();
     console.log('[voiceSession] starting');
     if (this.started) {
       console.warn('[voiceSession - start] Already started!');
