@@ -5,7 +5,9 @@ import {
   createLocalTracks,
   DataPacket_Kind,
   LocalAudioTrack,
+  LocalVideoTrack
   RemoteAudioTrack,
+  RemoteVideoTrack,
   RemoteTrack,
   Room,
   RoomEvent,
@@ -64,10 +66,11 @@ export class VoiceSession {
   private readonly textDecoder = new TextDecoder();
   private _state = VoiceSessionState.DISCONNECTED;
   private socket?: WebSocket;
-  private audioStarted = false;
+  private mediaStarted = false;
   private started = false;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
+  private localVideoTrack?: LocalVideoTrack;
   // True when we should have entered speaking state but didn't due to analyzer not being ready.
   private delayedSpeakingState = false;
   private inAnalyzer?: StreamAnalyzer;
@@ -130,16 +133,25 @@ export class VoiceSession {
     }
   }
 
-  /** Start the audio channels associated with this VoiceSession. This will request microphone permissions from the user. */
-  async startAudio() {
+  /** Start the audio channels associated with this VoiceSession. This will request microphone permissions from the user.
+   * @param video If true, also request camera permissions.
+   */
+  async startMedia({ video = false }: { video?: boolean } = {}) {
     console.log('[voiceSession] startAudio');
     this.audioContext.resume();
     this.audioElement.play();
-    const localTracks = await createLocalTracks({ audio: true, video: false });
+    const localTracks = await createLocalTracks({ audio: true, video });
     this.localAudioTrack = localTracks[0] as LocalAudioTrack;
+    if (video) {
+      this.localVideoTrack = localTracks[1] as LocalVideoTrack;
+    }
     console.log('[voiceSession] got mic stream');
     this.inAnalyzer = new StreamAnalyzer(this.audioContext, this.localAudioTrack!.mediaStream!);
-    this.audioStarted = true;
+    this.mediaStarted = true;
+  }
+
+  startAudio() {
+    return this.startMedia();
   }
 
   /** Start this VoiceSession. This will call startAudio if it has not been called yet.*/
@@ -149,11 +161,11 @@ export class VoiceSession {
       console.warn('[voiceSession - start] Already started!');
       return;
     }
-    if (!this.audioStarted) {
+    if (!this.mediaStarted) {
       await this.startAudio();
     }
     this.started = true;
-    this.maybePublishLocalAudio();
+    this.maybePublishLocalMedia();
   }
 
   /** Stop this VoiceSession. */
@@ -171,7 +183,7 @@ export class VoiceSession {
     this.localAudioTrack = undefined;
     this.socket?.close();
     this.socket = undefined;
-    this.audioStarted = false;
+    this.mediaStarted = false;
     this.started = false;
     this.changeState(VoiceSessionState.DISCONNECTED);
   }
@@ -202,15 +214,19 @@ export class VoiceSession {
     }, 5000);
   }
 
-  private maybePublishLocalAudio() {
+  private maybePublishLocalMedia() {
     if (this.started && this.room && this.room.state == 'connected' && this.localAudioTrack) {
       console.log('[voiceSession] publishing local audio track');
-      const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
-      this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
+      const audioOpts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
+      const videoOpts = { name: 'video', simulcast: false, source: Track.Source.Camera };
+      this.room.localParticipant.publishTrack(this.localAudioTrack, audioOpts);
+      if (this.localVideoTrack) {
+        this.room.localParticipant.publishTrack(this.localVideoTrack, videoOpts);
+      }
       this.changeState(VoiceSessionState.IDLE);
     } else {
       console.log(
-        `[voiceSession] not publishing local audio track - room state is ${this.room?.state}, local audio is ${
+        `[voiceSession] not publishing local media - room state is ${this.room?.state}, local audio is ${
           this.localAudioTrack != null
         }`
       );
@@ -258,7 +274,7 @@ export class VoiceSession {
         await this.room.connect(msg.roomUrl, msg.token);
         console.log(`[voiceSession] connected to room ${this.room.name}`);
         this.startPinger();
-        this.maybePublishLocalAudio();
+        this.maybePublishLocalMedia();
         break;
       default:
         console.warn('unknown message type', msg.type);
@@ -279,6 +295,10 @@ export class VoiceSession {
   }
 
   private handleTrackSubscribed(track: RemoteTrack) {
+    if (track.kind !== Track.Kind.Audio) {
+      console.warn(`[voiceSession] subscribed to unexpected track kind ${track.kind}`);
+      return;
+    }
     console.log(`[voiceSession] subscribed to remote audio track ${track.sid}`);
     const audioTrack = track as RemoteAudioTrack;
     audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log('[voiceSession] audio playback started'));
