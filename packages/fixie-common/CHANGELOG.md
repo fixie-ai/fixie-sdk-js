@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.8
+
+### Patch Changes
+
+- Fix agent deployment.
+
 ## 1.0.7
 
 ### Patch Changes
