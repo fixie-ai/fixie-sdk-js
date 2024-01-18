@@ -84,6 +84,7 @@ export class FixieAgentBase {
     return (result as any as { agent: Agent }).agent;
   }
 
+  /** Create a new Agent. */
   public static async CreateAgent({
     client,
     handle,
@@ -91,7 +92,7 @@ export class FixieAgentBase {
     displayName,
     description,
     moreInfoUrl,
-    published,
+    published = true,
   }: {
     client: FixieClientBase;
     handle: string;
