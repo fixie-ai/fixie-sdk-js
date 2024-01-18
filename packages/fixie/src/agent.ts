@@ -232,11 +232,17 @@ export class FixieAgent extends FixieAgentBase {
   }
 
   /** Deploy an agent from the given directory. */
-  public static async DeployAgent(
-    client: FixieClient,
-    agentPath: string,
-    environmentVariables: Record<string, string> = {}
-  ): Promise<AgentRevision> {
+  public static async DeployAgent({
+    client,
+    agentPath,
+    environmentVariables = {},
+    teamId,
+  }: {
+    client: FixieClient;
+    agentPath: string;
+    environmentVariables: Record<string, string>;
+    teamId?: string;
+  }): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
     term('🦊 Deploying agent ').green(config.handle)('...\n');
 
@@ -260,7 +266,7 @@ export class FixieAgent extends FixieAgentBase {
       );
     }
 
-    const agent = (await FixieAgent.ensureAgent({ client, config })) as FixieAgent;
+    const agent = (await FixieAgent.ensureAgent({ client, config, teamId })) as FixieAgent;
 
     const runtimeParametersSchema = FixieAgent.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
@@ -282,6 +288,7 @@ export class FixieAgent extends FixieAgentBase {
     port,
     environmentVariables,
     debug,
+    teamId,
   }: {
     client: FixieClient;
     agentPath: string;
@@ -289,6 +296,7 @@ export class FixieAgent extends FixieAgentBase {
     port: number;
     environmentVariables: Record<string, string>;
     debug?: boolean;
+    teamId?: string;
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
     term('🦊 Serving agent ').green(config.handle)('...\n');
@@ -375,7 +383,7 @@ export class FixieAgent extends FixieAgentBase {
       })();
     }
 
-    const agent = await this.ensureAgent({ client, config });
+    const agent = await this.ensureAgent({ client, config, teamId });
     const originalRevision = await agent.getCurrentRevision();
     if (originalRevision) {
       term('🥡 Replacing current agent revision ').green(originalRevision.revisionId)('\n');

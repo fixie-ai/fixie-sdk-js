@@ -49,6 +49,10 @@ function registerDeployCommand(command: Command) {
     .command('deploy [path]')
     .description('Deploy an agent')
     .option(
+      '--teamId <string>',
+      'The team ID to own the new agent. If unspecified, the current user will be the owner.'
+    )
+    .option(
       '-e, --env <key=value>',
       'Environment variables to set for this deployment. Variables in a .env file take precedence over those on the command line.',
       (v, m: Record<string, string> | undefined) => {
@@ -61,11 +65,16 @@ function registerDeployCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
+    .action(async (path: string | undefined, options: { teamId: string; env: Record<string, string> }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
-        FIXIE_API_URL: program.opts().url,
-        ...options.env,
+      await FixieAgent.DeployAgent({
+        client,
+        agentPath: path ?? process.cwd(),
+        environmentVariables: {
+          FIXIE_API_URL: program.opts().url,
+          ...options.env,
+        },
+        teamId: options.teamId,
       });
     });
 }
@@ -76,6 +85,10 @@ function registerServeCommand(command: Command) {
     .command('serve [path]')
     .description('Run an agent locally')
     .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '--teamId <string>',
+      'The team ID to own the new agent. If unspecified, the current user will be the owner.'
+    )
     .option(
       '-e, --env <key=value>',
       'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
@@ -89,19 +102,22 @@ function registerServeCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
-      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.ServeAgent({
-        client,
-        agentPath: path ?? process.cwd(),
-        port: parseInt(options.port),
-        tunnel: true,
-        environmentVariables: {
-          FIXIE_API_URL: program.opts().url,
-          ...options.env,
-        },
-      });
-    });
+    .action(
+      async (path: string | undefined, options: { port: string; teamId: string; env: Record<string, string> }) => {
+        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+        await FixieAgent.ServeAgent({
+          client,
+          agentPath: path ?? process.cwd(),
+          port: parseInt(options.port),
+          tunnel: true,
+          environmentVariables: {
+            FIXIE_API_URL: program.opts().url,
+            ...options.env,
+          },
+          teamId: options.teamId,
+        });
+      }
+    );
 }
 
 // Get current version of this package.
