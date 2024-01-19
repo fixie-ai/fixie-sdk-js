@@ -100,6 +100,9 @@ export class FixieClientBase {
 
   async requestJson<T = Jsonifiable>(path: string, bodyData?: unknown, method?: string): Promise<T> {
     const response = await this.request(path, bodyData, method);
+    if (response.status === 204) {
+      return {} as T;
+    }
     return response.json();
   }
 
