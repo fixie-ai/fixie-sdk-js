@@ -1,5 +1,21 @@
 # fixie
 
+## 7.0.8
+
+### Patch Changes
+
+- Fix agent deployment.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.8
+
+## 7.0.7
+
+### Patch Changes
+
+- Fix createRevision and agent deployment.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.7
+
 ## 7.0.6
 
 ### Patch Changes

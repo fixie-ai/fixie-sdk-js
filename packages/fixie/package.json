@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "7.0.6",
+  "version": "7.0.8",
   "license": "MIT",
   "repository": "fixie-ai/fixie-sdk",
   "bugs": "https://github.com/fixie-ai/fixie-sdk/issues",
@@ -21,7 +21,7 @@
   "bin": "dist/src/cli.js",
   "types": "dist/src/index.d.ts",
   "dependencies": {
-    "@fixieai/fixie-common": "^1.0.6",
+    "@fixieai/fixie-common": "^1.0.8",
     "axios": "^1.6.3",
     "commander": "^11.0.0",
     "execa": "^8.0.1",

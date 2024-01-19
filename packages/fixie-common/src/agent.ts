@@ -84,6 +84,7 @@ export class FixieAgentBase {
     return (result as any as { agent: Agent }).agent;
   }
 
+  /** Create a new Agent. */
   public static async CreateAgent({
     client,
     handle,
@@ -91,7 +92,7 @@ export class FixieAgentBase {
     displayName,
     description,
     moreInfoUrl,
-    published,
+    published = true,
   }: {
     client: FixieClientBase;
     handle: string;
@@ -277,7 +278,6 @@ export class FixieAgentBase {
     if (externalUrl !== undefined) {
       externalDeployment = {
         url: externalUrl,
-        runtimeParametersSchema,
       };
     }
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
@@ -285,6 +285,9 @@ export class FixieAgentBase {
         isCurrent,
         deployment: {
           external: externalDeployment,
+        },
+        runtime: {
+          parametersSchema: runtimeParametersSchema,
         },
         // The API expects this field to be pre-JSON-encoded.
         defaultRuntimeParameters: JSON.stringify(defaultRuntimeParameters),
