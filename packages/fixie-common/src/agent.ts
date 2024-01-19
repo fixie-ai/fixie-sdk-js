@@ -301,11 +301,7 @@ export class FixieAgentBase {
     this.update({ currentRevisionId: revisionId });
   }
 
-  public deleteRevision(revisionId: string): Promise<void> {
-    return this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
-      undefined,
-      'DELETE'
-    );
+  public deleteRevision(revisionId: string) {
+    this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`, undefined, 'DELETE');
   }
 }
