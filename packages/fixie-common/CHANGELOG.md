@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.11
+
+### Patch Changes
+
+- Fix DELETE operations to not expect content.
+
 ## 1.0.10
 
 ### Patch Changes

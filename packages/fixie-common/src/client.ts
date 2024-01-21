@@ -298,8 +298,8 @@ export class FixieClientBase {
    *
    * @param options.corpusId The ID of the Corpus to delete.
    */
-  deleteCorpus({ corpusId }: { corpusId: string }): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}`, undefined, 'DELETE');
+  async deleteCorpus({ corpusId }: { corpusId: string }) {
+    await this.request(`/api/v1/corpora/${corpusId}`, undefined, 'DELETE');
   }
 
   /**
@@ -483,8 +483,8 @@ export class FixieClientBase {
    * @param options.corpusId The ID of the Corpus that the Source belongs to.
    * @param options.sourceId The ID of the Source to delete.
    */
-  deleteCorpusSource({ corpusId, sourceId }: { corpusId: string; sourceId: string }): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
+  async deleteCorpusSource({ corpusId, sourceId }: { corpusId: string; sourceId: string }) {
+    await this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
   }
 
   /**
@@ -796,8 +796,8 @@ export class FixieClientBase {
   }
 
   /** Delete the given team. */
-  deleteTeam({ teamId }: { teamId: string }): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/teams/${teamId}`, undefined, 'DELETE');
+  async deleteTeam({ teamId }: { teamId: string }) {
+    await this.request(`/api/v1/teams/${teamId}`, undefined, 'DELETE');
   }
 
   /**
@@ -878,8 +878,8 @@ export class FixieClientBase {
    * @param options.teamId The ID of the team to cancel the invitation for.
    * @param options.email The email address of the member to cancel the invitation for.
    */
-  cancelInvitation({ teamId, email }: { teamId: string; email: string }): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/teams/${teamId}/invite/${email}`, null, 'DELETE');
+  async cancelInvitation({ teamId, email }: { teamId: string; email: string }) {
+    await this.request(`/api/v1/teams/${teamId}/invite/${email}`, null, 'DELETE');
   }
 
   /**
@@ -888,8 +888,8 @@ export class FixieClientBase {
    * @param options.teamId The ID of the team to invite the member to.
    * @param options.userId The user ID of the member to remove.
    */
-  removeTeamMember({ teamId, userId }: { teamId: string; userId: string }): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/teams/${teamId}/members/${userId}`, null, 'DELETE');
+  async removeTeamMember({ teamId, userId }: { teamId: string; userId: string }) {
+    await this.request(`/api/v1/teams/${teamId}/members/${userId}`, null, 'DELETE');
   }
 
   /**

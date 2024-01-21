@@ -177,11 +177,9 @@ describe('FixieClientBase corpus tests', () => {
     const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
     const mock = mockFetch({});
 
-    const result = await client.deleteCorpus({
+    await client.deleteCorpus({
       corpusId: 'fake-corpus-id',
     });
-    expect(result).toStrictEqual({});
-
     expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/corpora/fake-corpus-id');
     expect(mock.mock.calls[0][1]?.method).toStrictEqual('DELETE');
   });
