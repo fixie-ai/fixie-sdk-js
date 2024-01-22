@@ -1,5 +1,29 @@
 # fixie
 
+## 7.0.11
+
+### Patch Changes
+
+- Fix DELETE operations to not expect content.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.11
+
+## 7.0.10
+
+### Patch Changes
+
+- Fix issue with 204 return.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.10
+
+## 7.0.9
+
+### Patch Changes
+
+- Fix deleteRevision.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.9
+
 ## 7.0.8
 
 ### Patch Changes

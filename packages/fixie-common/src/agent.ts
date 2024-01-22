@@ -116,8 +116,8 @@ export class FixieAgentBase {
   }
 
   /** Delete this agent. */
-  delete() {
-    return this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}`, undefined, 'DELETE');
+  public async delete() {
+    await this.client.request(`/api/v1/agents/${this.metadata.agentId}`, undefined, 'DELETE');
   }
 
   /** Update this agent. */
@@ -301,11 +301,8 @@ export class FixieAgentBase {
     this.update({ currentRevisionId: revisionId });
   }
 
-  public deleteRevision(revisionId: string): Promise<void> {
-    return this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
-      undefined,
-      'DELETE'
-    );
+  /** Delete the given Agent revision. */
+  public async deleteRevision(revisionId: string) {
+    await this.client.request(`/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`, undefined, 'DELETE');
   }
 }

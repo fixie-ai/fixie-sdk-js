@@ -1,5 +1,23 @@
 # @fixieai/fixie-common
 
+## 1.0.11
+
+### Patch Changes
+
+- Fix DELETE operations to not expect content.
+
+## 1.0.10
+
+### Patch Changes
+
+- Fix issue with 204 return.
+
+## 1.0.9
+
+### Patch Changes
+
+- Fix deleteRevision.
+
 ## 1.0.8
 
 ### Patch Changes
