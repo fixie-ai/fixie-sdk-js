@@ -1,5 +1,5 @@
 // Import the Fixie client
-import { FixieClient } from "fixie";
+import { FixieClient } from 'fixie';
 import 'dotenv/config';
 import axios from 'axios';
 import { encode } from 'gpt-3-encoder';
@@ -17,16 +17,16 @@ let numMessages = 0;
 let lenConversations = 0;
 let numTokens = 0;
 
-console.log("calling listAgentConversations");
-getAgentConversations(AGENT_ID).then(data => {
+console.log('calling listAgentConversations');
+getAgentConversations(AGENT_ID).then((data) => {
   numConversations = data.length;
 
   console.log(`Got back ${data.length} conversations`);
-  data.forEach(element => {
-    console.log("------------------------------------------------------------\n");
+  data.forEach((element) => {
+    console.log('------------------------------------------------------------\n');
     console.log(`Conversation ID: ${element.id}`);
     console.log(`Total conversation turns\t${element.turns.length}`);
-    
+
     getConvoTurns(element);
 
     // We want to get content for any messages that are:
@@ -39,15 +39,14 @@ getAgentConversations(AGENT_ID).then(data => {
     //      kind = "functionResponse"....get the response
   });
 
-  console.log("\n\n============================================================");
+  console.log('\n\n============================================================');
   console.log(`Final stats for agent ${AGENT_ID}:\n`);
   console.log(`Total Conversations\t${numConversations}\n`);
   console.log(`Total Agent Messages\t${numMessages}\n`);
   console.log(`Total Characters\t${lenConversations}\n`);
   console.log(`Total LLM Tokens\t${numTokens}\n`);
-  console.log("============================================================");
+  console.log('============================================================');
 });
-
 
 function getConvoTurns(conversation) {
   let numConvoMessages = 0;
@@ -55,25 +54,24 @@ function getConvoTurns(conversation) {
   let numConvoTokens = 0;
 
   // Iterate thru the conversation and process all the turns
-  conversation.turns.forEach(turn => {
+  conversation.turns.forEach((turn) => {
     numConvoMessages += turn.messages.length;
 
     // Iterate through the turn messages and log their stats
-    turn.messages.forEach(message => {
+    turn.messages.forEach((message) => {
       // console.log(message);
       numMessages++;
       // Make sure it's a message type that we want
-      if(turn.state == "done"){
+      if (turn.state == 'done') {
         // Function Response
-        if(turn.role == "assistant" && message.kind == "functionResponse"){
+        if (turn.role == 'assistant' && message.kind == 'functionResponse') {
           lenConversations += message.response.length;
           const encoded = encode(message.response);
           numTokens += encoded.length;
 
           numConvoChars += message.response.length;
           numConvoTokens += encoded.length;
-
-        } else if(message.kind == "text" && (turn.role == "assistant" || turn.role == "user")) {
+        } else if (message.kind == 'text' && (turn.role == 'assistant' || turn.role == 'user')) {
           lenConversations += message.content.length;
           const encoded = encode(message.content);
           numTokens += encoded.length;
@@ -82,7 +80,6 @@ function getConvoTurns(conversation) {
           numConvoTokens += encoded.length;
         }
       }
-      
     });
   });
 
@@ -98,8 +95,8 @@ async function getAgentConversations(agentId) {
       maxBodyLength: Infinity,
       url: `https://api.fixie.ai/api/v1/agents/${agentId}/conversations`,
       headers: {
-        'Authorization': `Bearer ${FIXIE_API_KEY}`
-      }
+        Authorization: `Bearer ${FIXIE_API_KEY}`,
+      },
     });
     // console.log(response.data.conversations);
     return response.data.conversations;
