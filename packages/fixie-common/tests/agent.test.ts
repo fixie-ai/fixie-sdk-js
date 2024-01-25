@@ -337,7 +337,7 @@ describe('FixieAgentBase AgentRevision tests', () => {
     const revision = await agent.createRevision({
       defaultRuntimeParameters: { foo: 'bar' },
       externalUrl: 'https://fake.url',
-      runtimeParametersSchema: '{"type":"object"}',
+      runtimeParametersSchema: { type: 'object' },
     });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions'
@@ -353,9 +353,9 @@ describe('FixieAgentBase AgentRevision tests', () => {
             },
           },
           runtime: {
-            parametersSchema: '{"type":"object"}',
+            parametersSchema: { type: 'object' },
           },
-          defaultRuntimeParameters: '{"foo":"bar"}',
+          defaultRuntimeParameters: { foo: 'bar' },
         },
       })
     );
@@ -370,6 +370,6 @@ describe('FixieAgentBase AgentRevision tests', () => {
   });
 
   it('createRevision with runtimeParametersSchema requires externalUrl', async () => {
-    expect(async () => await agent.createRevision({ runtimeParametersSchema: '{}' })).rejects.toThrow();
+    expect(async () => await agent.createRevision({ runtimeParametersSchema: {} })).rejects.toThrow();
   });
 });

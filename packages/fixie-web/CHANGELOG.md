@@ -4,6 +4,14 @@
 
 ### Patch Changes
 
+- Added support for specifying default runtime parameters
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.12
+
+## 1.0.10
+
+### Patch Changes
+
 - Automatically warm up voice session in start()
 
 ## 1.0.8
