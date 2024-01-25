@@ -24,3 +24,6 @@ dist
 packages/fixie/.env
 
 .env
+
+# Ignore .yarn folder in examples folder
+packages/examples/**/.yarn/*
