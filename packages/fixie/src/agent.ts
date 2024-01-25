@@ -188,6 +188,7 @@ export class FixieAgent extends FixieAgentBase {
         displayName: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
+        teamId,
         published: true,
       })) as FixieAgent;
     }
