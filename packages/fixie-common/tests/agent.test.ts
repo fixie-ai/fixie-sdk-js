@@ -353,9 +353,9 @@ describe('FixieAgentBase AgentRevision tests', () => {
             },
           },
           runtime: {
-            parametersSchema: '{"type":"object"}',
+            parametersSchema: { type: 'object' },
           },
-          defaultRuntimeParameters: '{"foo":"bar"}',
+          defaultRuntimeParameters: { foo: 'bar' },
         },
       })
     );

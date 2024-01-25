@@ -85,7 +85,7 @@ describe('FixieAgent AgentRevision tests', () => {
         revision: {
           isCurrent: true,
           runtime: {
-            parametersSchema: '{"type":"object"}',
+            parametersSchema: { type: 'object' },
           },
           deployment: {
             managed: {
@@ -93,7 +93,7 @@ describe('FixieAgent AgentRevision tests', () => {
               environmentVariables: { TEST_ENV_VAR: 'test env var value' },
             },
           },
-          defaultRuntimeParameters: '{"foo":"bar"}',
+          defaultRuntimeParameters: { foo: 'bar' },
         },
       })
     );

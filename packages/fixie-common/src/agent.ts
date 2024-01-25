@@ -264,7 +264,7 @@ export class FixieAgentBase {
   }: {
     defaultRuntimeParameters?: Record<string, unknown>;
     externalUrl?: string;
-    runtimeParametersSchema?: Record<string, unknown> | null;
+    runtimeParametersSchema?: Record<string, unknown>;
     isCurrent?: boolean;
   }): Promise<AgentRevision> {
     if (externalUrl === undefined && defaultRuntimeParameters === undefined) {
@@ -287,9 +287,9 @@ export class FixieAgentBase {
           external: externalDeployment,
         },
         runtime: {
-          parametersSchema: runtimeParametersSchema && JSON.stringify(runtimeParametersSchema),
+          parametersSchema: runtimeParametersSchema,
         },
-        defaultRuntimeParameters: defaultRuntimeParameters && JSON.stringify(defaultRuntimeParameters),
+        defaultRuntimeParameters,
       },
     })) as { revision: AgentRevision };
     return result.revision;

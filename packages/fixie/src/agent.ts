@@ -127,7 +127,7 @@ export class FixieAgent extends FixieAgentBase {
   }: {
     tarball: string;
     defaultRuntimeParameters?: Record<string, unknown>;
-    runtimeParametersSchema?: Record<string, unknown> | null;
+    runtimeParametersSchema?: Record<string, unknown>;
     isCurrent?: boolean;
     environmentVariables?: Record<string, string>;
   }): Promise<AgentRevision> {
@@ -138,7 +138,7 @@ export class FixieAgent extends FixieAgentBase {
       revision: {
         isCurrent,
         runtime: {
-          parametersSchema: runtimeParametersSchema && JSON.stringify(runtimeParametersSchema),
+          parametersSchema: runtimeParametersSchema,
         },
         deployment: {
           managed: {
@@ -146,7 +146,7 @@ export class FixieAgent extends FixieAgentBase {
             environmentVariables,
           },
         },
-        defaultRuntimeParameters: defaultRuntimeParameters && JSON.stringify(defaultRuntimeParameters),
+        defaultRuntimeParameters: defaultRuntimeParameters,
       },
     })) as { revision: AgentRevision };
     return result.revision;
@@ -271,7 +271,7 @@ export class FixieAgent extends FixieAgentBase {
     const revision = await agent.createManagedRevision({
       tarball,
       environmentVariables,
-      runtimeParametersSchema: runtimeParametersSchema as Record<string, unknown>,
+      runtimeParametersSchema: (runtimeParametersSchema ?? undefined) as Record<string, unknown> | undefined,
       defaultRuntimeParameters,
     });
     spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl(client.url)}`);
@@ -430,7 +430,7 @@ export class FixieAgent extends FixieAgentBase {
         }
         currentRevision = await agent.createRevision({
           externalUrl: currentUrl,
-          runtimeParametersSchema: runtimeParametersSchema as Record<string, unknown>,
+          runtimeParametersSchema: (runtimeParametersSchema ?? undefined) as Record<string, unknown>,
           defaultRuntimeParameters,
         });
         term('🥡 Created temporary agent revision ').green(currentRevision.revisionId)('\n');
