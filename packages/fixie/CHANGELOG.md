@@ -1,5 +1,11 @@
 # fixie
 
+## 7.0.13
+
+### Patch Changes
+
+- Add 'main' to fixie/package.json.
+
 ## 7.0.12
 
 ### Patch Changes
