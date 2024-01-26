@@ -1,0 +1,4 @@
+dist/**
+tests/**
+jest.config.ts
+
