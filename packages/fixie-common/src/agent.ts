@@ -62,6 +62,9 @@ export class FixieAgentBase {
     let requestOffset = offset;
     while (true) {
       const requestLimit = Math.min(limit - agentList.length, 100);
+      if (requestLimit <= 0) {
+        break;
+      }
       const result = (await client.requestJson(
         `/api/v1/agents?offset=${requestOffset}&limit=${requestLimit}${
           teamId !== undefined ? `&team_id=${teamId}` : ''
