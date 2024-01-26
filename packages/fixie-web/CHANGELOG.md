@@ -1,5 +1,13 @@
 # fixie-web
 
+## 1.0.12
+
+### Patch Changes
+
+- Fix issue with agent listing.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.14
+
 ## 1.0.11
 
 ### Patch Changes

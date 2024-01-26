@@ -71,6 +71,36 @@ describe('FixieAgentBase Agent tests', () => {
     expect(agents[0].agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id-1');
   });
 
+  it('ListAgents pagination works', async () => {
+    const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
+    const mock = mockFetch({
+      agents: [
+        {
+          agentId: 'fake-agent-id-1',
+          handle: 'fake-agent-handle-1',
+        },
+        {
+          agentId: 'fake-agent-id-2',
+          handle: 'fake-agent-handle-2',
+        },
+        {
+          agentId: 'fake-agent-id-3',
+          handle: 'fake-agent-handle-3',
+        },
+        {
+          agentId: 'fake-agent-id-4',
+          handle: 'fake-agent-handle-4',
+        },
+      ],
+    });
+    const agents = await FixieAgentBase.ListAgents({ client, offset: 0, limit: 4 });
+    expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/agents?offset=0&limit=4');
+    expect(agents.length).toBe(4);
+    expect(agents[0].id).toBe('fake-agent-id-1');
+    expect(agents[0].handle).toBe('fake-agent-handle-1');
+    expect(agents[0].agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id-1');
+  });
+
   it('CreateAgent works', async () => {
     const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
     const mock = mockFetch({

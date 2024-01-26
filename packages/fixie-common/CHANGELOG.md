@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.14
+
+### Patch Changes
+
+- Fix issue with agent listing.
+
 ## 1.0.13
 
 ### Patch Changes
