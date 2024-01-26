@@ -1,6 +1,6 @@
 /** Unit tests for auth.ts. */
 
-import { jest, afterEach, describe, expect, it } from '@jest/globals';
+import { jest, beforeEach, afterEach, describe, expect, it } from '@jest/globals';
 import { loadConfig, Authenticate } from '../src/auth';
 
 /** This function mocks out 'fetch' to return the given response. */
@@ -18,6 +18,9 @@ const mockFetch = (response: any) => {
 };
 
 describe('FixieConfig tests', () => {
+  beforeEach(() => {
+    process.env = {};
+  });
   it('loadConfig reads fixie CLI config', async () => {
     const config = loadConfig('tests/fixtures/test-fixie-config.yaml');
     expect(config.apiUrl).toBe('https://fake.api.domain');
