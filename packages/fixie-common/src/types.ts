@@ -75,14 +75,14 @@ export interface AgentRevision {
   revisionId: AgentRevisionId;
   created: Date;
   isCurrent: boolean;
-  defaultRuntimeParameters?: string;
+  defaultRuntimeParameters?: Record<string, unknown>;
   runtime?: AgentRuntime;
   deployment?: AgentDeployment;
 }
 
 /** Agent runtime parameters. */
 export interface AgentRuntime {
-  parametersSchema: string;
+  parametersSchema: Record<string, unknown>;
 }
 
 /** Agent deployment settings. */
