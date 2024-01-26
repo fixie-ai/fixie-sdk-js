@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.11
+
+### Patch Changes
+
+- Update fixie-common
+
 ## 1.0.10
 
 ### Patch Changes
