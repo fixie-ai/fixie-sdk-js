@@ -146,7 +146,7 @@ export class FixieAgent extends FixieAgentBase {
             environmentVariables,
           },
         },
-        defaultRuntimeParameters: defaultRuntimeParameters,
+        defaultRuntimeParameters,
       },
     })) as { revision: AgentRevision };
     return result.revision;
@@ -166,7 +166,7 @@ export class FixieAgent extends FixieAgentBase {
     // The API does not currently provide a way to return an agent by its handle, so we scan
     // to see if the agent with the same handle already exists.
     const agentList = await FixieAgentBase.ListAgents({ client, teamId });
-    const found = agentList.find((agent) => agent.metadata.handle === config.handle) ?? null;
+    const found = agentList.agents.find((agent) => agent.metadata.handle === config.handle) ?? null;
     if (found) {
       agent = await this.GetAgent({ client, agentId: found.metadata.agentId });
       await agent.update({

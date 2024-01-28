@@ -1,5 +1,11 @@
 # @fixieai/fixie-common
 
+## 1.0.15
+
+### Patch Changes
+
+- Return total count from ListAgents.
+
 ## 1.0.14
 
 ### Patch Changes
