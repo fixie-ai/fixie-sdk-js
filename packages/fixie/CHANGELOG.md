@@ -1,5 +1,13 @@
 # fixie
 
+## 7.0.15
+
+### Patch Changes
+
+- Return total count from ListAgents.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.15
+
 ## 7.0.14
 
 ### Patch Changes

@@ -57,9 +57,10 @@ export class FixieAgentBase {
     teamId?: string;
     offset?: number;
     limit?: number;
-  }): Promise<FixieAgentBase[]> {
+  }): Promise<{ agents: FixieAgentBase[]; total: number }> {
     let agentList: Agent[] = [];
     let requestOffset = offset;
+    let total = 0;
     while (true) {
       const requestLimit = Math.min(limit - agentList.length, 100);
       if (requestLimit <= 0) {
@@ -71,14 +72,21 @@ export class FixieAgentBase {
         } `
       )) as {
         agents: Agent[];
+        pageInfo: {
+          totalResultCount: number;
+        };
       };
       agentList = agentList.concat(result.agents);
+      total = result.pageInfo.totalResultCount;
       if (result.agents.length < requestLimit) {
         break;
       }
       requestOffset += requestLimit;
     }
-    return agentList.map((agent: Agent) => new FixieAgentBase(client, agent));
+    return {
+      agents: agentList.map((agent: Agent) => new FixieAgentBase(client, agent)),
+      total,
+    };
   }
 
   /** Return the metadata associated with the given agent. */
