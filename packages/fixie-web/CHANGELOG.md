@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Add output transcript callback synced to voice playback
+- Add support for sending text messages over the webrtc data channel
 
 ## 1.0.13
 

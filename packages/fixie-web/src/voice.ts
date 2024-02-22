@@ -197,6 +197,16 @@ export class VoiceSession {
     this.sendData(obj);
   }
 
+  /** Send a message via text. Must be in LISTENING state. */
+  sendText(text: string) {
+    if (this.state != VoiceSessionState.LISTENING) {
+      console.warn('[voiceSession - sendText] Not in LISTENING state!');
+      return;
+    }
+    const obj = { type: 'text_message', text };
+    this.sendData(obj);
+  }
+
   private changeState(state: VoiceSessionState) {
     if (state != this._state) {
       console.log(`[voiceSession] ${this._state} -> ${state}`);
