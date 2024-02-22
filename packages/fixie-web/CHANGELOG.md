@@ -1,10 +1,16 @@
 # fixie-web
 
-## 1.0.13
+## 1.0.14
 
 ### Patch Changes
 
 - Add output transcript callback synced to voice playback
+
+## 1.0.13
+
+### Patch Changes
+
+- Add support for custom recording template
 
 ## 1.0.12
 
