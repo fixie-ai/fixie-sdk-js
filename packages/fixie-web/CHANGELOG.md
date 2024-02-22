@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.13
+
+### Patch Changes
+
+- Add support for custom recording template
+
 ## 1.0.12
 
 ### Patch Changes
