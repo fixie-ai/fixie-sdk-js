@@ -35,6 +35,7 @@ export interface VoiceSessionInit {
   ttsVoice?: string;
   webrtcUrl?: string;
   recordingTemplateUrl?: string;
+  roomName?: string;
 }
 
 /** Web Audio AnalyserNode for an audio stream. */
@@ -249,6 +250,7 @@ export class VoiceSession {
           model: this.params?.model,
         },
         recording: this.params?.recordingTemplateUrl ? { templateUrl: this.params.recordingTemplateUrl } : undefined,
+        room: this.params?.roomName ? { name: this.params.roomName } : undefined,
       },
     };
     this.socket?.send(JSON.stringify(obj));
