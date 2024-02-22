@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.13
+
+### Patch Changes
+
+- Add output transcript callback synced to voice playback
+
 ## 1.0.12
 
 ### Patch Changes
