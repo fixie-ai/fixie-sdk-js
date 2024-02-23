@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Add support for custom recording template
+- Add support for providing the room name
 
 ## 1.0.12
 
