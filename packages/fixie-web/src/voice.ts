@@ -203,7 +203,7 @@ export class VoiceSession {
       console.warn('[voiceSession - sendText] Not in LISTENING state!');
       return;
     }
-    const obj = { type: 'text_message', text };
+    const obj = { type: 'input_text_message', text };
     this.sendData(obj);
   }
 
