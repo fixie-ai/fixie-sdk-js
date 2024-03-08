@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - Mute audio playback outside of the SPEAKING state
+- Support voice playback transcripts sent as deltas
 
 ## 1.0.14
 
