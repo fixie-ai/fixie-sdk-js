@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.15
+
+### Patch Changes
+
+- Mute audio playback outside of the SPEAKING state
+
 ## 1.0.14
 
 ### Patch Changes

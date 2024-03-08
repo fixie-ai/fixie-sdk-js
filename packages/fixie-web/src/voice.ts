@@ -212,6 +212,7 @@ export class VoiceSession {
     if (state != this._state) {
       console.log(`[voiceSession] ${this._state} -> ${state}`);
       this._state = state;
+      this.audioElement.muted = state != VoiceSessionState.SPEAKING;
       this.onStateChange?.(state);
     }
   }
