@@ -76,7 +76,7 @@ export class VoiceSession {
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: ReturnType<typeof setInterval>;
-  private _outputTranscript: string = '';
+  private outputTranscript: string = '';
 
   /** Called when this VoiceSession changes its state. */
   onStateChange?: (state: VoiceSessionState) => void;
@@ -201,7 +201,7 @@ export class VoiceSession {
 
   /** Send a message via text. Must be in LISTENING state. */
   sendText(text: string) {
-    if (this.state != VoiceSessionState.LISTENING) {
+    if (this._state != VoiceSessionState.LISTENING) {
       console.warn('[voiceSession - sendText] Not in LISTENING state!');
       return;
     }
@@ -363,10 +363,10 @@ export class VoiceSession {
 
   private handleOutputTranscript(msg: any) {
     if (msg.delta) {
-      this._outputTranscript += msg.delta;
-      this.onOutputTranscript?.(this._outputTranscript);
+      this.outputTranscript += msg.delta;
+      this.onOutputTranscript?.(this.outputTranscript);
       if (msg.final) {
-        this._outputTranscript = '';
+        this.outputTranscript = '';
       }
     } else {
       this.onOutputTranscript?.(msg.text);
