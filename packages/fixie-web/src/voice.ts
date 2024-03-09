@@ -76,6 +76,7 @@ export class VoiceSession {
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: ReturnType<typeof setInterval>;
+  private outputTranscript: string = '';
 
   /** Called when this VoiceSession changes its state. */
   onStateChange?: (state: VoiceSessionState) => void;
@@ -200,7 +201,7 @@ export class VoiceSession {
 
   /** Send a message via text. Must be in LISTENING state. */
   sendText(text: string) {
-    if (this.state != VoiceSessionState.LISTENING) {
+    if (this._state != VoiceSessionState.LISTENING) {
       console.warn('[voiceSession - sendText] Not in LISTENING state!');
       return;
     }
@@ -212,6 +213,7 @@ export class VoiceSession {
     if (state != this._state) {
       console.log(`[voiceSession] ${this._state} -> ${state}`);
       this._state = state;
+      this.audioElement.muted = state != VoiceSessionState.SPEAKING;
       this.onStateChange?.(state);
     }
   }
@@ -339,7 +341,7 @@ export class VoiceSession {
     } else if (msg.type === 'output') {
       this.handleOutputChange(msg.text, msg.final);
     } else if (msg.type === 'voice_synced_transcript') {
-      this.handleOutputTranscript(msg.text);
+      this.handleOutputTranscript(msg);
     } else if (msg.type == 'latency') {
       this.handleLatency(msg.kind, msg.value);
     } else if (msg.type == 'conversation_created') {
@@ -359,8 +361,16 @@ export class VoiceSession {
     this.onOutputChange?.(text, final);
   }
 
-  private handleOutputTranscript(text: string) {
-    this.onOutputTranscript?.(text);
+  private handleOutputTranscript(msg: any) {
+    if (msg.delta) {
+      this.outputTranscript += msg.delta;
+      this.onOutputTranscript?.(this.outputTranscript);
+      if (msg.final) {
+        this.outputTranscript = '';
+      }
+    } else {
+      this.onOutputTranscript?.(msg.text);
+    }
   }
 
   private handleLatency(metric: string, value: number) {
