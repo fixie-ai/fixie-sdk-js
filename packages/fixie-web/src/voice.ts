@@ -84,11 +84,8 @@ export class VoiceSession {
   /** Called when the input changes. */
   onInputChange?: (text: string, final: boolean) => void;
 
-  /** Called when the output changes. Note that this may fire *before* speech has completed playing. */
-  onOutputChange?: (text: string, final: boolean) => void;
-
   /** Called as output voice is played with the text that should have completed playing (for this response). */
-  onOutputTranscript?: (text: string) => void;
+  onOutputChange?: (text: string, final: boolean) => void;
 
   /** Called when new latency data is available. */
   onLatencyChange?: (metric: string, value: number) => void;
@@ -338,8 +335,6 @@ export class VoiceSession {
         msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
         msg.transcript.final
       );
-    } else if (msg.type === 'output') {
-      this.handleOutputChange(msg.text, msg.final);
     } else if (msg.type === 'voice_synced_transcript') {
       this.handleOutputTranscript(msg);
     } else if (msg.type == 'latency') {
@@ -356,20 +351,15 @@ export class VoiceSession {
     this.onInputChange?.(text, final);
   }
 
-  private handleOutputChange(text: string, final: boolean) {
-    console.log(`[voiceSession] output: ${text}`);
-    this.onOutputChange?.(text, final);
-  }
-
   private handleOutputTranscript(msg: any) {
-    if (msg.delta) {
+    if (msg.text) {
+      this.outputTranscript = msg.text;
+    } else if (msg.delta) {
       this.outputTranscript += msg.delta;
-      this.onOutputTranscript?.(this.outputTranscript);
-      if (msg.final) {
-        this.outputTranscript = '';
-      }
-    } else {
-      this.onOutputTranscript?.(msg.text);
+    }
+    this.onOutputChange?.(this.outputTranscript, msg.final);
+    if (msg.final) {
+      this.outputTranscript = '';
     }
   }
 
