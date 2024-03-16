@@ -1,0 +1,14 @@
+{
+  "name": "usage-tracking",
+  "version": "0.0.1",
+  "description": "A simple app that reports out token usage for agent conversations.",
+  "main": "usage-tracking.js",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.5",
+    "dotenv": "^16.4.1",
+    "fixie": "^6.4.0",
+    "gpt-3-encoder": "^1.1.4"
+  }
+}
