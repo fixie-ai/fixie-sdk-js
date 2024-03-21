@@ -29,6 +29,7 @@ export enum VoiceSessionState {
 export interface VoiceSessionInit {
   asrProvider?: string;
   asrLanguage?: string;
+  asrKeywords?: string[];
   model?: string;
   ttsProvider?: string;
   ttsModel?: string;
@@ -316,6 +317,7 @@ export class VoiceSession {
     } else if (msg.type === 'transcript') {
       this.handleInputChange(
         msg.transcript.text,
+        msg.transcript.confidence,
         msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
         msg.transcript.final
       );
@@ -328,10 +330,10 @@ export class VoiceSession {
     }
   }
 
-  private handleInputChange(text: string, voiceEnded: boolean, final: boolean) {
-    const vadText = voiceEnded ? ' VAD' : '';
-    const finalText = final ? ' FINAL' : '';
-    console.log(`[voiceSession] input: ${text}${vadText}${finalText}`);
+  private handleInputChange(text: string, confidence: number, voiceEnded: boolean, final: boolean) {
+    const vadText = voiceEnded ? 'VAD' : '';
+    const finalText = final ? 'FINAL' : '';
+    console.log(`[voiceSession] input: ${text} ${confidence} ${vadText} ${finalText}`);
     this.onInputChange?.(text, final);
   }
 
