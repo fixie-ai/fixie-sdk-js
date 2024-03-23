@@ -251,6 +251,7 @@ export class VoiceSession {
         asr: {
           provider: this.params?.asrProvider,
           language: this.params?.asrLanguage,
+          keywords: this.params?.asrKeywords,
         },
         tts: {
           provider: this.params?.ttsProvider,
