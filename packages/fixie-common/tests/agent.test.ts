@@ -60,15 +60,53 @@ describe('FixieAgentBase Agent tests', () => {
           handle: 'fake-agent-handle-4',
         },
       ],
+      pageInfo: {
+        totalResultCount: 4,
+      },
     });
-    const agents = await FixieAgentBase.ListAgents({ client });
+    const result = await FixieAgentBase.ListAgents({ client });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents?offset=0&limit=100'
     );
-    expect(agents.length).toBe(4);
-    expect(agents[0].id).toBe('fake-agent-id-1');
-    expect(agents[0].handle).toBe('fake-agent-handle-1');
-    expect(agents[0].agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id-1');
+    expect(result.total).toBe(4);
+    expect(result.agents.length).toBe(4);
+    expect(result.agents[0].id).toBe('fake-agent-id-1');
+    expect(result.agents[0].handle).toBe('fake-agent-handle-1');
+    expect(result.agents[0].agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id-1');
+  });
+
+  it('ListAgents pagination works', async () => {
+    const client = new FixieClientBase({ url: 'https://fake.api.fixie.ai' });
+    const mock = mockFetch({
+      agents: [
+        {
+          agentId: 'fake-agent-id-1',
+          handle: 'fake-agent-handle-1',
+        },
+        {
+          agentId: 'fake-agent-id-2',
+          handle: 'fake-agent-handle-2',
+        },
+        {
+          agentId: 'fake-agent-id-3',
+          handle: 'fake-agent-handle-3',
+        },
+        {
+          agentId: 'fake-agent-id-4',
+          handle: 'fake-agent-handle-4',
+        },
+      ],
+      pageInfo: {
+        totalResultCount: 20,
+      },
+    });
+    const result = await FixieAgentBase.ListAgents({ client, offset: 0, limit: 4 });
+    expect(mock.mock.calls[0][0].toString()).toStrictEqual('https://fake.api.fixie.ai/api/v1/agents?offset=0&limit=4');
+    expect(result.total).toBe(20);
+    expect(result.agents.length).toBe(4);
+    expect(result.agents[0].id).toBe('fake-agent-id-1');
+    expect(result.agents[0].handle).toBe('fake-agent-handle-1');
+    expect(result.agents[0].agentUrl()).toBe('https://console.fixie.ai/agents/fake-agent-id-1');
   });
 
   it('CreateAgent works', async () => {
@@ -329,11 +367,15 @@ describe('FixieAgentBase AgentRevision tests', () => {
         revisionId: 'new-revision-id',
         created: '2021-08-31T18:00:00.000Z',
         isCurrent: true,
+        runtime: {
+          parametersSchema: '{"type":"object"}',
+        },
       },
     });
     const revision = await agent.createRevision({
       defaultRuntimeParameters: { foo: 'bar' },
       externalUrl: 'https://fake.url',
+      runtimeParametersSchema: { type: 'object' },
     });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions'
@@ -348,7 +390,10 @@ describe('FixieAgentBase AgentRevision tests', () => {
               url: 'https://fake.url',
             },
           },
-          defaultRuntimeParameters: '{"foo":"bar"}',
+          runtime: {
+            parametersSchema: { type: 'object' },
+          },
+          defaultRuntimeParameters: { foo: 'bar' },
         },
       })
     );
@@ -363,6 +408,6 @@ describe('FixieAgentBase AgentRevision tests', () => {
   });
 
   it('createRevision with runtimeParametersSchema requires externalUrl', async () => {
-    expect(async () => await agent.createRevision({ runtimeParametersSchema: '{}' })).rejects.toThrow();
+    expect(async () => await agent.createRevision({ runtimeParametersSchema: {} })).rejects.toThrow();
   });
 });

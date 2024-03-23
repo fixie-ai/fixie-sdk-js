@@ -1,5 +1,59 @@
 # @fixieai/fixie-common
 
+## 1.0.15
+
+### Patch Changes
+
+- Return total count from ListAgents.
+
+## 1.0.14
+
+### Patch Changes
+
+- Fix issue with agent listing.
+
+## 1.0.13
+
+### Patch Changes
+
+- Update AgentRevision types
+
+## 1.0.12
+
+### Patch Changes
+
+- Added support for specifying default runtime parameters
+
+## 1.0.11
+
+### Patch Changes
+
+- Fix DELETE operations to not expect content.
+
+## 1.0.10
+
+### Patch Changes
+
+- Fix issue with 204 return.
+
+## 1.0.9
+
+### Patch Changes
+
+- Fix deleteRevision.
+
+## 1.0.8
+
+### Patch Changes
+
+- Fix agent deployment.
+
+## 1.0.7
+
+### Patch Changes
+
+- Fix createRevision and agent deployment.
+
 ## 1.0.6
 
 ### Patch Changes

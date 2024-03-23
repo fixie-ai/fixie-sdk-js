@@ -1,0 +1,34 @@
+{
+  "name": "simple-node-client",
+  "private": true,
+  "version": "0.0.2",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node --no-warnings dist/src/index.js",
+    "build-start": "yarn run build && yarn run start",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "fixie": "^7.0.13"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "@types/node": "^20.4.1",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.40.0",
+    "eslint-config-nth": "^2.0.1",
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "5.1.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

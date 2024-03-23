@@ -35,6 +35,8 @@ export interface VoiceSessionInit {
   ttsModel?: string;
   ttsVoice?: string;
   webrtcUrl?: string;
+  recordingTemplateUrl?: string;
+  roomName?: string;
 }
 
 /** Web Audio AnalyserNode for an audio stream. */
@@ -75,6 +77,7 @@ export class VoiceSession {
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: ReturnType<typeof setInterval>;
+  private outputTranscript: string = '';
 
   /** Called when this VoiceSession changes its state. */
   onStateChange?: (state: VoiceSessionState) => void;
@@ -82,7 +85,7 @@ export class VoiceSession {
   /** Called when the input changes. */
   onInputChange?: (text: string, final: boolean) => void;
 
-  /** Called when the output changes. */
+  /** Called as output voice is played with the text that should have completed playing (for this response). */
   onOutputChange?: (text: string, final: boolean) => void;
 
   /** Called when new latency data is available. */
@@ -194,10 +197,21 @@ export class VoiceSession {
     this.sendData(obj);
   }
 
+  /** Send a message via text. Must be in LISTENING state. */
+  sendText(text: string) {
+    if (this._state != VoiceSessionState.LISTENING) {
+      console.warn('[voiceSession - sendText] Not in LISTENING state!');
+      return;
+    }
+    const obj = { type: 'input_text_message', text };
+    this.sendData(obj);
+  }
+
   private changeState(state: VoiceSessionState) {
     if (state != this._state) {
       console.log(`[voiceSession] ${this._state} -> ${state}`);
       this._state = state;
+      this.audioElement.muted = state != VoiceSessionState.SPEAKING;
       this.onStateChange?.(state);
     }
   }
@@ -249,6 +263,8 @@ export class VoiceSession {
           conversationId: this.conversationId,
           model: this.params?.model,
         },
+        recording: this.params?.recordingTemplateUrl ? { templateUrl: this.params.recordingTemplateUrl } : undefined,
+        room: this.params?.roomName ? { name: this.params.roomName } : undefined,
       },
     };
     this.socket?.send(JSON.stringify(obj));
@@ -322,8 +338,8 @@ export class VoiceSession {
         msg.transcript.stream_timestamp > msg.transcript.last_voice_timestamp,
         msg.transcript.final
       );
-    } else if (msg.type === 'output') {
-      this.handleOutputChange(msg.text, msg.final);
+    } else if (msg.type === 'voice_synced_transcript') {
+      this.handleOutputTranscript(msg);
     } else if (msg.type == 'latency') {
       this.handleLatency(msg.kind, msg.value);
     } else if (msg.type == 'conversation_created') {
@@ -338,9 +354,16 @@ export class VoiceSession {
     this.onInputChange?.(text, final);
   }
 
-  private handleOutputChange(text: string, final: boolean) {
-    console.log(`[voiceSession] output: ${text}`);
-    this.onOutputChange?.(text, final);
+  private handleOutputTranscript(msg: any) {
+    if (msg.text) {
+      this.outputTranscript = msg.text;
+    } else if (msg.delta) {
+      this.outputTranscript += msg.delta;
+    }
+    this.onOutputChange?.(this.outputTranscript, msg.final);
+    if (msg.final) {
+      this.outputTranscript = '';
+    }
   }
 
   private handleLatency(metric: string, value: number) {

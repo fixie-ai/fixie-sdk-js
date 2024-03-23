@@ -1,5 +1,75 @@
 # fixie
 
+## 7.0.15
+
+### Patch Changes
+
+- Return total count from ListAgents.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.15
+
+## 7.0.14
+
+### Patch Changes
+
+- Fix issue with agent listing.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.14
+
+## 7.0.13
+
+### Patch Changes
+
+- Add 'main' to fixie/package.json.
+
+## 7.0.12
+
+### Patch Changes
+
+- Added support for specifying default runtime parameters
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.12
+
+## 7.0.11
+
+### Patch Changes
+
+- Fix DELETE operations to not expect content.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.11
+
+## 7.0.10
+
+### Patch Changes
+
+- Fix issue with 204 return.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.10
+
+## 7.0.9
+
+### Patch Changes
+
+- Fix deleteRevision.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.9
+
+## 7.0.8
+
+### Patch Changes
+
+- Fix agent deployment.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.8
+
+## 7.0.7
+
+### Patch Changes
+
+- Fix createRevision and agent deployment.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.7
+
 ## 7.0.6
 
 ### Patch Changes

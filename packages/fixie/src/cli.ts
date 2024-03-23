@@ -5,7 +5,7 @@
  * platform. Run `npx fixie@latest --help` for usage information.
  */
 
-import { Command, program } from 'commander';
+import { Command, InvalidArgumentError, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
@@ -43,11 +43,27 @@ function parseDate(value: string): Date {
   return parsedDate;
 }
 
+function parseJsonObject(value: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed !== 'object') {
+      throw new Error('Must be an object.');
+    }
+    return parsed;
+  } catch (ex) {
+    throw new InvalidArgumentError('Not a valid JSON object.');
+  }
+}
+
 /** Deploy an agent from the current directory. */
 function registerDeployCommand(command: Command) {
   command
     .command('deploy [path]')
     .description('Deploy an agent')
+    .option(
+      '--teamId <string>',
+      'The team ID to own the new agent. If unspecified, the current user will be the owner.'
+    )
     .option(
       '-e, --env <key=value>',
       'Environment variables to set for this deployment. Variables in a .env file take precedence over those on the command line.',
@@ -61,13 +77,29 @@ function registerDeployCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
-      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
-        FIXIE_API_URL: program.opts().url,
-        ...options.env,
-      });
-    });
+    .option(
+      '--default-parameters <json>',
+      'Default runtime parameters to set for this revision. Must conform to the schema defined by the agent.',
+      parseJsonObject
+    )
+    .action(
+      async (
+        path: string | undefined,
+        options: { teamId: string; env: Record<string, string>; defaultParameters?: Record<string, unknown> }
+      ) => {
+        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+        await FixieAgent.DeployAgent({
+          client,
+          agentPath: path ?? process.cwd(),
+          environmentVariables: {
+            FIXIE_API_URL: program.opts().url,
+            ...options.env,
+          },
+          defaultRuntimeParameters: options.defaultParameters,
+          teamId: options.teamId,
+        });
+      }
+    );
 }
 
 /** Run an agent locally. */
@@ -76,6 +108,10 @@ function registerServeCommand(command: Command) {
     .command('serve [path]')
     .description('Run an agent locally')
     .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '--teamId <string>',
+      'The team ID to own the new agent. If unspecified, the current user will be the owner.'
+    )
     .option(
       '-e, --env <key=value>',
       'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
@@ -89,19 +125,36 @@ function registerServeCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
-      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.ServeAgent({
-        client,
-        agentPath: path ?? process.cwd(),
-        port: parseInt(options.port),
-        tunnel: true,
-        environmentVariables: {
-          FIXIE_API_URL: program.opts().url,
-          ...options.env,
-        },
-      });
-    });
+    .option(
+      '--default-parameters <json>',
+      'Default runtime parameters to set for this revision. Must conform to the schema defined by the agent.',
+      parseJsonObject
+    )
+    .action(
+      async (
+        path: string | undefined,
+        options: {
+          port: string;
+          teamId: string;
+          env: Record<string, string>;
+          defaultParameters?: Record<string, unknown>;
+        }
+      ) => {
+        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+        await FixieAgent.ServeAgent({
+          client,
+          agentPath: path ?? process.cwd(),
+          port: parseInt(options.port),
+          tunnel: true,
+          environmentVariables: {
+            FIXIE_API_URL: program.opts().url,
+            ...options.env,
+          },
+          defaultRuntimeParameters: options.defaultParameters,
+          teamId: options.teamId,
+        });
+      }
+    );
 }
 
 // Get current version of this package.
@@ -530,7 +583,7 @@ agent
     catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.ListAgents({ client, teamId: opts.teamId });
-      showResult(await Promise.all(result.map((agent) => agent.metadata)), program.opts().raw);
+      showResult(await Promise.all(result.agents.map((agent) => agent.metadata)), program.opts().raw);
     })
   );
 

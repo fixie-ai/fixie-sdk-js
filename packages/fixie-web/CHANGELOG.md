@@ -1,5 +1,48 @@
 # fixie-web
 
+## 1.0.15
+
+### Patch Changes
+
+- Mute audio playback outside of the SPEAKING state
+- Support voice playback transcripts sent as deltas
+
+## 1.0.14
+
+### Patch Changes
+
+- Add output transcript callback synced to voice playback
+- Add support for sending text messages over the webrtc data channel
+
+## 1.0.13
+
+### Patch Changes
+
+- Add support for custom recording template
+- Add support for providing the room name
+
+## 1.0.12
+
+### Patch Changes
+
+- Fix issue with agent listing.
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.14
+
+## 1.0.11
+
+### Patch Changes
+
+- Update fixie-common
+
+## 1.0.10
+
+### Patch Changes
+
+- Added support for specifying default runtime parameters
+- Updated dependencies
+  - @fixieai/fixie-common@1.0.12
+
 ## 1.0.10
 
 ### Patch Changes

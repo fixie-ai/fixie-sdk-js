@@ -57,25 +57,36 @@ export class FixieAgentBase {
     teamId?: string;
     offset?: number;
     limit?: number;
-  }): Promise<FixieAgentBase[]> {
+  }): Promise<{ agents: FixieAgentBase[]; total: number }> {
     let agentList: Agent[] = [];
     let requestOffset = offset;
+    let total = 0;
     while (true) {
       const requestLimit = Math.min(limit - agentList.length, 100);
+      if (requestLimit <= 0) {
+        break;
+      }
       const result = (await client.requestJson(
         `/api/v1/agents?offset=${requestOffset}&limit=${requestLimit}${
           teamId !== undefined ? `&team_id=${teamId}` : ''
         } `
       )) as {
         agents: Agent[];
+        pageInfo: {
+          totalResultCount: number;
+        };
       };
       agentList = agentList.concat(result.agents);
+      total = result.pageInfo.totalResultCount;
       if (result.agents.length < requestLimit) {
         break;
       }
       requestOffset += requestLimit;
     }
-    return agentList.map((agent: Agent) => new FixieAgentBase(client, agent));
+    return {
+      agents: agentList.map((agent: Agent) => new FixieAgentBase(client, agent)),
+      total,
+    };
   }
 
   /** Return the metadata associated with the given agent. */
@@ -84,6 +95,7 @@ export class FixieAgentBase {
     return (result as any as { agent: Agent }).agent;
   }
 
+  /** Create a new Agent. */
   public static async CreateAgent({
     client,
     handle,
@@ -91,7 +103,7 @@ export class FixieAgentBase {
     displayName,
     description,
     moreInfoUrl,
-    published,
+    published = true,
   }: {
     client: FixieClientBase;
     handle: string;
@@ -115,8 +127,8 @@ export class FixieAgentBase {
   }
 
   /** Delete this agent. */
-  delete() {
-    return this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}`, undefined, 'DELETE');
+  public async delete() {
+    await this.client.request(`/api/v1/agents/${this.metadata.agentId}`, undefined, 'DELETE');
   }
 
   /** Update this agent. */
@@ -263,7 +275,7 @@ export class FixieAgentBase {
   }: {
     defaultRuntimeParameters?: Record<string, unknown>;
     externalUrl?: string;
-    runtimeParametersSchema?: string;
+    runtimeParametersSchema?: Record<string, unknown>;
     isCurrent?: boolean;
   }): Promise<AgentRevision> {
     if (externalUrl === undefined && defaultRuntimeParameters === undefined) {
@@ -277,7 +289,6 @@ export class FixieAgentBase {
     if (externalUrl !== undefined) {
       externalDeployment = {
         url: externalUrl,
-        runtimeParametersSchema,
       };
     }
     const result = (await this.client.requestJson(`/api/v1/agents/${this.metadata.agentId}/revisions`, {
@@ -286,8 +297,10 @@ export class FixieAgentBase {
         deployment: {
           external: externalDeployment,
         },
-        // The API expects this field to be pre-JSON-encoded.
-        defaultRuntimeParameters: JSON.stringify(defaultRuntimeParameters),
+        runtime: {
+          parametersSchema: runtimeParametersSchema,
+        },
+        defaultRuntimeParameters,
       },
     })) as { revision: AgentRevision };
     return result.revision;
@@ -298,11 +311,8 @@ export class FixieAgentBase {
     this.update({ currentRevisionId: revisionId });
   }
 
-  public deleteRevision(revisionId: string): Promise<void> {
-    return this.client.requestJson(
-      `/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`,
-      undefined,
-      'DELETE'
-    );
+  /** Delete the given Agent revision. */
+  public async deleteRevision(revisionId: string) {
+    await this.client.request(`/api/v1/agents/${this.metadata.agentId}/revisions/${revisionId}`, undefined, 'DELETE');
   }
 }

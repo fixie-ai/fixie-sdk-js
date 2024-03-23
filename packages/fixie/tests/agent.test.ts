@@ -57,31 +57,7 @@ describe('FixieAgent AgentRevision tests', () => {
     jest.clearAllMocks();
   });
 
-  it('createRevision requires either externalUrl, tarball, or defaultRuntimeParameters', async () => {
-    expect(async () => await agent.createRevision({})).rejects.toThrow();
-  });
-
-  it('createRevision with externalUrl cannot have tarball specified', async () => {
-    expect(
-      async () => await agent.createRevision({ externalUrl: 'https://foo.com', tarball: 'abc.tar.gz' })
-    ).rejects.toThrow();
-  });
-
-  it('createRevision with externalUrl cannot have environmentVariables specified', async () => {
-    expect(
-      async () => await agent.createRevision({ externalUrl: 'https://foo.com', environmentVariables: { foo: 'bar' } })
-    ).rejects.toThrow();
-  });
-
-  it('createRevision with environmentVariables must have tarball specified', async () => {
-    expect(async () => await agent.createRevision({ environmentVariables: { foo: 'bar' } })).rejects.toThrow();
-  });
-
-  it('createRevision with runtimeParametersSchema requires externalUrl', async () => {
-    expect(async () => await agent.createRevision({ runtimeParametersSchema: '{}' })).rejects.toThrow();
-  });
-
-  it('createRevision accepts tarball', async () => {
+  it('createManagedRevision accepts tarball', async () => {
     const tarball = 'tests/fixtures/test-tarball.tar.gz';
     const tarballData = fs.readFileSync(fs.realpathSync(tarball));
     const codePackage = tarballData.toString('base64');
@@ -94,11 +70,11 @@ describe('FixieAgent AgentRevision tests', () => {
         isCurrent: true,
       },
     });
-    const revision = await agent.createRevision({
+    const revision = await agent.createManagedRevision({
       defaultRuntimeParameters: { foo: 'bar' },
       tarball,
       environmentVariables: { TEST_ENV_VAR: 'test env var value' },
-      runtimeParametersSchema: '{}',
+      runtimeParametersSchema: { type: 'object' },
     });
     expect(mock.mock.calls[0][0].toString()).toStrictEqual(
       'https://fake.api.fixie.ai/api/v1/agents/fake-agent-id/revisions'
@@ -108,11 +84,13 @@ describe('FixieAgent AgentRevision tests', () => {
       JSON.stringify({
         revision: {
           isCurrent: true,
+          runtime: {
+            parametersSchema: { type: 'object' },
+          },
           deployment: {
             managed: {
               codePackage,
-              environmentVariables: [{ name: 'TEST_ENV_VAR', value: 'test env var value' }],
-              runtimeParametersSchema: '{}',
+              environmentVariables: { TEST_ENV_VAR: 'test env var value' },
             },
           },
           defaultRuntimeParameters: { foo: 'bar' },
@@ -125,23 +103,15 @@ describe('FixieAgent AgentRevision tests', () => {
     expect(revision?.isCurrent).toBe(true);
   });
 
-  it('createRevision with missing tarball throws', async () => {
+  it('createManagedRevision with missing tarball throws', async () => {
     expect(
       async () =>
-        await agent.createRevision({
+        await agent.createManagedRevision({
           defaultRuntimeParameters: { foo: 'bar' },
           tarball: 'bogus-tarball-filename',
           environmentVariables: { TEST_ENV_VAR: 'test env var value' },
-          runtimeParametersSchema: '{}',
+          runtimeParametersSchema: { type: 'object' },
         })
     ).rejects.toThrow();
-  });
-
-  it('createRevision requires either externalUrl or defaultRuntimeParameters', async () => {
-    expect(async () => await agent.createRevision({})).rejects.toThrow();
-  });
-
-  it('createRevision with runtimeParametersSchema requires externalUrl', async () => {
-    expect(async () => await agent.createRevision({ runtimeParametersSchema: '{}' })).rejects.toThrow();
   });
 });
