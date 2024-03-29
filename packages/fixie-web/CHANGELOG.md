@@ -1,5 +1,11 @@
 # fixie-web
 
+## 1.0.18
+
+### Patch Changes
+
+- Update livekit version to avoid breaking changes in Chrome v124.
+
 ## 1.0.15
 
 ### Patch Changes
