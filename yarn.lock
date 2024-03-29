@@ -466,6 +466,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bufbuild/protobuf@npm:^1.7.2":
+  version: 1.8.0
+  resolution: "@bufbuild/protobuf@npm:1.8.0"
+  checksum: 148755fce3cc28891a42c35a375596a3817710e2e8f4a452f034ffd988bbec1c9154135865b0b846f5f56765c93eb88cacc2f42af053925fb14f09b6a2b8c295
+  languageName: node
+  linkType: hard
+
 "@changesets/apply-release-plan@npm:^7.0.0":
   version: 7.0.0
   resolution: "@changesets/apply-release-plan@npm:7.0.0"
@@ -1134,6 +1141,15 @@ __metadata:
     "@jridgewell/resolve-uri": ^3.1.0
     "@jridgewell/sourcemap-codec": ^1.4.14
   checksum: ac7dd2cfe0b479aa1b81776d40d789243131cc792dc8b6b6a028c70fcd6171958ae1a71bf67b618ffe3c0c3feead9870c095ee46a5e30319410d92976b28f498
+  languageName: node
+  linkType: hard
+
+"@livekit/protocol@npm:1.10.4":
+  version: 1.10.4
+  resolution: "@livekit/protocol@npm:1.10.4"
+  dependencies:
+    "@bufbuild/protobuf": ^1.7.2
+  checksum: 05372bed04f35c3718fb36cd7e06466d1256911446e15769e36b2c5fa4cdf3ecd95fb4298362fe18a426a40b61a8d27cd34b92ed0e925f7412a24b7af6ae12bf
   languageName: node
   linkType: hard
 
@@ -4039,7 +4055,7 @@ __metadata:
     base64-arraybuffer: ^1.0.2
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
-    livekit-client: ^1.15.2
+    livekit-client: ^2.0.10
     prettier: ^3.0.0
     type-fest: ^4.3.1
     typescript: 5.1.3
@@ -5940,6 +5956,22 @@ __metadata:
     typed-emitter: ^2.1.0
     webrtc-adapter: ^8.1.1
   checksum: 83acabcd2f954b4c289a278a0afa486752afbe885400f6f1fd77817061d0041292f5c10eccdd6291d8bbfb6175900118c337da95ca188c492a0fcfe4dafa149d
+  languageName: node
+  linkType: hard
+
+"livekit-client@npm:^2.0.10":
+  version: 2.0.10
+  resolution: "livekit-client@npm:2.0.10"
+  dependencies:
+    "@livekit/protocol": 1.10.4
+    events: ^3.3.0
+    loglevel: ^1.8.0
+    sdp-transform: ^2.14.1
+    ts-debounce: ^4.0.0
+    tslib: 2.6.2
+    typed-emitter: ^2.1.0
+    webrtc-adapter: ^8.1.1
+  checksum: 44655f8c625ac8969311ca6aeef4b3e0c3feaeebdc68d067e057d24a4db05faa7e85069ade3386856c6a31b813be98856f12a29e87f45cc78b94a0ab9625e0a2
   languageName: node
   linkType: hard
 

@@ -4,7 +4,6 @@ import { AgentId, ConversationId } from '@fixieai/fixie-common';
 import {
   createLocalTracks,
   ConnectionState,
-  DataPacket_Kind,
   LocalAudioTrack,
   RemoteAudioTrack,
   RemoteTrack,
@@ -239,7 +238,7 @@ export class VoiceSession {
   }
 
   private sendData(obj: any) {
-    this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
+    this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), { reliable: true });
   }
 
   private handleSocketOpen() {
